@@ -14,27 +14,18 @@ set(ALL_SOURCES
 )
 
 # Main executable
-add_executable(render ${ALL_SOURCES})
+add_executable(worldStream ${ALL_SOURCES})
 
-target_compile_options(render PRIVATE
+target_compile_options(worldStream PRIVATE
     -Wall
     -Wextra
     -pedantic
 )
 
-target_link_libraries(render
-    ${Vulkan_LIBRARIES}
-    glfw
-    VulkanMemoryAllocator
-    vk-bootstrap::vk-bootstrap
-    ImGui
-    tinygltf
-    spdlog::spdlog
-    fmt
-)
+target_link_libraries(worldStream PRIVATE third_party)
 
 # Set the output directory for the executable
-set_target_properties(render PROPERTIES
+set_target_properties(worldStream PROPERTIES
                         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Custom target to clean files, build, and run the program
