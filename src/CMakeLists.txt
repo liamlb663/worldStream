@@ -13,6 +13,9 @@ set(ALL_SOURCES
     ${SOURCE_FILES}
 )
 
+# Add subdirs
+add_subdirectory(Game)
+
 # Main executable
 add_executable(worldStream ${ALL_SOURCES})
 
