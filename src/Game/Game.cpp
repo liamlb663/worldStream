@@ -3,6 +3,7 @@
 #include "Game.hpp"
 
 bool Game::initialize(int argc, char* argv[]) {
+    m_graphics.initialize();
 
     return true;
 }

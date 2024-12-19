@@ -1,4 +1,4 @@
-// src/render/debug.cpp
+// src/RenderEngine/Debug.cpp
 
 #include "Debug.hpp"
 #include "VkBootstrap.h"

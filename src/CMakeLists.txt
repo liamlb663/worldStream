@@ -14,7 +14,9 @@ set(ALL_SOURCES
 )
 
 # Add subdirs
+add_subdirectory(Core)
 add_subdirectory(Game)
+add_subdirectory(RenderEngine)
 
 # Main executable
 add_executable(worldStream ${ALL_SOURCES})
@@ -35,9 +37,9 @@ set_target_properties(worldStream PROPERTIES
 add_custom_target(run
     COMMAND ${CMAKE_COMMAND} -E remove -f output error                 # Remove output and error files
     COMMAND ${CMAKE_BUILD_TOOL} -j                                      # Run the build with parallel jobs
-    COMMAND ./render 2> error                                           # Run the executable and redirect stderr to 'error'
+    COMMAND ./worldStream 2> error                                           # Run the executable and redirect stderr to 'error'
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}                               # Set the working directory to the build directory
-    DEPENDS render                                                      # Ensure 'render' is built before running
-    COMMENT "Running the render executable..."
+    DEPENDS worldStream                                                      # Ensure 'render' is built before running
+    COMMENT "Running the worldStream executable..."
     VERBATIM
 )

@@ -1,4 +1,4 @@
-// src/Render/Render.hpp
+// src/RenderEngine/Config.hpp
 
 #pragma once
 

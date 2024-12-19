@@ -1,22 +1,24 @@
-// src/Render/Render.hpp
+// src/RenderEngine/RenderEngine.hpp
 
-#include "Render.hpp"
+#include "RenderEngine.hpp"
 
-#include "Config.h"
+#include "Config.hpp"
 #include "Debug.hpp"
+#include "RenderEngine/VkUtils.hpp"
 
 #include <VkBootstrap.h>
 #include <spdlog/spdlog.h>
 
-bool Render::initialize() {
+bool RenderEngine::initialize() {
+
+    if (!initVulkan()) return false;
 
     return true;
 }
 
-bool Render::initVulkan() {
+bool RenderEngine::initVulkan() {
     spdlog::trace("Initialize Vulkan");
 
-    {
     //Create Instance + debug
     vkb::InstanceBuilder builder;
 
@@ -35,17 +37,14 @@ bool Render::initVulkan() {
 
     m_vkInfo.instance = vkbInstance.instance;
     m_vkInfo.debugMessenger = vkbInstance.debug_messenger;
-    }
 
     // Load Vulkan debug functions
     Debug::LoadDebugUtils(m_vkInfo.instance);
 
-#if 0
-    m_surface = Utils::createVkSurface(m_vkInfo.instance, m_window->getGLFWwindow());
+    m_window = new Window(1700, 900, "World Streamer");
+    m_window->init(m_vkInfo.instance);
 
     //Pick and Create Devices
-    spdlog::trace("Pick physical device");
-
     VkPhysicalDeviceVulkan13Features features13{};
     features13.dynamicRendering = true;
     features13.synchronization2 = true;
@@ -64,17 +63,15 @@ bool Render::initVulkan() {
         .set_required_features_13(features13)
         .set_required_features_12(features12)
         .set_required_features(features10)
-        .set_surface(m_surface)
+        .set_surface(m_window->getSurface())
         .select();
 
     if (!physicalDeviceReturn) {
         spdlog::error("Failed to select Vulkan physical device. Error: {}",
                 physicalDeviceReturn.error().message());
 
-        throw std::runtime_error("Failed to select Vulkan physical device");
+        return false;
     }
-
-    spdlog::trace("Create logical device");
 
     vkb::PhysicalDevice physicalDevice = physicalDeviceReturn.value();
     vkb::DeviceBuilder deviceBuilder = vkb::DeviceBuilder(physicalDevice);
@@ -84,12 +81,12 @@ bool Render::initVulkan() {
         spdlog::error("Failed to create Vulkan device. Error: ",
                 deviceReturn.error().message());
 
-        throw std::runtime_error("Failed to create Vulkan device");
+        return false;
     }
     vkb::Device vkbDevice = deviceReturn.value();
 
-    m_device = vkbDevice.device;
-    m_physicalDevice = physicalDevice.physical_device;
+    m_vkInfo.device = vkbDevice.device;
+    m_vkInfo.physicalDevice = physicalDevice.physical_device;
 
     // Graphics Queue
     auto graphicsQueueReturn = vkbDevice.get_queue(vkb::QueueType::graphics);
@@ -97,34 +94,32 @@ bool Render::initVulkan() {
         spdlog::error("Failed to get graphics queue, Error: {}",
                 graphicsQueueReturn.error().message());
 
-        throw std::runtime_error("Failed to get graphics queue");
+        return false;
     }
-    m_graphicsQueue = graphicsQueueReturn.value();
+    m_vkInfo.graphicsQueue = graphicsQueueReturn.value();
 
     auto graphicsQueueFamilyReturn = vkbDevice.get_queue_index(vkb::QueueType::graphics);
     if (!graphicsQueueFamilyReturn) {
         spdlog::error("Failed to get graphics queue family, Error: {}",
                 graphicsQueueFamilyReturn.error().message());
 
-        throw std::runtime_error("Failed to get graphics queue family");
+        return false;
     }
-    m_graphicsQueueFamily = graphicsQueueFamilyReturn.value();
+    m_vkInfo.graphicsQueueFamily = graphicsQueueFamilyReturn.value();
 
     // Create VMA
-    spdlog::trace("Create VMA Allocator");
-
     VmaAllocatorCreateInfo vmaInfo{};
-    vmaInfo.physicalDevice = m_physicalDevice;
-    vmaInfo.device = m_device;
-    vmaInfo.instance = m_instance;
+    vmaInfo.physicalDevice = m_vkInfo.physicalDevice;
+    vmaInfo.device = m_vkInfo.device;
+    vmaInfo.instance = m_vkInfo.instance;
     vmaInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 
-    auto res = vmaCreateAllocator(&vmaInfo, &m_allocator);
-    Utils::checkVkResult(res, "Failed to create vma allocator");
+    auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo.allocator);
+    VkUtils::checkVkResult(res, "Failed to create vma allocator");
 
     m_mainDeletionQueue.push([this]() {
         VmaTotalStatistics stats;
-        vmaCalculateStatistics(m_allocator, &stats);
+        vmaCalculateStatistics(m_vkInfo.allocator, &stats);
 
         size_t bytesLeft = stats.total.statistics.allocationBytes;
 
@@ -132,11 +127,13 @@ bool Render::initVulkan() {
             spdlog::error("Attempted to destroy VmaAllocator with allocated bytes");
             spdlog::error("{} bytes left allocated not destroying VmaAllocator", bytesLeft);
         } else {
-            vmaDestroyAllocator(m_allocator);
-            spdlog::trace("Destroyed VmaAllocator");
+            vmaDestroyAllocator(m_vkInfo.allocator);
         }
     });
-#endif
 
     return true;
+}
+
+void RenderEngine::shutdown() {
+    m_mainDeletionQueue.flush();
 }
