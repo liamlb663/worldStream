@@ -6,6 +6,8 @@ set(RENDERENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Debug.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Window.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/VkUtils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CommandSubmitter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FrameData.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

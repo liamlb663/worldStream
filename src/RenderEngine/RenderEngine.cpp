@@ -4,21 +4,21 @@
 
 #include "Config.hpp"
 #include "Debug.hpp"
-#include "RenderEngine/VkUtils.hpp"
+#include "VkUtils.hpp"
 
 #include <VkBootstrap.h>
 #include <spdlog/spdlog.h>
 
 bool RenderEngine::initialize() {
+    spdlog::trace("Initialize RenderEngine");
 
     if (!initVulkan()) return false;
+    if (!initFramedata()) return false;
 
     return true;
 }
 
 bool RenderEngine::initVulkan() {
-    spdlog::trace("Initialize Vulkan");
-
     //Create Instance + debug
     vkb::InstanceBuilder builder;
 
@@ -115,13 +115,13 @@ bool RenderEngine::initVulkan() {
     vmaInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 
     auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo.allocator);
-    VkUtils::checkVkResult(res, "Failed to create vma allocator");
+    if (!VkUtils::checkVkResult(res, "Failed to create vma allocator")) return false;
 
     m_mainDeletionQueue.push([this]() {
         VmaTotalStatistics stats;
         vmaCalculateStatistics(m_vkInfo.allocator, &stats);
 
-        size_t bytesLeft = stats.total.statistics.allocationBytes;
+        Size bytesLeft = stats.total.statistics.allocationBytes;
 
         if (bytesLeft > 0) {
             spdlog::error("Attempted to destroy VmaAllocator with allocated bytes");
@@ -130,6 +130,16 @@ bool RenderEngine::initVulkan() {
             vmaDestroyAllocator(m_vkInfo.allocator);
         }
     });
+
+    return true;
+}
+
+bool RenderEngine::initFramedata() {
+
+    m_frameData.resize(Config::framesInFlight);
+    for (Size i = 0; i < Config::framesInFlight; i++) {
+        m_frameData[i].init(m_vkInfo);
+    }
 
     return true;
 }

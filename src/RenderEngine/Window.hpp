@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Core/Types.hpp"
 #include "Core/Vector.hpp"
 
 #include <vulkan/vulkan.h>
@@ -12,21 +13,21 @@
 
 class Window {
 public:
-    Window(uint32_t width, uint32_t height, const std::string& title);
-    Window(Vector<uint32_t, 2> size, const std::string& title);
+    Window(U32 width, U32 height, const std::string& title);
+    Window(Vector<U32, 2> size, const std::string& title);
 
     bool init(VkInstance instance);
     void shutdown(VkInstance instance);
 
     GLFWwindow* getGLFWwindow() const;
-    Vector<uint32_t, 2> getSize() const;
+    Vector<U32, 2> getSize() const;
 
     VkSurfaceKHR getSurface() const;
     void initVkSurface(VkInstance instance, GLFWwindow* window);
 
 private:
 
-    Vector<uint32_t, 2> m_size;
+    Vector<U32, 2> m_size;
     std::string m_title;
 
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;

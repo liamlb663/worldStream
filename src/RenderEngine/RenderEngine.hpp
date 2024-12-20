@@ -3,34 +3,26 @@
 #pragma once
 
 #include "Core/DeletionQueue.hpp"
+#include "RenderEngine/FrameData.hpp"
+#include "VulkanInfo.hpp"
 #include "Window.hpp"
+
+#include <vector>
 #include <vulkan/vulkan.h>
-#include "vk_mem_alloc.h"
-
-typedef struct VulkanInfo {
-    VkInstance instance;
-    VkDebugUtilsMessengerEXT debugMessenger;
-
-    VkDevice device;
-    VkPhysicalDevice physicalDevice;
-
-    VkQueue graphicsQueue;
-    uint32_t graphicsQueueFamily;
-
-    VmaAllocator allocator;
-} VulkanInfo;
 
 class RenderEngine {
 public:
     bool initialize();
-
     void shutdown();
 
 private:
     bool initVulkan();
+    bool initFramedata();
 
     VulkanInfo m_vkInfo;
     Window* m_window;
+
+    std::vector<FrameData> m_frameData;
 
     DeletionQueue m_mainDeletionQueue;
 };

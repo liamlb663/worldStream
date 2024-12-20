@@ -1,9 +1,10 @@
 // src/RenderEngine/Debug.cpp
 
 #include "Debug.hpp"
-#include "VkBootstrap.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/spdlog.h"
+
+#include <VkBootstrap.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <iostream>
 #include <unordered_set>
@@ -42,7 +43,7 @@ void Debug::LoadDebugUtils(VkInstance instance) {
 }
 
 // Label Vulkan Object
-void Debug::SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name) {
+void Debug::SetObjectName(VkDevice device, U64 objectHandle, VkObjectType objectType, const char* name) {
 
     if (my_vkSetDebugUtilsObjectNameEXT) {
         VkDebugUtilsObjectNameInfoEXT nameInfo = {};
@@ -107,7 +108,7 @@ VkBool32 Debug::CustomDebugCallback(
 
     constexpr const char* format = "{}]\n{}";
 
-    static const std::unordered_set<uint32_t> suppressed_message_ids = {
+    static const std::unordered_set<U32> suppressed_message_ids = {
         0xfd92477a,  // vkAllocateMemory small allocation warning
         0x10b59d4b,  // vkBindBufferMemory small allocation warning
         0x675dc32e,  // VK_EXT_debug_utils usage warning
