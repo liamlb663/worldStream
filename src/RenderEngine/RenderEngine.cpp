@@ -4,6 +4,7 @@
 
 #include "Config.hpp"
 #include "Debug.hpp"
+#include "RenderEngine/CommandPool.hpp"
 #include "VkUtils.hpp"
 
 #include <VkBootstrap.h>
@@ -14,6 +15,7 @@ bool RenderEngine::initialize() {
 
     if (!initVulkan()) return false;
     if (!initFramedata()) return false;
+    if (!m_commandSubmitter.initialize(m_vkInfo, &m_frameData)) return false;
 
     return true;
 }
@@ -107,6 +109,25 @@ bool RenderEngine::initVulkan() {
     }
     m_vkInfo.graphicsQueueFamily = graphicsQueueFamilyReturn.value();
 
+    // Transfer Queue
+    auto transferQueueReturn = vkbDevice.get_queue(vkb::QueueType::transfer);
+    if (!transferQueueReturn) {
+        spdlog::error("Failed to get transfer queue, Error: {}",
+                transferQueueReturn.error().message());
+
+        return false;
+    }
+    m_vkInfo.transferQueue = transferQueueReturn.value();
+
+    auto transferQueueFamilyReturn = vkbDevice.get_queue_index(vkb::QueueType::transfer);
+    if (!transferQueueFamilyReturn) {
+        spdlog::error("Failed to get transfer queue family, Error: {}",
+                transferQueueFamilyReturn.error().message());
+
+        return false;
+    }
+    m_vkInfo.transferQueueFamily = transferQueueFamilyReturn.value();
+
     // Create VMA
     VmaAllocatorCreateInfo vmaInfo{};
     vmaInfo.physicalDevice = m_vkInfo.physicalDevice;
@@ -116,6 +137,10 @@ bool RenderEngine::initVulkan() {
 
     auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo.allocator);
     if (!VkUtils::checkVkResult(res, "Failed to create vma allocator")) return false;
+
+    // Create Transfer Pool
+    m_vkInfo.transferPool = new CommandPool();
+    m_vkInfo.transferPool->initialize(m_vkInfo, CommandPoolType::Transfer);
 
     m_mainDeletionQueue.push([this]() {
         VmaTotalStatistics stats;
@@ -135,10 +160,11 @@ bool RenderEngine::initVulkan() {
 }
 
 bool RenderEngine::initFramedata() {
+    m_vkInfo.transferPool->resizeBuffers(Config::framesInFlight);
 
     m_frameData.resize(Config::framesInFlight);
     for (Size i = 0; i < Config::framesInFlight; i++) {
-        m_frameData[i].init(m_vkInfo);
+        m_frameData[i].init(m_vkInfo, i);
     }
 
     return true;

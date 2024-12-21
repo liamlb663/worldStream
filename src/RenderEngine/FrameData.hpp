@@ -4,6 +4,7 @@
 
 #include "Core/DeletionQueue.hpp"
 #include "Core/Types.hpp"
+#include "CommandPool.hpp"
 #include "VulkanInfo.hpp"
 
 #include <vulkan/vulkan.h>
@@ -12,10 +13,11 @@
 
 class FrameData {
 public:
-    bool init(VulkanInfo vkInfo);
+    bool init(VulkanInfo vkInfo, Size frameNumber);
     void shutdown();
 
-    VkCommandPool commandPool;
+    CommandPool commandPool;
+    VkCommandBuffer transferBuffer;
 
     VkSemaphore swapchainSemaphore; // TODO: Replace with wrapper
     VkSemaphore renderSemaphore; // TODO: Replace with wrapper

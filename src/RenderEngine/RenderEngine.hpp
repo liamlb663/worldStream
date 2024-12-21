@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Core/DeletionQueue.hpp"
+#include "RenderEngine/CommandSubmitter.hpp"
 #include "RenderEngine/FrameData.hpp"
 #include "VulkanInfo.hpp"
 #include "Window.hpp"
@@ -25,5 +26,7 @@ private:
     std::vector<FrameData> m_frameData;
 
     DeletionQueue m_mainDeletionQueue;
+
+    CommandSubmitter m_commandSubmitter;
 };
 

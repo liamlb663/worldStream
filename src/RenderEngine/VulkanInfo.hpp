@@ -7,6 +7,8 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
+class CommandPool;  // Forward Declaration
+
 typedef struct VulkanInfo {
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
@@ -17,6 +19,10 @@ typedef struct VulkanInfo {
     VkQueue graphicsQueue;
     U32 graphicsQueueFamily;
 
+    VkQueue transferQueue;
+    U32 transferQueueFamily;
+
     VmaAllocator allocator;
+    CommandPool* transferPool;
 } VulkanInfo;
 

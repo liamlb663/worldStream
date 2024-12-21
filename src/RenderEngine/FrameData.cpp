@@ -2,25 +2,22 @@
 
 #include "FrameData.hpp"
 #include "Debug.hpp"
+#include "RenderEngine/CommandPool.hpp"
 #include "VkUtils.hpp"
+#include "spdlog/fmt/bundled/format.h"
 
-bool FrameData::init(VulkanInfo vkInfo) {
+bool FrameData::init(VulkanInfo vkInfo, Size frameNumber) {
     // CommandPool
-    VkCommandPoolCreateInfo cmdPoolInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .queueFamilyIndex = vkInfo.graphicsQueueFamily,
-    };
-
-    VkResult res = vkCreateCommandPool(
-            vkInfo.device, &cmdPoolInfo, nullptr, &commandPool);
-    if (!VkUtils::checkVkResult(res, "Failed to Create Frame's Command Pool"))
-        return false;
+    VkUtils::checkVkResult(
+            commandPool.initialize(vkInfo, CommandPoolType::Graphics),
+            "Failed to initialize graphics commandPool");
 
     Debug::SetObjectName(
-            vkInfo.device, (U64)commandPool, VK_OBJECT_TYPE_COMMAND_POOL,
-            "Frame Command Pool");
+            vkInfo.device, (U64)commandPool.getPool(), VK_OBJECT_TYPE_COMMAND_POOL,
+            fmt::format("Frame[{}]'s Command Pool", frameNumber).c_str());
+
+    // Transfer Buffer
+    transferBuffer = vkInfo.transferPool->getBuffer(frameNumber);
 
     // Semaphores
     VkSemaphoreCreateInfo semaCreateInfo = {
@@ -29,23 +26,27 @@ bool FrameData::init(VulkanInfo vkInfo) {
         .flags = 0,
     };
 
-    res = vkCreateSemaphore(
+    // Render Semaphore
+    VkResult res = vkCreateSemaphore(
             vkInfo.device, &semaCreateInfo, nullptr, &renderSemaphore);
-    if (!VkUtils::checkVkResult(res, "Failed to Create Frame's Render Semaphore"))
+    if (!VkUtils::checkVkResult(res,
+            fmt::format("Failed to Create Frame[{}]'s Render Semaphore", frameNumber).c_str()))
         return false;
 
     Debug::SetObjectName(
             vkInfo.device, (U64)renderSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
-            "Frame Render Semaphore");
+            fmt::format("Frame[{}]'s Render Semaphore", frameNumber).c_str());
 
+    // Swapchain Semaphore
     res = vkCreateSemaphore(
             vkInfo.device, &semaCreateInfo, nullptr, &swapchainSemaphore);
-    if (!VkUtils::checkVkResult(res, "Failed to Create Frame's Swapchain Semaphore"))
+    if (!VkUtils::checkVkResult(res,
+            fmt::format("Failed to Create Frame[{}]'s Swapchain Semaphore", frameNumber).c_str()))
         return false;
 
     Debug::SetObjectName(
-            vkInfo.device, (U64)renderSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
-            "Frame Swapchain Semaphore");
+            vkInfo.device, (U64)swapchainSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
+            fmt::format("Frame[{}]'s Swapchain Semaphore", frameNumber).c_str());
 
     //Fence
     VkFenceCreateInfo fenceCreateInfo = {
@@ -56,12 +57,13 @@ bool FrameData::init(VulkanInfo vkInfo) {
 
     res = vkCreateFence(
             vkInfo.device, &fenceCreateInfo, nullptr, &renderFence);
-    if (!VkUtils::checkVkResult(res, "Failed to Create Frame's Render Fence"))
+    if (!VkUtils::checkVkResult(res,
+            fmt::format("Failed to Create Frame[{}]'s Render Fence", frameNumber).c_str()))
         return false;
 
     Debug::SetObjectName(
             vkInfo.device, (U64)renderFence, VK_OBJECT_TYPE_FENCE,
-            "Frame Render Fence");
+            fmt::format("Frame[{}]'s Render Fence", frameNumber).c_str());
 
     return true;
 }
