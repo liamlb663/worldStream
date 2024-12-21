@@ -9,6 +9,7 @@
 
 #include <VkBootstrap.h>
 #include <spdlog/spdlog.h>
+#include <vulkan/vulkan_core.h>
 
 bool RenderEngine::initialize() {
     spdlog::trace("Initialize RenderEngine");
@@ -128,6 +129,13 @@ bool RenderEngine::initVulkan() {
     }
     m_vkInfo.transferQueueFamily = transferQueueFamilyReturn.value();
 
+    m_mainDeletionQueue.push([this]() {
+            m_window->shutdown(m_vkInfo.instance);
+            vkDestroyDevice(m_vkInfo.device, nullptr);
+            vkb::destroy_debug_utils_messenger(m_vkInfo.instance, m_vkInfo.debugMessenger);
+            vkDestroyInstance(m_vkInfo.instance, nullptr);
+    });
+
     // Create VMA
     VmaAllocatorCreateInfo vmaInfo{};
     vmaInfo.physicalDevice = m_vkInfo.physicalDevice;
@@ -137,10 +145,6 @@ bool RenderEngine::initVulkan() {
 
     auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo.allocator);
     if (!VkUtils::checkVkResult(res, "Failed to create vma allocator")) return false;
-
-    // Create Transfer Pool
-    m_vkInfo.transferPool = new CommandPool();
-    m_vkInfo.transferPool->initialize(m_vkInfo, CommandPoolType::Transfer);
 
     m_mainDeletionQueue.push([this]() {
         VmaTotalStatistics stats;
@@ -156,6 +160,14 @@ bool RenderEngine::initVulkan() {
         }
     });
 
+    // Create Transfer Pool
+    m_vkInfo.transferPool = new CommandPool();
+    m_vkInfo.transferPool->initialize(m_vkInfo, CommandPoolType::Transfer, 0, "Transfer Pool");
+
+    m_mainDeletionQueue.push([this]() {
+        m_vkInfo.transferPool->shutdown();
+    });
+
     return true;
 }
 
@@ -166,6 +178,12 @@ bool RenderEngine::initFramedata() {
     for (Size i = 0; i < Config::framesInFlight; i++) {
         m_frameData[i].init(m_vkInfo, i);
     }
+
+    m_mainDeletionQueue.push([this]() {
+        for (Size i = 0; i < Config::framesInFlight; i++) {
+            m_frameData[i].shutdown(m_vkInfo);
+        }
+    });
 
     return true;
 }

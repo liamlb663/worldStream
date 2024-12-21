@@ -9,12 +9,10 @@
 
 #include <vulkan/vulkan.h>
 
-#include <vector>
-
 class FrameData {
 public:
     bool init(VulkanInfo vkInfo, Size frameNumber);
-    void shutdown();
+    void shutdown(VulkanInfo vkInfo);
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;
@@ -33,10 +31,7 @@ public:
 
     // TODO: Decide on new scene descriptor setup
 
-    VkCommandBuffer getBuffer(Size index);
-
 private:
-    std::vector<VkCommandBuffer> m_commandBuffers;
 
 };
 

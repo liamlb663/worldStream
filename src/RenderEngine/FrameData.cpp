@@ -5,16 +5,14 @@
 #include "RenderEngine/CommandPool.hpp"
 #include "VkUtils.hpp"
 #include "spdlog/fmt/bundled/format.h"
+#include <vulkan/vulkan_core.h>
 
 bool FrameData::init(VulkanInfo vkInfo, Size frameNumber) {
     // CommandPool
     VkUtils::checkVkResult(
-            commandPool.initialize(vkInfo, CommandPoolType::Graphics),
+            commandPool.initialize(vkInfo, CommandPoolType::Graphics, 0,
+                fmt::format("Frame[{}]'s Graphics Command Pool", frameNumber)),
             "Failed to initialize graphics commandPool");
-
-    Debug::SetObjectName(
-            vkInfo.device, (U64)commandPool.getPool(), VK_OBJECT_TYPE_COMMAND_POOL,
-            fmt::format("Frame[{}]'s Command Pool", frameNumber).c_str());
 
     // Transfer Buffer
     transferBuffer = vkInfo.transferPool->getBuffer(frameNumber);
@@ -68,8 +66,13 @@ bool FrameData::init(VulkanInfo vkInfo, Size frameNumber) {
     return true;
 }
 
-void FrameData::shutdown() {
+void FrameData::shutdown(VulkanInfo vkInfo) {
+    deletionQueue.flush();
 
+    commandPool.shutdown();
 
+    vkDestroyFence(vkInfo.device, renderFence, nullptr);
+    vkDestroySemaphore(vkInfo.device, renderSemaphore, nullptr);
+    vkDestroySemaphore(vkInfo.device, swapchainSemaphore, nullptr);
 }
 
