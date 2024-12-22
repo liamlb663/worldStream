@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "VulkanInfo.hpp"
+#include "../VulkanInfo.hpp"
 
 #include <vulkan/vulkan.h>
 

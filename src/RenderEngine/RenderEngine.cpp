@@ -4,7 +4,7 @@
 
 #include "Config.hpp"
 #include "Debug.hpp"
-#include "RenderEngine/CommandPool.hpp"
+#include "Commands/CommandPool.hpp"
 #include "VkUtils.hpp"
 
 #include <VkBootstrap.h>

@@ -1,8 +1,7 @@
 // src/RenderEngine/CommandSubmitter.cpp
 
 #include "CommandSubmitter.hpp"
-#include "FrameData.hpp"
-#include "VkUtils.hpp"
+#include "../VkUtils.hpp"
 
 bool CommandSubmitter::initialize(VulkanInfo vkInfo, std::vector<FrameData>* frames) {
     m_vkInfo = vkInfo;

@@ -2,8 +2,8 @@
 
 #include "CommandPool.hpp"
 
-#include "Debug.hpp"
-#include "VkUtils.hpp"
+#include "../Debug.hpp"
+#include "../VkUtils.hpp"
 
 #include <spdlog/spdlog.h>
 

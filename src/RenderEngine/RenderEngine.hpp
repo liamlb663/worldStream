@@ -3,10 +3,10 @@
 #pragma once
 
 #include "Core/DeletionQueue.hpp"
-#include "RenderEngine/CommandSubmitter.hpp"
-#include "RenderEngine/FrameData.hpp"
+#include "Commands/CommandSubmitter.hpp"
+#include "FrameResources/FrameData.hpp"
 #include "VulkanInfo.hpp"
-#include "Window.hpp"
+#include "FrameResources/Window.hpp"
 
 #include <vector>
 #include <vulkan/vulkan.h>
