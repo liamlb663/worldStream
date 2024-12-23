@@ -8,6 +8,7 @@
 #include "VkUtils.hpp"
 
 #include <VkBootstrap.h>
+#include <memory>
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan_core.h>
 
@@ -16,12 +17,13 @@ bool RenderEngine::initialize() {
 
     if (!initVulkan()) return false;
     if (!initFramedata()) return false;
-    if (!m_commandSubmitter.initialize(m_vkInfo, &m_frameData)) return false;
 
     return true;
 }
 
 bool RenderEngine::initVulkan() {
+    m_vkInfo = std::make_shared<VulkanInfo>();
+
     //Create Instance + debug
     vkb::InstanceBuilder builder;
 
@@ -38,14 +40,13 @@ bool RenderEngine::initVulkan() {
     }
     vkb::Instance vkbInstance = instanceReturn.value();
 
-    m_vkInfo.instance = vkbInstance.instance;
-    m_vkInfo.debugMessenger = vkbInstance.debug_messenger;
+    m_vkInfo->instance = vkbInstance.instance;
+    m_vkInfo->debugMessenger = vkbInstance.debug_messenger;
 
     // Load Vulkan debug functions
-    Debug::LoadDebugUtils(m_vkInfo.instance);
+    Debug::LoadDebugUtils(m_vkInfo->instance);
 
-    m_window = new Window(1700, 900, "World Streamer");
-    m_window->init(m_vkInfo.instance);
+    m_frameManager.initializeWindow(m_vkInfo);
 
     //Pick and Create Devices
     VkPhysicalDeviceVulkan13Features features13{};
@@ -66,7 +67,7 @@ bool RenderEngine::initVulkan() {
         .set_required_features_13(features13)
         .set_required_features_12(features12)
         .set_required_features(features10)
-        .set_surface(m_window->getSurface())
+        .set_surface(m_frameManager.getWindow()->getSurface())
         .select();
 
     if (!physicalDeviceReturn) {
@@ -88,8 +89,8 @@ bool RenderEngine::initVulkan() {
     }
     vkb::Device vkbDevice = deviceReturn.value();
 
-    m_vkInfo.device = vkbDevice.device;
-    m_vkInfo.physicalDevice = physicalDevice.physical_device;
+    m_vkInfo->device = vkbDevice.device;
+    m_vkInfo->physicalDevice = physicalDevice.physical_device;
 
     // Graphics Queue
     auto graphicsQueueReturn = vkbDevice.get_queue(vkb::QueueType::graphics);
@@ -99,7 +100,7 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo.graphicsQueue = graphicsQueueReturn.value();
+    m_vkInfo->graphicsQueue = graphicsQueueReturn.value();
 
     auto graphicsQueueFamilyReturn = vkbDevice.get_queue_index(vkb::QueueType::graphics);
     if (!graphicsQueueFamilyReturn) {
@@ -108,7 +109,7 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo.graphicsQueueFamily = graphicsQueueFamilyReturn.value();
+    m_vkInfo->graphicsQueueFamily = graphicsQueueFamilyReturn.value();
 
     // Transfer Queue
     auto transferQueueReturn = vkbDevice.get_queue(vkb::QueueType::transfer);
@@ -118,7 +119,7 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo.transferQueue = transferQueueReturn.value();
+    m_vkInfo->transferQueue = transferQueueReturn.value();
 
     auto transferQueueFamilyReturn = vkbDevice.get_queue_index(vkb::QueueType::transfer);
     if (!transferQueueFamilyReturn) {
@@ -127,28 +128,28 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo.transferQueueFamily = transferQueueFamilyReturn.value();
+    m_vkInfo->transferQueueFamily = transferQueueFamilyReturn.value();
 
     m_mainDeletionQueue.push([this]() {
-            m_window->shutdown(m_vkInfo.instance);
-            vkDestroyDevice(m_vkInfo.device, nullptr);
-            vkb::destroy_debug_utils_messenger(m_vkInfo.instance, m_vkInfo.debugMessenger);
-            vkDestroyInstance(m_vkInfo.instance, nullptr);
+            m_frameManager.getWindow()->shutdown(m_vkInfo->instance);
+            vkDestroyDevice(m_vkInfo->device, nullptr);
+            vkb::destroy_debug_utils_messenger(m_vkInfo->instance, m_vkInfo->debugMessenger);
+            vkDestroyInstance(m_vkInfo->instance, nullptr);
     });
 
     // Create VMA
     VmaAllocatorCreateInfo vmaInfo{};
-    vmaInfo.physicalDevice = m_vkInfo.physicalDevice;
-    vmaInfo.device = m_vkInfo.device;
-    vmaInfo.instance = m_vkInfo.instance;
+    vmaInfo.physicalDevice = m_vkInfo->physicalDevice;
+    vmaInfo.device = m_vkInfo->device;
+    vmaInfo.instance = m_vkInfo->instance;
     vmaInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 
-    auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo.allocator);
+    auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo->allocator);
     if (!VkUtils::checkVkResult(res, "Failed to create vma allocator")) return false;
 
     m_mainDeletionQueue.push([this]() {
         VmaTotalStatistics stats;
-        vmaCalculateStatistics(m_vkInfo.allocator, &stats);
+        vmaCalculateStatistics(m_vkInfo->allocator, &stats);
 
         Size bytesLeft = stats.total.statistics.allocationBytes;
 
@@ -156,33 +157,31 @@ bool RenderEngine::initVulkan() {
             spdlog::error("Attempted to destroy VmaAllocator with allocated bytes");
             spdlog::error("{} bytes left allocated not destroying VmaAllocator", bytesLeft);
         } else {
-            vmaDestroyAllocator(m_vkInfo.allocator);
+            vmaDestroyAllocator(m_vkInfo->allocator);
         }
     });
 
     // Create Transfer Pool
-    m_vkInfo.transferPool = new CommandPool();
-    m_vkInfo.transferPool->initialize(m_vkInfo, CommandPoolType::Transfer, 0, "Transfer Pool");
+    m_vkInfo->transferPool = new CommandPool();
+    m_vkInfo->transferPool->initialize(m_vkInfo, CommandPoolType::Transfer, 0, "Transfer Pool");
 
     m_mainDeletionQueue.push([this]() {
-        m_vkInfo.transferPool->shutdown();
+        m_vkInfo->transferPool->shutdown();
     });
 
     return true;
 }
 
 bool RenderEngine::initFramedata() {
-    m_vkInfo.transferPool->resizeBuffers(Config::framesInFlight);
+    m_vkInfo->transferPool->resizeBuffers(Config::framesInFlight);
 
-    m_frameData.resize(Config::framesInFlight);
-    for (Size i = 0; i < Config::framesInFlight; i++) {
-        m_frameData[i].init(m_vkInfo, i);
+    if (!m_frameManager.initializeFrames(m_vkInfo)) {
+        spdlog::error("Failed to initialize FrameManager!");
+        return false;
     }
 
     m_mainDeletionQueue.push([this]() {
-        for (Size i = 0; i < Config::framesInFlight; i++) {
-            m_frameData[i].shutdown(m_vkInfo);
-        }
+        m_frameManager.shutdown(m_vkInfo);
     });
 
     return true;

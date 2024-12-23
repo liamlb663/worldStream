@@ -1,20 +1,18 @@
 // src/RenderEngine/CommandSubmitter.cpp
 
 #include "CommandSubmitter.hpp"
+
+#include "CommandPool.hpp"
 #include "../VkUtils.hpp"
 
-bool CommandSubmitter::initialize(VulkanInfo vkInfo, std::vector<FrameData>* frames) {
-    m_vkInfo = vkInfo;
-
-    m_frames = frames;
-    m_frameNumber = 0;
+bool CommandSubmitter::initialize() {
 
     return true;
 }
 
-void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>& function) {
+void CommandSubmitter::transferSubmit(Size frameNumber, const std::function<void(VkCommandBuffer)>& function) {
     // Get Buffer
-    VkCommandBuffer commandBuffer = m_vkInfo.transferPool->getBuffer(m_frameNumber);
+    VkCommandBuffer commandBuffer = m_vkInfo.transferPool->getBuffer(frameNumber);
 
     // Begin Command Buffer
     VkCommandBufferBeginInfo beginInfo{

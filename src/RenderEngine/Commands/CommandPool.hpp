@@ -4,6 +4,7 @@
 
 #include "../VulkanInfo.hpp"
 
+#include <memory>
 #include <vulkan/vulkan.h>
 
 #include <string>
@@ -19,7 +20,7 @@ public:
     CommandPool() : m_buffers() {};
 
     VkResult initialize(
-            VulkanInfo vkInfo,
+            std::shared_ptr<VulkanInfo> vkInfo,
             CommandPoolType type,
             VkCommandPoolCreateFlags flags,
             std::string name

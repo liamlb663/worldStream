@@ -7,12 +7,13 @@
 #include "../Commands/CommandPool.hpp"
 #include "../VulkanInfo.hpp"
 
+#include <memory>
 #include <vulkan/vulkan.h>
 
 class FrameData {
 public:
-    bool init(VulkanInfo vkInfo, Size frameNumber);
-    void shutdown(VulkanInfo vkInfo);
+    bool init(std::shared_ptr<VulkanInfo> vkInfo, Size frameNumber);
+    void shutdown(std::shared_ptr<VulkanInfo> vkInfo);
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;

@@ -3,12 +3,10 @@
 #pragma once
 
 #include "Core/DeletionQueue.hpp"
-#include "Commands/CommandSubmitter.hpp"
-#include "FrameResources/FrameData.hpp"
+#include "FrameManagement/FrameManager.hpp"
 #include "VulkanInfo.hpp"
-#include "FrameResources/Window.hpp"
 
-#include <vector>
+#include <memory>
 #include <vulkan/vulkan.h>
 
 class RenderEngine {
@@ -20,13 +18,11 @@ private:
     bool initVulkan();
     bool initFramedata();
 
-    VulkanInfo m_vkInfo;
-    Window* m_window;
+    std::shared_ptr<VulkanInfo> m_vkInfo;
 
-    std::vector<FrameData> m_frameData;
+    FrameManager m_frameManager;
 
     DeletionQueue m_mainDeletionQueue;
 
-    CommandSubmitter m_commandSubmitter;
 };
 

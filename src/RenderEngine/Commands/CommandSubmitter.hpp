@@ -2,25 +2,30 @@
 
 #pragma once
 
-#include "../FrameResources/FrameData.hpp"
 #include "../VulkanInfo.hpp"
+#include "RenderEngine/FrameManagement/FrameData.hpp"
 
 #include <vulkan/vulkan.h>
 
 #include <functional>
 
+typedef struct SubmitInfo {
+    Size frameNumber;
+    FrameData frameData;
+    //Swapchain image
+} SubmitInfo;
+
 class CommandSubmitter {
 public:
-    bool initialize(VulkanInfo vkInfo, std::vector<FrameData>* frames);
+    bool initialize();
 
-    void transferSubmit(const std::function<void(VkCommandBuffer)>& function);
+    void transferSubmit(Size frameNumber, const std::function<void(VkCommandBuffer)>& function);
+    void frameSubmit(SubmitInfo info, const std::function<void(VkCommandBuffer)>& function);
 
     void shutdown();
 
 private:
     VulkanInfo m_vkInfo;
 
-    std::vector<FrameData>* m_frames;
-    Size m_frameNumber;
-
 };
+

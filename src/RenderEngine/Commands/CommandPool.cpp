@@ -5,23 +5,24 @@
 #include "../Debug.hpp"
 #include "../VkUtils.hpp"
 
+#include <memory>
 #include <spdlog/spdlog.h>
 
 VkResult CommandPool::initialize(
-        VulkanInfo vkInfo,
+        std::shared_ptr<VulkanInfo> vkInfo,
         CommandPoolType type,
         VkCommandPoolCreateFlags flags,
         std::string name
 ) {
-    m_device = vkInfo.device;
+    m_device = vkInfo->device;
 
     uint32_t queueFamilyIndex = 0;
     switch (type) {
         case CommandPoolType::Graphics:
-            queueFamilyIndex = vkInfo.graphicsQueueFamily;
+            queueFamilyIndex = vkInfo->graphicsQueueFamily;
             break;
         case CommandPoolType::Transfer:
-            queueFamilyIndex = vkInfo.transferQueueFamily;
+            queueFamilyIndex = vkInfo->transferQueueFamily;
             break;
         default:
             spdlog::error("Invalid CommandPoolType");
@@ -40,7 +41,7 @@ VkResult CommandPool::initialize(
     if ((res = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_pool)) != VK_SUCCESS) {
         return res;
     }
-    Debug::SetObjectName(vkInfo.device, (U64)m_pool,
+    Debug::SetObjectName(vkInfo->device, (U64)m_pool,
             VK_OBJECT_TYPE_COMMAND_POOL, name.c_str());
 
     m_name = name;

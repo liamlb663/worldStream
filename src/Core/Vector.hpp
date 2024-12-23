@@ -57,4 +57,27 @@ public:
             static_cast<int32_t>(value.z)
         };
     }
+
+    // From 2D Vulkan Structs
+    static Vector fromExtent2D(const VkExtent2D& extent) {
+        static_assert(Dimensions == 2 && std::is_unsigned<T>::value, "Extent2D requires vec2 and unsigned components");
+        return Vector(static_cast<T>(extent.width), static_cast<T>(extent.height));
+    }
+
+    static Vector fromOffset2D(const VkExtent2D& extent) {
+        static_assert(Dimensions == 2, "Offset2D requires vec2");
+        return Vector(static_cast<T>(extent.width), static_cast<T>(extent.height));
+    }
+
+    // From 3D Vulkan Structs
+    static Vector fromExtent3D(const VkExtent3D& extent) {
+        static_assert(Dimensions == 3 && std::is_unsigned<T>::value, "Extent3D requires vec3 and unsigned components");
+        return Vector(static_cast<T>(extent.width), static_cast<T>(extent.height), static_cast<T>(extent.depth));
+    }
+
+    static Vector fromOffset3D(const VkExtent3D& extent) {
+        static_assert(Dimensions == 3, "Offset3D requires vec3");
+        return Vector(static_cast<T>(extent.width), static_cast<T>(extent.height), static_cast<T>(extent.depth));
+    }
+
 };

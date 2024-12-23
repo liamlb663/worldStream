@@ -21,8 +21,8 @@ public:
 
     GLFWwindow* getGLFWwindow() const;
     Vector<U32, 2> getSize() const;
-
     VkSurfaceKHR getSurface() const;
+
     void initVkSurface(VkInstance instance, GLFWwindow* window);
 
 private:

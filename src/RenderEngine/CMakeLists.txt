@@ -6,9 +6,10 @@ set(RENDERENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Debug.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/VkUtils.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/FrameResources/Window.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/FrameResources/FrameData.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/FrameResources/SwapchainManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FrameManagement/Window.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FrameManagement/FrameData.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FrameManagement/SwapchainManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FrameManagement/FrameManager.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/CommandSubmitter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Commands/CommandPool.cpp

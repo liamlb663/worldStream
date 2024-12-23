@@ -78,6 +78,11 @@ GLFWwindow* Window::getGLFWwindow() const {
     return m_window;
 }
 
+Vector<U32, 2> Window::getSize() const {
+    if (!m_window) spdlog::error("Size null at time of procurement");
+    return m_size;
+}
+
 VkSurfaceKHR Window::getSurface() const {
     if (!m_window) spdlog::error("VkSurfaceKHR null at time of procurement");
     return m_surface;
