@@ -35,7 +35,7 @@ public:
     void shutdown();
 
 private:
-    VkDevice m_device;
+    std::shared_ptr<VulkanInfo> m_vkInfo;
     VkCommandPool m_pool;
     std::vector<VkCommandBuffer> m_buffers;
     std::string m_name;

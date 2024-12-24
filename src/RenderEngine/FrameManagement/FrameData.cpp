@@ -1,7 +1,6 @@
 // src/RenderEngine/FrameData.cpp
 
 #include "FrameData.hpp"
-#include "../Debug.hpp"
 #include "../VkUtils.hpp"
 
 #include "fmt/core.h"
@@ -17,61 +16,22 @@ bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Size frameNumber) {
     transferBuffer = vkInfo->transferPool->getBuffer(frameNumber);
 
     // Semaphores
-    VkSemaphoreCreateInfo semaCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-    };
-
-    // Render Semaphore
-    VkResult res = vkCreateSemaphore(
-            vkInfo->device, &semaCreateInfo, nullptr, &renderSemaphore);
-    if (!VkUtils::checkVkResult(res,
-            fmt::format("Failed to Create Frame[{}]'s Render Semaphore", frameNumber).c_str()))
-        return false;
-
-    Debug::SetObjectName(
-            vkInfo->device, (U64)renderSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
-            fmt::format("Frame[{}]'s Render Semaphore", frameNumber).c_str());
-
-    // Swapchain Semaphore
-    res = vkCreateSemaphore(
-            vkInfo->device, &semaCreateInfo, nullptr, &swapchainSemaphore);
-    if (!VkUtils::checkVkResult(res,
-            fmt::format("Failed to Create Frame[{}]'s Swapchain Semaphore", frameNumber).c_str()))
-        return false;
-
-    Debug::SetObjectName(
-            vkInfo->device, (U64)swapchainSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
-            fmt::format("Frame[{}]'s Swapchain Semaphore", frameNumber).c_str());
+    renderSemaphore.initialize(vkInfo, fmt::format("Failed to Create Frame[{}]'s Swapchain Semaphore", frameNumber).c_str());
+    swapchainSemaphore.initialize(vkInfo, fmt::format("Frame[{}]'s Swapchain Semaphore", frameNumber).c_str());
 
     //Fence
-    VkFenceCreateInfo fenceCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT
-    };
-
-    res = vkCreateFence(
-            vkInfo->device, &fenceCreateInfo, nullptr, &renderFence);
-    if (!VkUtils::checkVkResult(res,
-            fmt::format("Failed to Create Frame[{}]'s Render Fence", frameNumber).c_str()))
-        return false;
-
-    Debug::SetObjectName(
-            vkInfo->device, (U64)renderFence, VK_OBJECT_TYPE_FENCE,
-            fmt::format("Frame[{}]'s Render Fence", frameNumber).c_str());
+    renderFence.initialize(vkInfo, true, fmt::format("Frame[{}]'s Render Fence", frameNumber));
 
     return true;
 }
 
-void FrameData::shutdown(std::shared_ptr<VulkanInfo> vkInfo) {
+void FrameData::shutdown() {
     deletionQueue.flush();
 
     commandPool.shutdown();
 
-    vkDestroyFence(vkInfo->device, renderFence, nullptr);
-    vkDestroySemaphore(vkInfo->device, renderSemaphore, nullptr);
-    vkDestroySemaphore(vkInfo->device, swapchainSemaphore, nullptr);
+    renderFence.shutdown();
+    swapchainSemaphore.shutdown();
+    renderSemaphore.shutdown();
 }
 

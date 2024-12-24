@@ -14,7 +14,7 @@ VkResult CommandPool::initialize(
         VkCommandPoolCreateFlags flags,
         std::string name
 ) {
-    m_device = vkInfo->device;
+    m_vkInfo = vkInfo;
 
     uint32_t queueFamilyIndex = 0;
     switch (type) {
@@ -38,7 +38,7 @@ VkResult CommandPool::initialize(
     };
 
     VkResult res;
-    if ((res = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_pool)) != VK_SUCCESS) {
+    if ((res = vkCreateCommandPool(vkInfo->device, &poolInfo, nullptr, &m_pool)) != VK_SUCCESS) {
         return res;
     }
     Debug::SetObjectName(vkInfo->device, (U64)m_pool,
@@ -52,7 +52,7 @@ VkResult CommandPool::initialize(
 void CommandPool::resizeBuffers(Size size) {
     // Free existing command buffers
     if (!m_buffers.empty()) {
-        vkFreeCommandBuffers(m_device, m_pool, static_cast<uint32_t>(m_buffers.size()), m_buffers.data());
+        vkFreeCommandBuffers(m_vkInfo->device, m_pool, static_cast<uint32_t>(m_buffers.size()), m_buffers.data());
         m_buffers.clear();
     }
 
@@ -67,14 +67,14 @@ void CommandPool::resizeBuffers(Size size) {
             .commandBufferCount = static_cast<uint32_t>(size),
         };
 
-        VkResult result = vkAllocateCommandBuffers(m_device, &allocInfo, m_buffers.data());
+        VkResult result = vkAllocateCommandBuffers(m_vkInfo->device, &allocInfo, m_buffers.data());
         if (!VkUtils::checkVkResult(result, "Failed to allocate command buffers.")) {
             m_buffers.clear();
         }
     }
 
     for (Size i = 0; i < size; i++) {
-        Debug::SetObjectName(m_device, (U64)m_buffers[i],
+        Debug::SetObjectName(m_vkInfo->device, (U64)m_buffers[i],
                 VK_OBJECT_TYPE_COMMAND_BUFFER, fmt::format("{}'s Command Buffer {}", m_name, i).c_str());
     }
 }
@@ -93,11 +93,11 @@ VkCommandBuffer CommandPool::getBuffer(Size index) {
 
 void CommandPool::shutdown() {
     if (!m_buffers.empty()) {
-        vkFreeCommandBuffers(m_device, m_pool, static_cast<uint32_t>(m_buffers.size()), m_buffers.data());
+        vkFreeCommandBuffers(m_vkInfo->device, m_pool, static_cast<uint32_t>(m_buffers.size()), m_buffers.data());
         m_buffers.clear();
     }
 
-    vkDestroyCommandPool(m_device, m_pool, nullptr);
+    vkDestroyCommandPool(m_vkInfo->device, m_pool, nullptr);
     m_pool = VK_NULL_HANDLE;
 }
 

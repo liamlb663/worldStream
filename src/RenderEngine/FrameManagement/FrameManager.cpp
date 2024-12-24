@@ -7,17 +7,19 @@
 #include "spdlog/spdlog.h"
 
 bool FrameManager::initializeWindow(std::shared_ptr<VulkanInfo> vkInfo) {
+    m_vkInfo = vkInfo;
+
     m_window = std::make_shared<Window>(1700, 900, "World Streamer");
     return m_window->init(vkInfo->instance);
 }
 
-bool FrameManager::initializeFrames(std::shared_ptr<VulkanInfo> vkInfo) {
+bool FrameManager::initializeFrames() {
     m_isResizing = false;
     m_frameNumber = 0;
 
     m_frameData.resize(Config::framesInFlight);
     for (Size i = 0; i < Config::framesInFlight; i++) {
-        if (!m_frameData[i].init(vkInfo, i)) {
+        if (!m_frameData[i].init(m_vkInfo, i)) {
             spdlog::error("Failed to initialze Frame[{}]", i);
             return false;
         }
@@ -30,7 +32,7 @@ bool FrameManager::initializeFrames(std::shared_ptr<VulkanInfo> vkInfo) {
     }
 
     m_swapchain = std::make_shared<Swapchain>();
-    m_swapchain->initialize(m_window, vkInfo);
+    m_swapchain->initialize(m_window, m_vkInfo);
 
     return true;
 }
@@ -39,11 +41,11 @@ void FrameManager::transferSubmit(const std::function<void(VkCommandBuffer)>& fu
     m_commandSubmitter->transferSubmit(m_frameNumber, function);
 }
 
-void FrameManager::shutdown(std::shared_ptr<VulkanInfo> vkInfo) {
+void FrameManager::shutdown() {
     m_swapchain->shutdown();
     m_commandSubmitter->shutdown();
     for (Size i = 0; i < Config::framesInFlight; i++) {
-        m_frameData[i].shutdown(vkInfo);
+        m_frameData[i].shutdown();
     }
-    m_window->shutdown(vkInfo->instance);
+    m_window->shutdown(m_vkInfo->instance);
 }

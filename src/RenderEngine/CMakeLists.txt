@@ -13,11 +13,13 @@ set(RENDERENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FrameManagement/FrameManager.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/CommandPool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Fence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Semaphore.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FrameResources)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Commands)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/RenderResources)
 
 set(ALL_SOURCES
     ${ALL_SOURCES}

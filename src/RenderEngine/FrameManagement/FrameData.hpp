@@ -4,8 +4,12 @@
 
 #include "Core/DeletionQueue.hpp"
 #include "Core/Types.hpp"
-#include "../RenderResources/CommandPool.hpp"
+
 #include "../VulkanInfo.hpp"
+
+#include "../RenderResources/CommandPool.hpp"
+#include "../RenderResources/Fence.hpp"
+#include "../RenderResources/Semaphore.hpp"
 
 #include <memory>
 #include <vulkan/vulkan.h>
@@ -13,14 +17,14 @@
 class FrameData {
 public:
     bool init(std::shared_ptr<VulkanInfo> vkInfo, Size frameNumber);
-    void shutdown(std::shared_ptr<VulkanInfo> vkInfo);
+    void shutdown();
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;
 
-    VkSemaphore swapchainSemaphore; // TODO: Replace with wrapper
-    VkSemaphore renderSemaphore; // TODO: Replace with wrapper
-    VkFence renderFence; // TODO: Replace with wrapper
+    Semaphore swapchainSemaphore; // TODO: Replace with wrapper
+    Semaphore renderSemaphore; // TODO: Replace with wrapper
+    Fence renderFence; // TODO: Replace with wrapper
 
     DeletionQueue deletionQueue;
     // TODO: Descriptor Allocator

@@ -175,13 +175,13 @@ bool RenderEngine::initVulkan() {
 bool RenderEngine::initFramedata() {
     m_vkInfo->transferPool->resizeBuffers(Config::framesInFlight);
 
-    if (!m_frameManager.initializeFrames(m_vkInfo)) {
+    if (!m_frameManager.initializeFrames()) {
         spdlog::error("Failed to initialize FrameManager!");
         return false;
     }
 
     m_mainDeletionQueue.push([this]() {
-        m_frameManager.shutdown(m_vkInfo);
+        m_frameManager.shutdown();
     });
 
     return true;

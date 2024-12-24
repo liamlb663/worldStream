@@ -12,8 +12,8 @@
 class FrameManager {
 public:
     bool initializeWindow(std::shared_ptr<VulkanInfo> vkInfo);
-    bool initializeFrames(std::shared_ptr<VulkanInfo> vkInfo);
-    void shutdown(std::shared_ptr<VulkanInfo> vkInfo);
+    bool initializeFrames();
+    void shutdown();
 
     std::shared_ptr<Window> getWindow() const { return m_window; }
 
@@ -23,7 +23,7 @@ public:
         U32 index = 0;
 
         bool swapSuccess =
-            m_swapchain->getNextImage(m_frameData[m_frameNumber].swapchainSemaphore, &index);
+            m_swapchain->getNextImage(m_frameData[m_frameNumber].swapchainSemaphore.get(), &index);
 
         if (!swapSuccess) {
             m_isResizing = true;
@@ -43,6 +43,7 @@ public:
 
 
 private:
+    std::shared_ptr<VulkanInfo> m_vkInfo;
     std::shared_ptr<Swapchain> m_swapchain;
     std::shared_ptr<CommandSubmitter> m_commandSubmitter;
     std::shared_ptr<Window> m_window;
