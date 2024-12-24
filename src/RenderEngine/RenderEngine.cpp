@@ -46,7 +46,8 @@ bool RenderEngine::initVulkan() {
     // Load Vulkan debug functions
     Debug::LoadDebugUtils(m_vkInfo->instance);
 
-    m_frameManager.initializeWindow(m_vkInfo);
+    m_frameManager = std::make_shared<FrameManager>();
+    m_frameManager->initializeWindow(m_vkInfo);
 
     //Pick and Create Devices
     VkPhysicalDeviceVulkan13Features features13{};
@@ -67,7 +68,7 @@ bool RenderEngine::initVulkan() {
         .set_required_features_13(features13)
         .set_required_features_12(features12)
         .set_required_features(features10)
-        .set_surface(m_frameManager.getWindow()->getSurface())
+        .set_surface(m_frameManager->getWindow()->getSurface())
         .select();
 
     if (!physicalDeviceReturn) {
@@ -169,19 +170,29 @@ bool RenderEngine::initVulkan() {
         delete m_vkInfo->transferPool;
     });
 
+    m_commandSubmitter = std::make_shared<CommandSubmitter>();
+    if (!m_commandSubmitter->initialize(m_vkInfo)) {
+        spdlog::error("Failed to initialze CommandSubmitter");
+        return false;
+    }
+
+    m_mainDeletionQueue.push([this]() {
+        m_commandSubmitter->shutdown();
+    });
+
     return true;
 }
 
 bool RenderEngine::initFramedata() {
     m_vkInfo->transferPool->resizeBuffers(Config::framesInFlight);
 
-    if (!m_frameManager.initializeFrames()) {
+    if (!m_frameManager->initializeFrames()) {
         spdlog::error("Failed to initialize FrameManager!");
         return false;
     }
 
     m_mainDeletionQueue.push([this]() {
-        m_frameManager.shutdown();
+        m_frameManager->shutdown();
     });
 
     return true;
@@ -192,3 +203,4 @@ void RenderEngine::shutdown() {
 
 
 }
+

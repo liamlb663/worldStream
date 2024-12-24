@@ -4,7 +4,6 @@
 
 #include "../VulkanInfo.hpp"
 #include "FrameData.hpp"
-#include "../CommandSubmitter.hpp"
 #include "RenderEngine/FrameManagement/SwapchainManager.hpp"
 #include "Window.hpp"
 #include <memory>
@@ -16,8 +15,6 @@ public:
     void shutdown();
 
     std::shared_ptr<Window> getWindow() const { return m_window; }
-
-    void transferSubmit(const std::function<void(VkCommandBuffer)>& function);
 
     U32 aquireNextSwap() {
         U32 index = 0;
@@ -45,7 +42,6 @@ public:
 private:
     std::shared_ptr<VulkanInfo> m_vkInfo;
     std::shared_ptr<Swapchain> m_swapchain;
-    std::shared_ptr<CommandSubmitter> m_commandSubmitter;
     std::shared_ptr<Window> m_window;
     std::vector<FrameData> m_frameData;
     Size m_frameNumber;

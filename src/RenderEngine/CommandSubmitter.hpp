@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 
 #include <functional>
+#include <memory>
 
 typedef struct SubmitInfo {
     Size frameNumber;
@@ -17,15 +18,15 @@ typedef struct SubmitInfo {
 
 class CommandSubmitter {
 public:
-    bool initialize();
+    bool initialize(std::shared_ptr<VulkanInfo> vkInfo);
 
-    void transferSubmit(Size frameNumber, const std::function<void(VkCommandBuffer)>& function);
+    void transferSubmit(const std::function<void(VkCommandBuffer)>& function);
     void frameSubmit(SubmitInfo info, const std::function<void(VkCommandBuffer)>& function);
 
     void shutdown();
 
 private:
-    VulkanInfo m_vkInfo;
+    std::shared_ptr<VulkanInfo> m_vkInfo;
 
 };
 

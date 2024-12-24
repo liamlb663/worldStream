@@ -4,6 +4,7 @@
 
 #include "Core/DeletionQueue.hpp"
 #include "FrameManagement/FrameManager.hpp"
+#include "CommandSubmitter.hpp"
 #include "VulkanInfo.hpp"
 
 #include <memory>
@@ -20,7 +21,8 @@ private:
 
     std::shared_ptr<VulkanInfo> m_vkInfo;
 
-    FrameManager m_frameManager;
+    std::shared_ptr<FrameManager> m_frameManager;
+    std::shared_ptr<CommandSubmitter> m_commandSubmitter;
 
     DeletionQueue m_mainDeletionQueue;
 

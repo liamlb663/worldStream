@@ -5,14 +5,15 @@
 #include "RenderResources/CommandPool.hpp"
 #include "VkUtils.hpp"
 
-bool CommandSubmitter::initialize() {
+bool CommandSubmitter::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
+    m_vkInfo = vkInfo;
 
     return true;
 }
 
-void CommandSubmitter::transferSubmit(Size frameNumber, const std::function<void(VkCommandBuffer)>& function) {
+void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>& function) {
     // Get Buffer
-    VkCommandBuffer commandBuffer = m_vkInfo.transferPool->getBuffer(frameNumber);
+    VkCommandBuffer commandBuffer = m_vkInfo->transferPool->getBuffer(0);
 
     // Begin Command Buffer
     VkCommandBufferBeginInfo beginInfo{
@@ -53,13 +54,13 @@ void CommandSubmitter::transferSubmit(Size frameNumber, const std::function<void
         .pSignalSemaphores = nullptr,
     };
 
-    res = vkQueueSubmit(m_vkInfo.transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    res = vkQueueSubmit(m_vkInfo->transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
     if (!VkUtils::checkVkResult(res, "Failed to submit transfer command buffer.")) {
         return;
     }
 
     // Block on transfer completion
-    vkQueueWaitIdle(m_vkInfo.transferQueue);
+    vkQueueWaitIdle(m_vkInfo->transferQueue);
 }
 
 void CommandSubmitter::shutdown() {

@@ -25,25 +25,14 @@ bool FrameManager::initializeFrames() {
         }
     }
 
-    m_commandSubmitter = std::make_shared<CommandSubmitter>();
-    if (!m_commandSubmitter->initialize()) {
-        spdlog::error("Failed to initialze CommandSubmitter");
-        return false;
-    }
-
     m_swapchain = std::make_shared<Swapchain>();
     m_swapchain->initialize(m_window, m_vkInfo);
 
     return true;
 }
 
-void FrameManager::transferSubmit(const std::function<void(VkCommandBuffer)>& function) {
-    m_commandSubmitter->transferSubmit(m_frameNumber, function);
-}
-
 void FrameManager::shutdown() {
     m_swapchain->shutdown();
-    m_commandSubmitter->shutdown();
     for (Size i = 0; i < Config::framesInFlight; i++) {
         m_frameData[i].shutdown();
     }
