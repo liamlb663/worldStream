@@ -4,7 +4,7 @@
 
 #include "Config.hpp"
 #include "Debug.hpp"
-#include "Commands/CommandPool.hpp"
+#include "RenderResources/CommandPool.hpp"
 #include "VkUtils.hpp"
 
 #include <VkBootstrap.h>
@@ -36,7 +36,7 @@ bool RenderEngine::initVulkan() {
 
     if (!instanceReturn) {
         spdlog::error("Could not build vulkan instance, {}", instanceReturn.error().message());
-        throw std::runtime_error("Could not build vulkan instance");
+        return false;
     }
     vkb::Instance vkbInstance = instanceReturn.value();
 
@@ -131,7 +131,6 @@ bool RenderEngine::initVulkan() {
     m_vkInfo->transferQueueFamily = transferQueueFamilyReturn.value();
 
     m_mainDeletionQueue.push([this]() {
-            m_frameManager.getWindow()->shutdown(m_vkInfo->instance);
             vkDestroyDevice(m_vkInfo->device, nullptr);
             vkb::destroy_debug_utils_messenger(m_vkInfo->instance, m_vkInfo->debugMessenger);
             vkDestroyInstance(m_vkInfo->instance, nullptr);
@@ -167,6 +166,7 @@ bool RenderEngine::initVulkan() {
 
     m_mainDeletionQueue.push([this]() {
         m_vkInfo->transferPool->shutdown();
+        delete m_vkInfo->transferPool;
     });
 
     return true;
@@ -189,4 +189,6 @@ bool RenderEngine::initFramedata() {
 
 void RenderEngine::shutdown() {
     m_mainDeletionQueue.flush();
+
+
 }

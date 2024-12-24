@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "../VulkanInfo.hpp"
-#include "RenderEngine/FrameManagement/FrameData.hpp"
+#include "VulkanInfo.hpp"
+#include "FrameManagement/FrameData.hpp"
 
 #include <vulkan/vulkan.h>
 

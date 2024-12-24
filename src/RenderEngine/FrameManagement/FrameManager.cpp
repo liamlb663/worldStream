@@ -7,7 +7,7 @@
 #include "spdlog/spdlog.h"
 
 bool FrameManager::initializeWindow(std::shared_ptr<VulkanInfo> vkInfo) {
-    m_window = new Window(1700, 900, "World Streamer");
+    m_window = std::make_shared<Window>(1700, 900, "World Streamer");
     return m_window->init(vkInfo->instance);
 }
 
@@ -23,13 +23,14 @@ bool FrameManager::initializeFrames(std::shared_ptr<VulkanInfo> vkInfo) {
         }
     }
 
-    m_commandSubmitter = new CommandSubmitter();
+    m_commandSubmitter = std::make_shared<CommandSubmitter>();
     if (!m_commandSubmitter->initialize()) {
         spdlog::error("Failed to initialze CommandSubmitter");
         return false;
     }
 
-    m_swapchain = new Swapchain();
+    m_swapchain = std::make_shared<Swapchain>();
+    m_swapchain->initialize(m_window, vkInfo);
 
     return true;
 }
@@ -39,8 +40,10 @@ void FrameManager::transferSubmit(const std::function<void(VkCommandBuffer)>& fu
 }
 
 void FrameManager::shutdown(std::shared_ptr<VulkanInfo> vkInfo) {
+    m_swapchain->shutdown();
     m_commandSubmitter->shutdown();
     for (Size i = 0; i < Config::framesInFlight; i++) {
         m_frameData[i].shutdown(vkInfo);
     }
+    m_window->shutdown(vkInfo->instance);
 }

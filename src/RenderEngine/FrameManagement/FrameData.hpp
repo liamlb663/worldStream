@@ -4,7 +4,7 @@
 
 #include "Core/DeletionQueue.hpp"
 #include "Core/Types.hpp"
-#include "../Commands/CommandPool.hpp"
+#include "../RenderResources/CommandPool.hpp"
 #include "../VulkanInfo.hpp"
 
 #include <memory>

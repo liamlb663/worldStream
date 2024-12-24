@@ -25,15 +25,10 @@ public:
         std::shared_ptr<Window> window,
         std::shared_ptr<VulkanInfo> vkInfo
     );
-
     void shutdown();
 
     bool resizeSwapchain(std::shared_ptr<Window> window);
-
-    bool getNextImage(
-            VkSemaphore semaphore,
-            Size imageIndex
-    );
+    bool getNextImage(VkSemaphore semaphore, U32* index);
 
     VkSwapchainKHR getSwapchain() { return m_swapchain; }
 

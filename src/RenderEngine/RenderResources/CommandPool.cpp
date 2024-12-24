@@ -1,4 +1,4 @@
-// src/RenderEngine/CommandPool.cpp
+// src/RenderEngine/RenderResources/CommandPool.cpp
 
 #include "CommandPool.hpp"
 
@@ -98,5 +98,6 @@ void CommandPool::shutdown() {
     }
 
     vkDestroyCommandPool(m_device, m_pool, nullptr);
+    m_pool = VK_NULL_HANDLE;
 }
 

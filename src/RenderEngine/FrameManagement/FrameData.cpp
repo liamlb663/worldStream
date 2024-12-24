@@ -3,7 +3,6 @@
 #include "FrameData.hpp"
 #include "../Debug.hpp"
 #include "../VkUtils.hpp"
-#include "../Commands/CommandPool.hpp"
 
 #include "fmt/core.h"
 

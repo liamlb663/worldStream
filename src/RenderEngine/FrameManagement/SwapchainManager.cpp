@@ -28,26 +28,20 @@ bool Swapchain::resizeSwapchain(std::shared_ptr<Window> window) {
     return createSwapchain(window);
 }
 
-bool Swapchain::getNextImage(
-        VkSemaphore semaphore,
-        Size imageIndex
-) {
+bool Swapchain::getNextImage(VkSemaphore semaphore, U32* index) {
     U64 timeout = UINT64_MAX;
-    U32 index = static_cast<U32>(imageIndex);
 
     VkResult result = vkAcquireNextImageKHR(
             m_vkInfo->device,
-            getSwapchain(),
+            m_swapchain,
             timeout,
             semaphore,
             nullptr,
-            &index
+            index
     );
 
-    if (
-            result == VK_ERROR_OUT_OF_DATE_KHR ||
-            result == VK_SUBOPTIMAL_KHR
-    ) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR ||
+        result == VK_SUBOPTIMAL_KHR) {
         return false;
     }
 

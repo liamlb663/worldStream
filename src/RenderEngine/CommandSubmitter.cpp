@@ -2,8 +2,8 @@
 
 #include "CommandSubmitter.hpp"
 
-#include "CommandPool.hpp"
-#include "../VkUtils.hpp"
+#include "RenderResources/CommandPool.hpp"
+#include "VkUtils.hpp"
 
 bool CommandSubmitter::initialize() {
 
