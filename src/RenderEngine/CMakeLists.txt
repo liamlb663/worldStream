@@ -15,6 +15,8 @@ set(RENDERENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/CommandPool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Fence.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Semaphore.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Buffer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Image.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
