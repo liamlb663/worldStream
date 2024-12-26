@@ -17,6 +17,7 @@ set(ALL_SOURCES
 add_subdirectory(Core)
 add_subdirectory(Game)
 add_subdirectory(RenderEngine)
+add_subdirectory(ResourceManagement)
 
 # Main executable
 add_executable(worldStream ${ALL_SOURCES})

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "RenderEngine/RenderEngine.hpp"
+#include "ResourceManagement/ResourceManager.hpp"
 
 class Game {
 public:
@@ -16,5 +17,6 @@ public:
 
 private:
     RenderEngine m_graphics;
+    ResourceManager m_resources;
 };
 

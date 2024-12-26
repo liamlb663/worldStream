@@ -1,8 +1,8 @@
-// src/RenderEngine/RenderResources/Image.hpp
+// src/ResourceManagement/RenderResources/Image.hpp
 
 #pragma once
 
-#include "../VulkanInfo.hpp"
+#include "RenderEngine/VulkanInfo.hpp"
 #include "Core/Vector.hpp"
 
 #include <vulkan/vulkan.h>

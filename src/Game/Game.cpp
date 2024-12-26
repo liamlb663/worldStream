@@ -5,7 +5,9 @@
 
 bool Game::initialize(int argc, char* argv[]) {
     spdlog::info("Initializing Game");
+
     m_graphics.initialize();
+    m_resources.initialize(m_graphics.getInfo());
 
     (void) argc;
     (void) argv;
@@ -20,6 +22,8 @@ void Game::run() {
 
 void Game::shutdown() {
     spdlog::info("Shutting Down Game");
+
+    m_resources.shutdown();
     m_graphics.shutdown();
 }
 

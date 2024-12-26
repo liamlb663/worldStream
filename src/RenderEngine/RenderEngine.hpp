@@ -15,6 +15,8 @@ public:
     bool initialize();
     void shutdown();
 
+    std::shared_ptr<VulkanInfo> getInfo();
+
 private:
     bool initVulkan();
     bool initFramedata();

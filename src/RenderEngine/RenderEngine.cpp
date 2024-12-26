@@ -198,6 +198,10 @@ bool RenderEngine::initFramedata() {
     return true;
 }
 
+std::shared_ptr<VulkanInfo> RenderEngine::getInfo() {
+    return m_vkInfo;
+}
+
 void RenderEngine::shutdown() {
     m_mainDeletionQueue.flush();
 

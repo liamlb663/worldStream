@@ -1,6 +1,7 @@
-// src/RenderEngine/RenderResources/Image.hpp
+// src/ResourceManagement/RenderResources/Image.hpp
 
 #include "Image.hpp"
+
 #include "RenderEngine/VkUtils.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
 
