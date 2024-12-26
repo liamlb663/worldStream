@@ -4,13 +4,12 @@
 
 #include "Config.hpp"
 #include "Debug.hpp"
-#include "RenderResources/CommandPool.hpp"
+#include "InternalResources/CommandPool.hpp"
 #include "VkUtils.hpp"
 
 #include <VkBootstrap.h>
 #include <memory>
 #include <spdlog/spdlog.h>
-#include <vulkan/vulkan_core.h>
 
 bool RenderEngine::initialize() {
     spdlog::trace("Initialize RenderEngine");

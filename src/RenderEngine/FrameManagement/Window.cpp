@@ -4,7 +4,6 @@
 #include "Core/Vector.hpp"
 #include "GLFW/glfw3.h"
 #include "spdlog/spdlog.h"
-#include <vulkan/vulkan_core.h>
 
 Window::Window(uint32_t width, uint32_t height, const std::string& title)
     : Window(

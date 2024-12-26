@@ -2,7 +2,7 @@
 
 #include "CommandSubmitter.hpp"
 
-#include "RenderResources/CommandPool.hpp"
+#include "InternalResources/CommandPool.hpp"
 #include "VkUtils.hpp"
 
 bool CommandSubmitter::initialize(std::shared_ptr<VulkanInfo> vkInfo) {

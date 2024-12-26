@@ -1,4 +1,4 @@
-// src/RenderEngine/RenderResources/Semaphore.hpp
+// src/RenderEngine/InternalResources/Semaphore.hpp
 
 #pragma once
 

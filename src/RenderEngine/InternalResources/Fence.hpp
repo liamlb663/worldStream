@@ -1,4 +1,4 @@
-// src/RenderEngine/RenderResources/Fence.hpp
+// src/RenderEngine/InternalResources/Fence.hpp
 
 #pragma once
 

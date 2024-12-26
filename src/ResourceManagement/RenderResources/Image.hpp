@@ -14,12 +14,12 @@ public:
     VkImage image = VK_NULL_HANDLE;
     VkImageView view = VK_NULL_HANDLE;
     VmaAllocation allocation = VK_NULL_HANDLE;
-    Vector<U32, 3> size = {0,0,0};
+    Vector<U32, 2> size = {0,0};
     VkFormat format = VK_FORMAT_UNDEFINED;
 
     bool init(
             std::shared_ptr<VulkanInfo> vkInfo,
-            const Vector<U32, 3>& imageSize,
+            const Vector<U32, 2>& imageSize,
             VkFormat imageFormat,
             VkImageUsageFlags usage
     );

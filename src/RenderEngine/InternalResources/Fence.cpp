@@ -1,4 +1,4 @@
-// src/RenderEngine/RenderResources/Fence.cpp
+// src/RenderEngine/InternalResources/Fence.cpp
 
 #include "Fence.hpp"
 

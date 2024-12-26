@@ -1,9 +1,9 @@
-// src/ResourceManagement/RenderResources/CommandPool.cpp
+// src/RenderEngine/InternalResources/CommandPool.cpp
 
 #include "CommandPool.hpp"
 
-#include "RenderEngine/Debug.hpp"
-#include "RenderEngine/VkUtils.hpp"
+#include "../Debug.hpp"
+#include "../VkUtils.hpp"
 
 #include <memory>
 #include <spdlog/spdlog.h>

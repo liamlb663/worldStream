@@ -1,4 +1,4 @@
-// src/RenderEngine/RenderResources/CommandPool.hpp
+// src/RenderEngine/InternalResources/CommandPool.hpp
 
 #pragma once
 

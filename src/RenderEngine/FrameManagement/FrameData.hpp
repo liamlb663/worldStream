@@ -7,36 +7,41 @@
 
 #include "../VulkanInfo.hpp"
 
-#include "../RenderResources/CommandPool.hpp"
-#include "../RenderResources/Fence.hpp"
-#include "../RenderResources/Semaphore.hpp"
+#include "../InternalResources/CommandPool.hpp"
+#include "../InternalResources/Fence.hpp"
+#include "../InternalResources/Semaphore.hpp"
+#include "ResourceManagement/RenderResources/Image.hpp"
 
 #include <memory>
 #include <vulkan/vulkan.h>
 
 class FrameData {
 public:
-    bool init(std::shared_ptr<VulkanInfo> vkInfo, Size frameNumber);
+    bool init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Size frameNumber);
     void shutdown();
+
+    bool regenerate(Vector<U32, 2> size);
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;
 
-    Semaphore swapchainSemaphore; // TODO: Replace with wrapper
-    Semaphore renderSemaphore; // TODO: Replace with wrapper
-    Fence renderFence; // TODO: Replace with wrapper
+    Semaphore swapchainSemaphore;
+    Semaphore renderSemaphore;
+    Fence renderFence;
 
     DeletionQueue deletionQueue;
     // TODO: Descriptor Allocator
 
-    // TODO: Image drawImage;
-    // TODO: Image depthImage;
+    Image drawImage;
+    Image depthImage;
 
     // TODO: DrawContext
 
     // TODO: Decide on new scene descriptor setup
 
 private:
+    bool createImages(Vector<U32, 2> size);
 
+    std::shared_ptr<VulkanInfo> m_vkInfo;
 };
 

@@ -19,7 +19,7 @@ bool FrameManager::initializeFrames() {
 
     m_frameData.resize(Config::framesInFlight);
     for (Size i = 0; i < Config::framesInFlight; i++) {
-        if (!m_frameData[i].init(m_vkInfo, i)) {
+        if (!m_frameData[i].init(m_vkInfo, m_window->getSize(), i)) {
             spdlog::error("Failed to initialze Frame[{}]", i);
             return false;
         }

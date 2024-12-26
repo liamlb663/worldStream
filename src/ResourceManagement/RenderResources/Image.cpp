@@ -7,11 +7,13 @@
 
 bool Image::init(
         std::shared_ptr<VulkanInfo> vkInfo,
-        const Vector<U32, 3>& imageSize,
+        const Vector<U32, 2>& imageSize,
         VkFormat imageFormat,
         VkImageUsageFlags usage
 ) {
+    m_vkInfo = vkInfo;
     size = imageSize;
+    Vector<U32, 3> size3D = {size.value.x, size.value.y, 1};
     format = imageFormat;
 
     std::vector families = {vkInfo->graphicsQueueFamily, vkInfo->transferQueueFamily};
@@ -22,13 +24,14 @@ bool Image::init(
         .flags = 0,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = format,
-        .extent = size,
+        .extent = size3D,
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,   // TODO: Anti-Aliasing
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = usage,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .sharingMode = VK_SHARING_MODE_CONCURRENT,
+        // Shift to using Image Ownership Transfer with exclusing sharing for better performance
         .queueFamilyIndexCount = static_cast<U32>(families.size()),
         .pQueueFamilyIndices = families.data(),
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
