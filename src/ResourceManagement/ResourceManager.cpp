@@ -23,20 +23,6 @@ void ResourceManager::shutdown() {
 
 }
 
-std::shared_ptr<Buffer> ResourceManager::createStagingBuffer(Size size) {
-    std::shared_ptr<Buffer> buff = std::make_shared<Buffer>();
-
-    VkBufferUsageFlags bufferUsage =
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-    VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-
-    buff->init(m_vkInfo, size, bufferUsage, memoryUsage);
-
-    return buff;
-}
-
 void ResourceManager::copyToImage(void* data, Size size, std::shared_ptr<Image> image) {
     // Create and fill buffer
     std::shared_ptr<Buffer> staging = createStagingBuffer(size + 1);
@@ -69,7 +55,8 @@ void ResourceManager::copyToImage(void* data, Size size, std::shared_ptr<Image> 
 std::shared_ptr<Image> ResourceManager::loadImage(std::string path) {
     auto it = m_images.find(path);
     if (it != m_images.end()) {
-        return it->second;
+        it->second.references++;
+        return it->second.value;
     }
 
     fs::path fullPath = resourceBasePath / path;
@@ -92,8 +79,46 @@ std::shared_ptr<Image> ResourceManager::loadImage(std::string path) {
     img->init(m_vkInfo, Vector<U32, 2>(width, height), format, usage, path);
 
     copyToImage(data, width * height * 4, img);
-
     stbi_image_free(data);
+
+    m_images[path] = RefCount<std::shared_ptr<Image>>{
+        .value = img,
+        .references = 1,
+    };
 
     return img;
 }
+
+void ResourceManager::dropImage(std::shared_ptr<Image> image) {
+    for (auto it = m_images.begin(); it != m_images.end(); ++it) {
+        auto sharedResource = it->second.value;
+        if (sharedResource == image) {
+            // Decrement reference count
+            it->second.references--;
+
+            if (it->second.references <= 0) {
+                // If reference count is zero, apply custom shutdown logic
+                image->shutdown();
+                m_images.erase(it);
+            }
+            return;
+        }
+    }
+
+    spdlog::error("Resource not found for dropping!");
+}
+
+std::shared_ptr<Buffer> ResourceManager::createStagingBuffer(Size size) {
+    std::shared_ptr<Buffer> buff = std::make_shared<Buffer>();
+
+    VkBufferUsageFlags bufferUsage =
+        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+    VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+
+    buff->init(m_vkInfo, size, bufferUsage, memoryUsage);
+
+    return buff;
+}
+

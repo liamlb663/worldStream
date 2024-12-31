@@ -10,10 +10,10 @@
 
 class Buffer {
 public:
-    VkBuffer buffer;
-    VmaAllocation allocation;
-    VmaAllocationInfo info;
-    Size size;
+    VkBuffer buffer = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
+    VmaAllocationInfo info = {};
+    Size size = 0;
 
     bool init(
             std::shared_ptr<VulkanInfo> vkInfo,

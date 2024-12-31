@@ -58,5 +58,8 @@ bool Buffer::init(
 
 void Buffer::shutdown() {
     vmaDestroyBuffer(m_vkInfo->allocator, buffer, allocation);
+    buffer = VK_NULL_HANDLE;
+    allocation = VK_NULL_HANDLE;
+    info = {};
     size = 0;
 }

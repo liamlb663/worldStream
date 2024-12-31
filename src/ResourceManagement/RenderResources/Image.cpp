@@ -5,6 +5,7 @@
 #include "RenderEngine/Debug.hpp"
 #include "RenderEngine/VkUtils.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
+#include "spdlog/spdlog.h"
 
 #include <fmt/core.h>
 
@@ -110,5 +111,12 @@ bool Image::init(
 void Image::shutdown() {
     vkDestroyImageView(m_vkInfo->device, view, nullptr);
     vmaDestroyImage(m_vkInfo->allocator, image, allocation);
+
+    image = VK_NULL_HANDLE;
+    view = VK_NULL_HANDLE;
+    allocation = VK_NULL_HANDLE;
+    size = {0,0};
+    format = VK_FORMAT_UNDEFINED;
+    layout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 

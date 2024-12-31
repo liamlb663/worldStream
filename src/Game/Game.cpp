@@ -19,7 +19,7 @@ void Game::run() {
     spdlog::info("Running Game");
 
     std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
-    img->shutdown();
+    m_resources.dropImage(img);
 }
 
 void Game::shutdown() {
