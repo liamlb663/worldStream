@@ -5,6 +5,9 @@
 #include "InternalResources/CommandPool.hpp"
 #include "VkUtils.hpp"
 
+#include <spdlog/spdlog.h>
+#include <vulkan/vk_enum_string_helper.h>
+
 bool CommandSubmitter::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
     m_vkInfo = vkInfo;
 
@@ -61,6 +64,130 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
 
     // Block on transfer completion
     vkQueueWaitIdle(m_vkInfo->transferQueue);
+}
+
+// Holy Shit
+struct StageAccessMasks {
+    VkPipelineStageFlags2 stageMask;
+    VkAccessFlags2 accessMask;
+};
+
+StageAccessMasks getStageAccessMasks(VkImageLayout layout) {
+    StageAccessMasks masks = {};
+
+    switch (layout) {
+        case VK_IMAGE_LAYOUT_UNDEFINED:
+            masks.stageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+            masks.accessMask = 0; // No previous access
+            break;
+
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            masks.accessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            break;
+
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT; // Or COMPUTE/GRAPHICS as needed
+            masks.accessMask = VK_ACCESS_2_SHADER_READ_BIT;
+            break;
+
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            masks.accessMask = VK_ACCESS_2_TRANSFER_READ_BIT;
+            break;
+
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+            masks.accessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+            break;
+
+        case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+            masks.accessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            break;
+
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+            masks.accessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            break;
+
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+            masks.accessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+            break;
+
+        case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+            masks.stageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+            //masks.accessMask = VK_ACCESS_2_MEMORY_READ_BIT;
+            masks.accessMask = 0;
+            break;
+
+        case VK_IMAGE_LAYOUT_GENERAL:
+            masks.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            masks.accessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+            break;
+
+        default:
+            // Handle unsupported layouts or add more cases as needed
+            masks.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            masks.accessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+            spdlog::warn("Using unsupported Image Layout");
+            break;
+    }
+
+    return masks;
+}
+
+void CommandSubmitter::transitionImage(VkCommandBuffer cmd, std::shared_ptr<Image> image, VkImageLayout newLayout) {
+    if (newLayout == VK_IMAGE_LAYOUT_UNDEFINED) {
+        spdlog::error("Invalid layout transition: newLayout cannot be VK_IMAGE_LAYOUT_UNDEFINED.");
+        return;
+    }
+
+    if (image->layout == newLayout) {
+        spdlog::warn("Skipping transition: Image is already in the desired layout.");
+        return;
+    }
+
+    StageAccessMasks srcMasks = getStageAccessMasks(image->layout);
+    StageAccessMasks dstMasks = getStageAccessMasks(newLayout);
+
+    VkImageAspectFlags aspectMask =
+            (newLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL)
+            ? VK_IMAGE_ASPECT_DEPTH_BIT
+            : VK_IMAGE_ASPECT_COLOR_BIT;
+
+    VkImageSubresourceRange subImage = {};
+    subImage.aspectMask = aspectMask;
+    subImage.baseMipLevel = 0;
+    subImage.baseArrayLayer = 0;
+    subImage.levelCount = VK_REMAINING_MIP_LEVELS;
+    subImage.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    VkImageMemoryBarrier2 imageBarrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .pNext = nullptr,
+        .srcStageMask   = srcMasks.stageMask,
+        .srcAccessMask  = srcMasks.accessMask,
+        .dstStageMask   = dstMasks.stageMask,
+        .dstAccessMask  = dstMasks.accessMask,
+        .oldLayout = image->layout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = 0,
+        .dstQueueFamilyIndex = 0,
+        .image = image->image,
+        .subresourceRange = subImage,
+    };
+
+    VkDependencyInfo depInfo = {};
+    depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+    depInfo.pNext = nullptr;
+
+    depInfo.imageMemoryBarrierCount = 1;
+    depInfo.pImageMemoryBarriers = &imageBarrier;
+
+    vkCmdPipelineBarrier2(cmd, &depInfo);
+    image->layout = newLayout;
 }
 
 void CommandSubmitter::shutdown() {

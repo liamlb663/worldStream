@@ -7,7 +7,7 @@ bool Game::initialize(int argc, char* argv[]) {
     spdlog::info("Initializing Game");
 
     m_graphics.initialize();
-    m_resources.initialize(m_graphics.getInfo());
+    m_resources.initialize(m_graphics.getInfo(), m_graphics.getSubmitter());
 
     (void) argc;
     (void) argv;
@@ -18,6 +18,8 @@ bool Game::initialize(int argc, char* argv[]) {
 void Game::run() {
     spdlog::info("Running Game");
 
+    std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
+    img->shutdown();
 }
 
 void Game::shutdown() {

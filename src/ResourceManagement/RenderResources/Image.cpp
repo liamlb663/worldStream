@@ -2,14 +2,18 @@
 
 #include "Image.hpp"
 
+#include "RenderEngine/Debug.hpp"
 #include "RenderEngine/VkUtils.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
+
+#include <fmt/core.h>
 
 bool Image::init(
         std::shared_ptr<VulkanInfo> vkInfo,
         const Vector<U32, 2>& imageSize,
         VkFormat imageFormat,
-        VkImageUsageFlags usage
+        VkImageUsageFlags usage,
+        std::string name
 ) {
     m_vkInfo = vkInfo;
     size = imageSize;
@@ -60,6 +64,8 @@ bool Image::init(
         return false;
     }
 
+    Debug::SetObjectName(vkInfo->device, (U64)image, VK_OBJECT_TYPE_IMAGE, fmt::format("{}'s image", name).c_str());
+
 	// if the format is a depth format, we will need to
     // have it use the correct aspect flag
 	VkImageAspectFlags aspectFlag = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -95,6 +101,8 @@ bool Image::init(
     if (!VkUtils::checkVkResult(result, "Could not create the image view")) {
         return false;
     }
+
+    Debug::SetObjectName(vkInfo->device, (U64)view, VK_OBJECT_TYPE_IMAGE_VIEW, fmt::format("{}'s image view", name).c_str());
 
     return true;
 }

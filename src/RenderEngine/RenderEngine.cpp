@@ -197,8 +197,12 @@ bool RenderEngine::initFramedata() {
     return true;
 }
 
-std::shared_ptr<VulkanInfo> RenderEngine::getInfo() {
+std::shared_ptr<VulkanInfo> RenderEngine::getInfo() const {
     return m_vkInfo;
+}
+
+std::shared_ptr<CommandSubmitter> RenderEngine::getSubmitter() const {
+    return m_commandSubmitter;
 }
 
 void RenderEngine::shutdown() {

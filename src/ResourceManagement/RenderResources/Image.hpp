@@ -16,12 +16,14 @@ public:
     VmaAllocation allocation = VK_NULL_HANDLE;
     Vector<U32, 2> size = {0,0};
     VkFormat format = VK_FORMAT_UNDEFINED;
+    VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     bool init(
             std::shared_ptr<VulkanInfo> vkInfo,
             const Vector<U32, 2>& imageSize,
             VkFormat imageFormat,
-            VkImageUsageFlags usage
+            VkImageUsageFlags usage,
+            std::string name
     );
 
     void shutdown();

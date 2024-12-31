@@ -15,7 +15,8 @@ public:
     bool initialize();
     void shutdown();
 
-    std::shared_ptr<VulkanInfo> getInfo();
+    std::shared_ptr<VulkanInfo> getInfo() const;
+    std::shared_ptr<CommandSubmitter> getSubmitter() const;
 
 private:
     bool initVulkan();

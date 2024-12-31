@@ -8,6 +8,8 @@
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 bool VkUtils::checkVkResult(VkResult result, std::string ErrorMessage) {
     if (result != VK_SUCCESS) {

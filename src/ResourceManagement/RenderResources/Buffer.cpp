@@ -20,7 +20,8 @@ bool Buffer::init(
         .flags = 0,
         .size = size,
         .usage = bufferUsage,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .sharingMode = VK_SHARING_MODE_CONCURRENT,
+        // Shift to using Buffer Ownership Transfer with exclusing sharing for better performance
         .queueFamilyIndexCount = static_cast<U32>(families.size()),
         .pQueueFamilyIndices = families.data(),
     };

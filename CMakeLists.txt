@@ -21,3 +21,13 @@ add_subdirectory(third_party) # Third-party dependencies
 add_subdirectory(src)         # Application source code
 #add_subdirectory(shaders)     # Shader compilation pipeline (if applicable)
 
+# Assets Symlink
+set(ASSETS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/assets")
+set(ASSETS_LINK_NAME "${CMAKE_BINARY_DIR}/assets")
+
+if(NOT EXISTS "${ASSETS_LINK_NAME}")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${ASSETS_SOURCE_DIR}" "${ASSETS_LINK_NAME}")
+    message(STATUS "Created symbolic link: ${ASSETS_LINK_NAME} -> ${ASSETS_SOURCE_DIR}")
+else()
+    message(STATUS "Symbolic link already exists: ${ASSETS_LINK_NAME}")
+endif()

@@ -43,5 +43,6 @@ private:
     bool createImages(Vector<U32, 2> size);
 
     std::shared_ptr<VulkanInfo> m_vkInfo;
+    Size m_frameNumber;
 };
 

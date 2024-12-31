@@ -18,7 +18,8 @@ bool FrameData::createImages(Vector<U32, 2> size) {
             m_vkInfo,
             Vector<U32, 2>(size.value.x, size.value.y),
             Config::drawFormat,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | commonFlags
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | commonFlags,
+            fmt::format("Frame[{}]'s Draw Image", m_frameNumber)
     );
     if (!result) {
         spdlog::error("Draw Image failed to initialize");
@@ -29,7 +30,8 @@ bool FrameData::createImages(Vector<U32, 2> size) {
             m_vkInfo,
             Vector<U32, 2>(size.value.x, size.value.y),
             Config::depthFormat,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | commonFlags
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | commonFlags,
+            fmt::format("Frame[{}]'s Depth Image", m_frameNumber)
     );
     if (!result) {
         spdlog::error("Depth Image failed to initialize");
@@ -41,6 +43,7 @@ bool FrameData::createImages(Vector<U32, 2> size) {
 
 bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Size frameNumber) {
     m_vkInfo = vkInfo;
+    m_frameNumber = frameNumber;
 
     // CommandPool
     VkUtils::checkVkResult(

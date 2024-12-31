@@ -23,6 +23,8 @@ public:
     void transferSubmit(const std::function<void(VkCommandBuffer)>& function);
     void frameSubmit(SubmitInfo info, const std::function<void(VkCommandBuffer)>& function);
 
+    void transitionImage(VkCommandBuffer cmd, std::shared_ptr<Image> image, VkImageLayout newLayout);
+
     void shutdown();
 
 private:
