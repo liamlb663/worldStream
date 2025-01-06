@@ -6,10 +6,10 @@
 #include "RenderResources/Image.hpp"
 #include "spdlog/spdlog.h"
 
-#include <cstring>
 #include <vulkan/vulkan.h>
 #include <stb_image.h>
 
+#include <cstring>
 #include <memory>
 
 bool ResourceManager::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
@@ -20,36 +20,16 @@ bool ResourceManager::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::shared
 }
 
 void ResourceManager::shutdown() {
+    // Clear all images
+    for (auto& pair : m_images) {
+        auto& refCount = pair.second;
+        if (refCount.references > 0) {
+            refCount.value->shutdown();
+        }
+    }
+    m_images.clear();
 
-}
-
-void ResourceManager::copyToImage(void* data, Size size, std::shared_ptr<Image> image) {
-    // Create and fill buffer
-    std::shared_ptr<Buffer> staging = createStagingBuffer(size + 1);
-    memcpy(staging->info.pMappedData, data, size);
-
-    m_submitter->transferSubmit([this, staging, image](VkCommandBuffer cmd){
-        m_submitter->transitionImage(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-        VkBufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
-        region.imageSubresource.layerCount = 1;
-        region.imageOffset = {0, 0, 0};
-        region.imageExtent = {
-           static_cast<U32>(image->size.value.x),
-           static_cast<U32>(image->size.value.y),
-           (U32)1
-        };
-
-        vkCmdCopyBufferToImage(cmd, staging->buffer, image->image, image->layout, 1, &region);
-    });
-
-    staging->shutdown();
+    spdlog::info("ResourceManager shutdown completed");
 }
 
 std::shared_ptr<Image> ResourceManager::loadImage(std::string path) {
@@ -89,6 +69,35 @@ std::shared_ptr<Image> ResourceManager::loadImage(std::string path) {
     return img;
 }
 
+void ResourceManager::copyToImage(void* data, Size size, std::shared_ptr<Image> image) {
+    // Create and fill buffer
+    std::shared_ptr<Buffer> staging = createStagingBuffer(size + 1);
+    memcpy(staging->info.pMappedData, data, size);
+
+    m_submitter->transferSubmit([this, staging, image](VkCommandBuffer cmd){
+        m_submitter->transitionImage(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = {0, 0, 0};
+        region.imageExtent = {
+           static_cast<U32>(image->size.value.x),
+           static_cast<U32>(image->size.value.y),
+           (U32)1
+        };
+
+        vkCmdCopyBufferToImage(cmd, staging->buffer, image->image, image->layout, 1, &region);
+    });
+
+    staging->shutdown();
+}
+
 void ResourceManager::dropImage(std::shared_ptr<Image> image) {
     for (auto it = m_images.begin(); it != m_images.end(); ++it) {
         auto sharedResource = it->second.value;
@@ -105,20 +114,56 @@ void ResourceManager::dropImage(std::shared_ptr<Image> image) {
         }
     }
 
-    spdlog::error("Resource not found for dropping!");
+    spdlog::error("Image not found for dropping!");
 }
 
 std::shared_ptr<Buffer> ResourceManager::createStagingBuffer(Size size) {
-    std::shared_ptr<Buffer> buff = std::make_shared<Buffer>();
-
     VkBufferUsageFlags bufferUsage =
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
 
-    buff->init(m_vkInfo, size, bufferUsage, memoryUsage);
+    VmaAllocationCreateFlags allocFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT |
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
+    return createBuffer(size, bufferUsage, memoryUsage, allocFlags);
+}
+
+std::shared_ptr<Buffer> ResourceManager::createVertexBuffer(Size size) {
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                               VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    return createBuffer(size, usage, memoryUsage, 0);
+}
+
+std::shared_ptr<Buffer> ResourceManager::createUniformBuffer(Size size) {
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    VmaAllocationCreateFlags allocFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+    return createBuffer(size, usage, memoryUsage, allocFlags);
+}
+
+std::shared_ptr<Buffer> ResourceManager::createStorageBuffer(Size size) {
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                               VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    return createBuffer(size, usage, memoryUsage, 0);
+}
+
+std::shared_ptr<Buffer> ResourceManager::createBuffer(
+        Size size,
+        VkBufferUsageFlags usage,
+        VmaMemoryUsage memoryUsage,
+        VmaAllocationCreateFlags allocFlags
+) {
+    std::shared_ptr<Buffer> buff = std::make_shared<Buffer>();
+    if (!buff->init(m_vkInfo, size, usage, memoryUsage, allocFlags)) {
+        return nullptr;
+    }
     return buff;
 }
 

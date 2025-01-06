@@ -109,8 +109,13 @@ bool Image::init(
 }
 
 void Image::shutdown() {
-    vkDestroyImageView(m_vkInfo->device, view, nullptr);
+    if (image == VK_NULL_HANDLE) {
+        spdlog::warn("Attempted to destroy image a second time!");
+        return;
+    }
+
     vmaDestroyImage(m_vkInfo->allocator, image, allocation);
+    vkDestroyImageView(m_vkInfo->device, view, nullptr);
 
     image = VK_NULL_HANDLE;
     view = VK_NULL_HANDLE;

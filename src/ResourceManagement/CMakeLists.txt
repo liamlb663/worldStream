@@ -6,9 +6,11 @@ set(RESOURCE_MANAGEMENT_SOURCES
 
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Image.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/SparseBuffer.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/RenderResources)
 
 set(ALL_SOURCES
     ${ALL_SOURCES}

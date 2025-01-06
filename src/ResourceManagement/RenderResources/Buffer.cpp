@@ -4,13 +4,16 @@
 
 #include "RenderEngine/VkUtils.hpp"
 
+#include <spdlog/spdlog.h>
+
 #include <vector>
 
 bool Buffer::init(
         std::shared_ptr<VulkanInfo> vkInfo,
         Size size,
         VkBufferUsageFlags bufferUsage,
-        VmaMemoryUsage memoryUsage
+        VmaMemoryUsage memoryUsage,
+        VmaAllocationCreateFlags allocFlags
 ) {
     std::vector families = {vkInfo->graphicsQueueFamily, vkInfo->transferQueueFamily};
 
@@ -27,8 +30,7 @@ bool Buffer::init(
     };
 
     VmaAllocationCreateInfo allocInfo = {
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT |
-            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+        .flags = allocFlags,
         .usage = memoryUsage,
         .requiredFlags = 0,
         .preferredFlags = 0,
@@ -51,7 +53,6 @@ bool Buffer::init(
     }
 
     m_vkInfo = vkInfo;
-    this->size = size;
 
     return true;
 }
@@ -61,5 +62,17 @@ void Buffer::shutdown() {
     buffer = VK_NULL_HANDLE;
     allocation = VK_NULL_HANDLE;
     info = {};
-    size = 0;
 }
+
+void Buffer::map() {
+    VkResult res = vmaMapMemory(m_vkInfo->allocator, allocation, &info.pUserData);
+    if (!VkUtils::checkVkResult(res, "Failed to map buffer memory")) {
+        spdlog::error("This was assumed to never fail!");
+        return;
+    }
+}
+
+void Buffer::unmap() {
+    vmaUnmapMemory(m_vkInfo->allocator, allocation);
+}
+

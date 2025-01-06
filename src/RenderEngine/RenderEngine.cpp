@@ -59,6 +59,9 @@ bool RenderEngine::initVulkan() {
 
     VkPhysicalDeviceFeatures features10{};
     features10.samplerAnisotropy = true;
+    features10.shaderSampledImageArrayDynamicIndexing = true;
+    features10.sparseBinding = true;
+    features10.sparseResidencyBuffer = true;
 
     vkb::PhysicalDeviceSelector selector = vkb::PhysicalDeviceSelector(vkbInstance);
 
