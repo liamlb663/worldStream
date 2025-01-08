@@ -20,7 +20,8 @@ public:
             Size size,
             VkBufferUsageFlags bufferUsage,
             VmaMemoryUsage memoryUsage,
-            VmaAllocationCreateFlags allocFlags
+            VmaAllocationCreateFlags allocFlags,
+            Size pageSize
     );
     void shutdown();
 
@@ -29,6 +30,8 @@ public:
     void flushPendingBinds();
 
     void updateData(const void* data, Size size, Size offset);
+
+    Size getPageSize() const;
 
 private:
     struct Allocation {
@@ -41,13 +44,13 @@ private:
     Allocation* allocateMemory(Size size, Size offset);
     void freeMemory(Allocation allocation);
 
-    Size alignSize(Size size);
+    Size align(Size size);
 
     void* mapMemory(Size offset, Size size);
     void unmapMemory(Size offset);
 
     std::shared_ptr<VulkanInfo> m_vkInfo;
-    Size m_granularity;
+    Size m_pageSize;
     VmaMemoryUsage m_memoryUsage;
     VmaAllocationCreateFlags m_allocFlags;
 

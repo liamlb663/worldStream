@@ -2,6 +2,7 @@
 
 #include "Game.hpp"
 #include "spdlog/spdlog.h"
+#include <unistd.h>
 
 bool Game::initialize(int argc, char* argv[]) {
     spdlog::info("Initializing Game");
@@ -19,6 +20,11 @@ void Game::run() {
     spdlog::info("Running Game");
 
     std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
+
+    for (int i = 0; i < 5; i++) {
+        sleep(1);
+    }
+
     m_resources.dropImage(img);
 }
 

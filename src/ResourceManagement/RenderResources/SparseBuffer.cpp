@@ -11,17 +11,13 @@ bool SparseBuffer::init(
         Size size,
         VkBufferUsageFlags bufferUsage,
         VmaMemoryUsage memoryUsage,
-        VmaAllocationCreateFlags allocFlags
+        VmaAllocationCreateFlags allocFlags,
+        Size pageSize
 ) {
     m_vkInfo = vkInfo;
     m_allocFlags = allocFlags;
     m_memoryUsage = memoryUsage;
-
-    // Query memory granularity // TODO: Use CVAR system to retrieve this later
-    VkPhysicalDeviceProperties2 deviceProperties = {};
-    deviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-    vkGetPhysicalDeviceProperties2(m_vkInfo->physicalDevice, &deviceProperties);
-    m_granularity = deviceProperties.properties.limits.bufferImageGranularity;
+    m_pageSize = pageSize;
 
     return buffer.init(
         vkInfo,
@@ -36,11 +32,21 @@ bool SparseBuffer::init(
 
 void SparseBuffer::shutdown() {
     m_pendingBinds.clear();
+    for (const Allocation& allocation : m_allocations) {
+        freeMemory(allocation);
+    }
     buffer.shutdown();
 }
 
 void SparseBuffer::bindMemory(Size size, Size offset) {
+    size = align(size);
+    offset = align(offset);
+
     Allocation* allocation = allocateMemory(size, offset);
+    if (!allocation) {
+        spdlog::error("Failed to allocate memory for bind at offset {} with size {}", offset, size);
+        return;
+    }
 
     VkSparseMemoryBind bind = {
         .resourceOffset = offset,
@@ -54,12 +60,16 @@ void SparseBuffer::bindMemory(Size size, Size offset) {
 }
 
 void SparseBuffer::unbindMemory(Size size, Size offset) {
+    size = align(size);
+    offset = align(offset);
+
     // Find allocation
     Allocation allocation = {{},{},0,0};
     for (Size i = 0; i < m_allocations.size(); i++) {
         Allocation candidate = m_allocations[i];
         if (candidate.size == size && candidate.offset == offset) {
             allocation = candidate;
+            break;
         }
     }
 
@@ -103,6 +113,9 @@ void SparseBuffer::flushPendingBinds() {
 }
 
 SparseBuffer::Allocation* SparseBuffer::allocateMemory(Size size, Size offset) {
+    size = align(size);
+    offset = align(offset);
+
     VmaAllocationCreateInfo allocInfo = {
         .flags = m_allocFlags,
         .usage = m_memoryUsage,
@@ -115,13 +128,14 @@ SparseBuffer::Allocation* SparseBuffer::allocateMemory(Size size, Size offset) {
     };
 
     VmaAllocation vmaAllocation;
-    VkResult res = vmaAllocateMemoryForBuffer(m_vkInfo->allocator, buffer.buffer, &allocInfo, &vmaAllocation, nullptr);
+    VkResult res = vmaAllocateMemoryForBuffer(
+            m_vkInfo->allocator, buffer.buffer, &allocInfo, &vmaAllocation, nullptr);
     if (!VkUtils::checkVkResult(res, "Failed to allocate sparse memory!")) {
         return nullptr;
     }
 
     VmaAllocationInfo info;
-    vmaGetAllocationInfo(m_vkInfo->allocator, vmaAllocation, &info); // Get memory properties
+    vmaGetAllocationInfo(m_vkInfo->allocator, vmaAllocation, &info);
 
     Allocation allocation = {
         .allocation = vmaAllocation,
@@ -131,7 +145,7 @@ SparseBuffer::Allocation* SparseBuffer::allocateMemory(Size size, Size offset) {
     };
 
     m_allocations.push_back(allocation);
-    return &m_allocations[m_allocations.size() - 1];
+    return &m_allocations.back();
 }
 
 void SparseBuffer::freeMemory(Allocation allocation) {
@@ -149,11 +163,14 @@ void SparseBuffer::freeMemory(Allocation allocation) {
     spdlog::warn("Failed to find and remove Allocation from tracked state.");
 }
 
-Size SparseBuffer::alignSize(Size size) {
-    return (size + m_granularity - 1) & ~(m_granularity - 1);
+Size SparseBuffer::align(Size in) {
+    return (in + m_pageSize - 1) & ~(m_pageSize - 1);
 }
 
 void* SparseBuffer::mapMemory(Size offset, Size size) {
+    size = align(size);
+    offset = align(offset);
+
     for (const Allocation& allocation : m_allocations) {
         if (allocation.offset == offset && allocation.size >= size) {
             void* data = nullptr;
@@ -171,21 +188,27 @@ void* SparseBuffer::mapMemory(Size offset, Size size) {
 }
 
 void SparseBuffer::unmapMemory(Size offset) {
-    // Find the allocation for the region
+    offset = align(offset);
+
     for (const Allocation& allocation : m_allocations) {
         if (allocation.offset <= offset && allocation.offset + allocation.size > offset) {
-            // Unmap the memory
             vmaUnmapMemory(m_vkInfo->allocator, allocation.allocation);
             return;
         }
     }
 
-    // If no matching allocation is found, log a warning
     spdlog::warn("No allocation found for unmapping the specified region");
 }
 
 void SparseBuffer::updateData(const void* data, Size size, Size offset) {
+    size = align(size);
+    offset = align(offset);
+
     void* mappedMemory = mapMemory(offset, size);
     std::memcpy(mappedMemory, data, size);
     unmapMemory(offset);
+}
+
+Size SparseBuffer::getPageSize() const {
+    return m_pageSize;
 }
