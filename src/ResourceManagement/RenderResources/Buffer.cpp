@@ -65,7 +65,12 @@ void Buffer::shutdown() {
 }
 
 void Buffer::map() {
-    VkResult res = vmaMapMemory(m_vkInfo->allocator, allocation, &info.pUserData);
+    if (!info.pMappedData) {
+        spdlog::warn("Attempted to map buffer twice!");
+        return;
+    }
+
+    VkResult res = vmaMapMemory(m_vkInfo->allocator, allocation, &info.pMappedData);
     if (!VkUtils::checkVkResult(res, "Failed to map buffer memory")) {
         spdlog::error("This was assumed to never fail!");
         return;
@@ -73,6 +78,12 @@ void Buffer::map() {
 }
 
 void Buffer::unmap() {
+    if (info.pMappedData == nullptr) {
+        spdlog::warn("Buffer is not mapped!");
+        return;
+    }
+
     vmaUnmapMemory(m_vkInfo->allocator, allocation);
+    info.pMappedData = nullptr;
 }
 
