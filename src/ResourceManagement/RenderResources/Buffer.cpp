@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 bool Buffer::init(
         std::shared_ptr<VulkanInfo> vkInfo,
@@ -62,6 +63,7 @@ void Buffer::shutdown() {
     buffer = VK_NULL_HANDLE;
     allocation = VK_NULL_HANDLE;
     info = {};
+    address = 0;
 }
 
 void Buffer::map() {
@@ -87,3 +89,15 @@ void Buffer::unmap() {
     info.pMappedData = nullptr;
 }
 
+VkDeviceAddress Buffer::getAddress() {
+    if (address != 0) return address;
+
+    VkBufferDeviceAddressInfo info = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .pNext = nullptr,
+        .buffer = buffer,
+    };
+
+    address = vkGetBufferDeviceAddress(m_vkInfo->device, &info);
+    return address;
+}

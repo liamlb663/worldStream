@@ -5,6 +5,7 @@
 #include "Core/DeletionQueue.hpp"
 #include "FrameManagement/FrameManager.hpp"
 #include "CommandSubmitter.hpp"
+#include "RenderEngine/RenderGraph/RenderGraph.hpp"
 #include "VulkanInfo.hpp"
 
 #include <memory>
@@ -17,6 +18,9 @@ public:
 
     std::shared_ptr<VulkanInfo> getInfo() const;
     std::shared_ptr<CommandSubmitter> getSubmitter() const;
+
+    void setRenderGraph(std::shared_ptr<RenderGraph> graph);
+    void renderFrame();
 
 private:
     bool initVulkan();

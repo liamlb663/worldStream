@@ -49,7 +49,11 @@ bool RenderEngine::initVulkan() {
     m_frameManager->initializeWindow(m_vkInfo);
 
     //Pick and Create Devices
+    VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeatures{};
+    descriptorBufferFeatures.descriptorBuffer = true;
+
     VkPhysicalDeviceVulkan13Features features13{};
+    features13.pNext = &descriptorBufferFeatures;
     features13.dynamicRendering = true;
     features13.synchronization2 = true;
 
@@ -70,6 +74,7 @@ bool RenderEngine::initVulkan() {
         .set_required_features_13(features13)
         .set_required_features_12(features12)
         .set_required_features(features10)
+        .add_required_extension("VK_EXT_descriptor_buffer")
         .set_surface(m_frameManager->getWindow()->getSurface())
         .select();
 

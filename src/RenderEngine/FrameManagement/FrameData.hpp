@@ -10,6 +10,8 @@
 #include "../InternalResources/CommandPool.hpp"
 #include "../InternalResources/Fence.hpp"
 #include "../InternalResources/Semaphore.hpp"
+
+#include "RenderEngine/RenderGraph/RenderGraph.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
 
 #include <memory>
@@ -30,14 +32,11 @@ public:
     Fence renderFence;
 
     DeletionQueue deletionQueue;
-    // TODO: Descriptor Allocator
 
     Image drawImage;
     Image depthImage;
 
-    // TODO: DrawContext
-
-    // TODO: Decide on new scene descriptor setup
+    std::shared_ptr<RenderGraph> renderGraph;
 
 private:
     bool createImages(Vector<U32, 2> size);

@@ -13,6 +13,7 @@ public:
     VkBuffer buffer = VK_NULL_HANDLE;
     VmaAllocation allocation = VK_NULL_HANDLE;
     VmaAllocationInfo info = {};
+    VkDeviceAddress address = 0;
 
     bool init(
             std::shared_ptr<VulkanInfo> vkInfo,
@@ -26,6 +27,8 @@ public:
 
     void map();
     void unmap();
+
+    VkDeviceAddress getAddress();
 
 private:
     std::shared_ptr<VulkanInfo> m_vkInfo;

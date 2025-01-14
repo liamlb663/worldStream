@@ -3,7 +3,10 @@
 #pragma once
 
 #include "RenderEngine/RenderEngine.hpp"
+#include "RenderEngine/RenderGraph/RenderGraph.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
+
+#include <memory>
 
 class Game {
 public:
@@ -18,5 +21,7 @@ public:
 private:
     RenderEngine m_graphics;
     ResourceManager m_resources;
+
+    std::shared_ptr<RenderGraph> m_renderGraph;
 };
 
