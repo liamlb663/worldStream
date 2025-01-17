@@ -12,7 +12,6 @@
 #include "../InternalResources/Semaphore.hpp"
 
 #include "RenderEngine/RenderGraph/RenderGraph.hpp"
-#include "ResourceManagement/RenderResources/Image.hpp"
 
 #include <memory>
 #include <vulkan/vulkan.h>
@@ -33,9 +32,10 @@ public:
 
     DeletionQueue deletionQueue;
 
-    Image drawImage;
-    Image depthImage;
+    Size drawImage;
+    Size depthImage;
 
+    RenderInfo renderContext;
     std::shared_ptr<RenderGraph> renderGraph;
 
 private:
