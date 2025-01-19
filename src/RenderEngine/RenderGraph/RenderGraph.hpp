@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Core/Types.hpp"
+#include "Core/Vector.hpp"
 
 #include "GraphContext.hpp"
 #include "RenderEngine/InternalResources/Semaphore.hpp"
@@ -23,7 +24,8 @@ struct RenderInfo {
 
     static RenderInfo create(
             std::shared_ptr<VulkanInfo> vkInfo,
-            const RenderGraph& renderGraph
+            std::shared_ptr<RenderGraph> renderGraph,
+            Vector<U32, 2> windowSize
     );
     void shutdown();
 };
@@ -36,7 +38,14 @@ public:
     std::vector<RenderNode> nodes;
     std::vector<std::vector<Size>> adjacency;
 
-    Size addImage(std::string name);
+    Size addImage(
+            Vector<U32, 2> size,
+            Vector<F32, 2> factor,
+            ImageSizeType sizeType,
+            VkFormat format,
+            VkImageUsageFlags usage,
+            std::string name
+    );
 
     Size createNode(
             std::string name,

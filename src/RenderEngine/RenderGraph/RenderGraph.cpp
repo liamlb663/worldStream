@@ -8,18 +8,44 @@
 
 RenderInfo RenderInfo::create(
         std::shared_ptr<VulkanInfo> vkInfo,
-        const RenderGraph& renderGraph
+        std::shared_ptr<RenderGraph> renderGraph,
+        Vector<U32, 2> windowSize
 ) {
     RenderInfo info = {
-        .images = std::vector<Image>(renderGraph.images.size()),
-        .geometries = std::vector<std::vector<void*>>(renderGraph.geometries.size()),
-        .semaphores = std::vector<Semaphore>(renderGraph.nodes.size())
+        .images = std::vector<Image>(renderGraph->images.size()),
+        .geometries = std::vector<std::vector<void*>>(renderGraph->geometries.size()),
+        .semaphores = std::vector<Semaphore>(renderGraph->nodes.size())
     };
 
-    for (Size i = 0; i < renderGraph.nodes.size(); i++) {
+    for (Size i = 0; i < renderGraph->images.size(); i++) {
+        ImageInformation imgInfo = renderGraph->images[i];
+
+        Vector<U32, 2> imageSize;
+        switch (imgInfo.sizeType) {
+            case ImageSizeType::fixed:
+                imageSize = imgInfo.size;
+                break;
+            case ImageSizeType::fractional:
+                imageSize = Vector<U32, 2>(
+                        imgInfo.factor.value.x * windowSize.value.x,
+                        imgInfo.factor.value.y * windowSize.value.y
+                );
+                break;
+        }
+
+        info.images[i].init(
+                vkInfo,
+                imageSize,
+                imgInfo.format,
+                imgInfo.usage,
+                imgInfo.name
+        );
+    }
+
+    for (Size i = 0; i < renderGraph->nodes.size(); i++) {
         info.semaphores[i].initialize(
                 vkInfo,
-                fmt::format("{}'s semaphore", renderGraph.nodes[i].name)
+                fmt::format("{}'s semaphore", renderGraph->nodes[i].name)
         );
     }
 
@@ -30,17 +56,27 @@ void RenderInfo::shutdown() {
     for (Size i = 0; i < images.size(); i++) {
         images[i].shutdown();
     }
-    images.clear();
 
     for (Size i = 0; i < semaphores.size(); i++) {
         semaphores[i].shutdown();
     }
-    semaphores.clear();
 }
 
-Size RenderGraph::addImage(std::string name) {
+Size RenderGraph::addImage(
+        Vector<U32, 2> size,
+        Vector<F32, 2> factor,
+        ImageSizeType sizeType,
+        VkFormat format,
+        VkImageUsageFlags usage,
+        std::string name
+) {
     ImageInformation info = {
         .id = images.size(),
+        .size = size,
+        .factor = factor,
+        .sizeType = sizeType,
+        .format = format,
+        .usage = usage,
         .name = name,
     };
 

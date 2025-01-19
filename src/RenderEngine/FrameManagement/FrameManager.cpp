@@ -72,7 +72,7 @@ void FrameManager::setRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
     waitOnFrames();
 
     for (Size i = 0; i < m_frameData.size(); i++) {
-        m_frameData[i].renderGraph = renderGraph;
+        m_frameData[i].changeRenderGraph(renderGraph);
     }
 }
 

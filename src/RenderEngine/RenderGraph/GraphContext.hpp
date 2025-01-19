@@ -3,13 +3,26 @@
 #pragma once
 
 #include "Core/Types.hpp"
+#include "Core/Vector.hpp"
+
+#include <vulkan/vulkan.h>
 
 #include <cmath>
 #include <string>
 #include <functional>
 
+enum ImageSizeType {
+    fixed,
+    fractional,
+};
+
 struct ImageInformation {
     Size id;
+    Vector<U32, 2> size;
+    Vector<F32, 2> factor;
+    ImageSizeType sizeType;
+    VkFormat format;
+    VkImageUsageFlags usage;
     std::string name;
 };
 

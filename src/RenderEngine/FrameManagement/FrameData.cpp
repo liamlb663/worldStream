@@ -1,45 +1,12 @@
 // src/RenderEngine/FrameData.cpp
 
 #include "FrameData.hpp"
-#include "../VkUtils.hpp"
 
-#include "RenderEngine/Config.hpp"
-#include "fmt/core.h"
+#include "../VkUtils.hpp"
+#include "../RenderGraph/GraphContext.hpp"
 #include "spdlog/spdlog.h"
 
-bool FrameData::createImages(Vector<U32, 2> size) {
-    VkImageUsageFlags commonFlags = 0;
-    commonFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    commonFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    commonFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
-    commonFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
-
-    bool result = drawImage.init(
-            m_vkInfo,
-            Vector<U32, 2>(size.value.x, size.value.y),
-            Config::drawFormat,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | commonFlags,
-            fmt::format("Frame[{}]'s Draw Image", m_frameNumber)
-    );
-    if (!result) {
-        spdlog::error("Draw Image failed to initialize");
-        return false;
-    }
-
-    result = depthImage.init(
-            m_vkInfo,
-            Vector<U32, 2>(size.value.x, size.value.y),
-            Config::depthFormat,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | commonFlags,
-            fmt::format("Frame[{}]'s Depth Image", m_frameNumber)
-    );
-    if (!result) {
-        spdlog::error("Depth Image failed to initialize");
-        return false;
-    }
-
-    return true;
-}
+#include <fmt/core.h>
 
 bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Size frameNumber) {
     m_vkInfo = vkInfo;
@@ -70,10 +37,7 @@ bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Si
         return false;
     }
 
-    // Images
-    if (!createImages(size)) {
-        return false;
-    }
+    m_currentWindowSize = size;
 
     return true;
 }
@@ -81,8 +45,16 @@ bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Si
 void FrameData::shutdown() {
     deletionQueue.flush();
 
-    depthImage.shutdown();
-    drawImage.shutdown();
+    for (Size i = 0; i < renderContext.semaphores.size(); i++) {
+        renderContext.semaphores[i].shutdown();
+    }
+    for (Size i = 0; i < renderContext.images.size(); i++) {
+        renderContext.images[i].shutdown();
+    }
+    renderGraph = nullptr;
+
+    renderContext.shutdown();
+    renderContext = {};
 
     commandPool.shutdown();
 
@@ -92,13 +64,17 @@ void FrameData::shutdown() {
 }
 
 bool FrameData::regenerate(Vector<U32, 2> size) {
-    depthImage.shutdown();
-    drawImage.shutdown();
+    renderContext.shutdown();
 
-    if (!createImages(size)) {
-        return false;
-    }
+    renderContext = renderContext.create(m_vkInfo, renderGraph, size);
+    m_currentWindowSize = size;
 
     return true;
+}
+
+void FrameData::changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
+    renderContext.shutdown();
+    this->renderGraph = renderGraph;
+    renderContext.create(m_vkInfo, renderGraph, m_currentWindowSize);
 }
 
