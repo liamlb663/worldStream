@@ -14,7 +14,7 @@ RenderInfo RenderInfo::create(
     RenderInfo info = {
         .images = std::vector<Image>(renderGraph->images.size()),
         .geometries = std::vector<std::vector<void*>>(renderGraph->geometries.size()),
-        .semaphores = std::vector<Semaphore>(renderGraph->nodes.size())
+        .semaphores = std::vector<Semaphore>(renderGraph->nodes.size()),
     };
 
     for (Size i = 0; i < renderGraph->images.size(); i++) {

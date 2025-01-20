@@ -3,7 +3,6 @@
 #include "FrameData.hpp"
 
 #include "../VkUtils.hpp"
-#include "../RenderGraph/GraphContext.hpp"
 #include "spdlog/spdlog.h"
 
 #include <fmt/core.h>
@@ -45,16 +44,8 @@ bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Si
 void FrameData::shutdown() {
     deletionQueue.flush();
 
-    for (Size i = 0; i < renderContext.semaphores.size(); i++) {
-        renderContext.semaphores[i].shutdown();
-    }
-    for (Size i = 0; i < renderContext.images.size(); i++) {
-        renderContext.images[i].shutdown();
-    }
     renderGraph = nullptr;
-
     renderContext.shutdown();
-    renderContext = {};
 
     commandPool.shutdown();
 
@@ -64,17 +55,16 @@ void FrameData::shutdown() {
 }
 
 bool FrameData::regenerate(Vector<U32, 2> size) {
-    renderContext.shutdown();
-
-    renderContext = renderContext.create(m_vkInfo, renderGraph, size);
     m_currentWindowSize = size;
+    renderContext.shutdown();
+    renderContext = RenderInfo::create(m_vkInfo, renderGraph, size);
 
     return true;
 }
 
 void FrameData::changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
-    renderContext.shutdown();
+    if (renderGraph != nullptr) renderContext.shutdown();
     this->renderGraph = renderGraph;
-    renderContext.create(m_vkInfo, renderGraph, m_currentWindowSize);
+    renderContext = RenderInfo::create(m_vkInfo, renderGraph, m_currentWindowSize);
 }
 
