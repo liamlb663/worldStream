@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <spdlog/spdlog.h>
+#include <vulkan/vulkan_core.h>
 
 VkResult CommandPool::initialize(
         std::shared_ptr<VulkanInfo> vkInfo,
@@ -76,6 +77,13 @@ void CommandPool::resizeBuffers(Size size) {
     for (Size i = 0; i < size; i++) {
         Debug::SetObjectName(m_vkInfo->device, (U64)m_buffers[i],
                 VK_OBJECT_TYPE_COMMAND_BUFFER, fmt::format("{}'s Command Buffer {}", m_name, i).c_str());
+    }
+}
+
+void CommandPool::resetPool() {
+    VkResult result = vkResetCommandPool(m_vkInfo->device, getPool(), 0);
+    if (!VkUtils::checkVkResult(result, "Error resetting command pool")) {
+        return;
     }
 }
 

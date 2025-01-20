@@ -66,6 +66,9 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
     vkQueueWaitIdle(m_vkInfo->transferQueue);
 }
 
+void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
+}
+
 // Holy Shit
 struct StageAccessMasks {
     VkPipelineStageFlags2 stageMask;

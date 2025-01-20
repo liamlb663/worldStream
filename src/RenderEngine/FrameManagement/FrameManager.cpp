@@ -3,6 +3,7 @@
 #include "FrameManager.hpp"
 
 #include "../Config.hpp"
+#include "RenderEngine/FrameSubmitInfo.hpp"
 #include "SwapchainManager.hpp"
 #include "spdlog/spdlog.h"
 
@@ -42,8 +43,11 @@ void FrameManager::shutdown() {
 U32 FrameManager::aquireNextSwap() {
     U32 index = 0;
 
+    FrameData frame = m_frameData[m_frameNumber % Config::framesInFlight];
+    Semaphore semaphore = frame.swapchainSemaphore;
+
     bool swapSuccess =
-        m_swapchain->getNextImage(m_frameData[m_frameNumber].swapchainSemaphore.get(), &index);
+        m_swapchain->getNextImage(semaphore.get(), &index);
 
     if (!swapSuccess) {
         m_isResizing = true;
@@ -68,6 +72,21 @@ SwapchainImage FrameManager::getSwapchainImage(U32 index) {
     return m_swapchain->getImage(index);
 }
 
+FrameSubmitInfo FrameManager::getNextFrameInfo() {
+    U32 swapchainIndex = aquireNextSwap();
+    SwapchainImage swapchainImage = getSwapchainImage(swapchainIndex);
+
+    FrameSubmitInfo info = {
+        .frameNumber = m_frameNumber,
+        .frameData = m_frameData[m_frameNumber % Config::framesInFlight],
+        .swapchainImage = swapchainImage,
+    };
+
+    m_frameNumber++;
+
+    return info;
+}
+
 void FrameManager::setRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
     waitOnFrames();
 
@@ -82,3 +101,4 @@ void FrameManager::waitOnFrames() {
         vkWaitForFences(m_vkInfo->device, 1, &fence, VK_TRUE, UINT64_MAX);
     }
 }
+

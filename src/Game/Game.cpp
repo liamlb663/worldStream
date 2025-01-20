@@ -53,8 +53,6 @@ bool Game::initialize(int argc, char* argv[]) {
     m_renderGraph->addImageInput(postFxPass, {geometryPass});
     m_renderGraph->addImageOutput(postFxPass, {finalImg});
 
-    m_renderGraph->printGraph();
-
     m_graphics.setRenderGraph(m_renderGraph);
 
     return true;
@@ -64,6 +62,8 @@ void Game::run() {
     spdlog::info("Running Game");
 
     std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
+
+    m_graphics.renderFrame();
 
     m_resources.dropImage(img);
 }

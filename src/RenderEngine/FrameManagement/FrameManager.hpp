@@ -4,6 +4,7 @@
 
 #include "../VulkanInfo.hpp"
 #include "FrameData.hpp"
+#include "RenderEngine/FrameSubmitInfo.hpp"
 #include "RenderEngine/RenderGraph/RenderGraph.hpp"
 #include "SwapchainManager.hpp"
 #include "Window.hpp"
@@ -22,6 +23,7 @@ public:
 
     U32 aquireNextSwap();
     SwapchainImage getSwapchainImage(U32 index);
+    FrameSubmitInfo getNextFrameInfo();
 
     void setRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
 

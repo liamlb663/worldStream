@@ -17,5 +17,6 @@ public:
 private:
     VkSemaphore m_semaphore = VK_NULL_HANDLE;
     std::shared_ptr<VulkanInfo> m_vkInfo;
+
 };
 

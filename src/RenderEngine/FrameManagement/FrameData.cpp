@@ -3,7 +3,6 @@
 #include "FrameData.hpp"
 
 #include "../VkUtils.hpp"
-#include "spdlog/spdlog.h"
 
 #include <fmt/core.h>
 

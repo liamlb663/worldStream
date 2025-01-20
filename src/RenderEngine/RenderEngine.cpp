@@ -5,6 +5,7 @@
 #include "Config.hpp"
 #include "Debug.hpp"
 #include "InternalResources/CommandPool.hpp"
+#include "RenderEngine/FrameSubmitInfo.hpp"
 #include "VkUtils.hpp"
 
 #include <VkBootstrap.h>
@@ -220,3 +221,9 @@ void RenderEngine::shutdown() {
 void RenderEngine::setRenderGraph(std::shared_ptr<RenderGraph> graph) {
     m_frameManager->setRenderGraph(graph);
 }
+
+void RenderEngine::renderFrame() {
+    FrameSubmitInfo info = m_frameManager->getNextFrameInfo();
+    m_commandSubmitter->frameSubmit(info);
+}
+

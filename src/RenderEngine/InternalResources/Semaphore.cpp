@@ -36,6 +36,9 @@ void Semaphore::shutdown() {
 }
 
 VkSemaphore Semaphore::get() const {
-    spdlog::warn("Attempted to get null semaphore");
+    if (m_semaphore == VK_NULL_HANDLE)
+        spdlog::warn("Attempted to get null semaphore");
+
     return m_semaphore;
 }
+

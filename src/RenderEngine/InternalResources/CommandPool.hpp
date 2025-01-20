@@ -27,9 +27,9 @@ public:
     );
 
     void resizeBuffers(Size size);
+    void resetPool();
 
     VkCommandPool getPool() { return m_pool; };
-
     VkCommandBuffer getBuffer(Size index);
 
     void shutdown();
