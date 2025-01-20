@@ -1,45 +1,11 @@
 // src/RenderEngine/FrameData.cpp
 
 #include "FrameData.hpp"
-#include "../VkUtils.hpp"
 
-#include "RenderEngine/Config.hpp"
-#include "fmt/core.h"
+#include "../VkUtils.hpp"
 #include "spdlog/spdlog.h"
 
-bool FrameData::createImages(Vector<U32, 2> size) {
-    VkImageUsageFlags commonFlags = 0;
-    commonFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    commonFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    commonFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
-    commonFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
-
-    bool result = drawImage.init(
-            m_vkInfo,
-            Vector<U32, 2>(size.value.x, size.value.y),
-            Config::drawFormat,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | commonFlags,
-            fmt::format("Frame[{}]'s Draw Image", m_frameNumber)
-    );
-    if (!result) {
-        spdlog::error("Draw Image failed to initialize");
-        return false;
-    }
-
-    result = depthImage.init(
-            m_vkInfo,
-            Vector<U32, 2>(size.value.x, size.value.y),
-            Config::depthFormat,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | commonFlags,
-            fmt::format("Frame[{}]'s Depth Image", m_frameNumber)
-    );
-    if (!result) {
-        spdlog::error("Depth Image failed to initialize");
-        return false;
-    }
-
-    return true;
-}
+#include <fmt/core.h>
 
 bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Size frameNumber) {
     m_vkInfo = vkInfo;
@@ -70,10 +36,7 @@ bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Si
         return false;
     }
 
-    // Images
-    if (!createImages(size)) {
-        return false;
-    }
+    m_currentWindowSize = size;
 
     return true;
 }
@@ -81,8 +44,8 @@ bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Si
 void FrameData::shutdown() {
     deletionQueue.flush();
 
-    depthImage.shutdown();
-    drawImage.shutdown();
+    renderGraph = nullptr;
+    renderContext.shutdown();
 
     commandPool.shutdown();
 
@@ -92,13 +55,16 @@ void FrameData::shutdown() {
 }
 
 bool FrameData::regenerate(Vector<U32, 2> size) {
-    depthImage.shutdown();
-    drawImage.shutdown();
-
-    if (!createImages(size)) {
-        return false;
-    }
+    m_currentWindowSize = size;
+    renderContext.shutdown();
+    renderContext = RenderInfo::create(m_vkInfo, renderGraph, size);
 
     return true;
+}
+
+void FrameData::changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
+    if (renderGraph != nullptr) renderContext.shutdown();
+    this->renderGraph = renderGraph;
+    renderContext = RenderInfo::create(m_vkInfo, renderGraph, m_currentWindowSize);
 }
 

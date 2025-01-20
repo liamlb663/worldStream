@@ -40,6 +40,8 @@ public:
         };
     }
 
+    Vector<U32, 2> getSize() { return m_size; }
+
 private:
     std::shared_ptr<VulkanInfo> m_vkInfo;
 

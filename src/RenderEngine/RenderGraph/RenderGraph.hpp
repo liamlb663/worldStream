@@ -5,91 +5,64 @@
 #include "Core/Types.hpp"
 #include "Core/Vector.hpp"
 
-#include <fmt/ranges.h>
-#include <spdlog/spdlog.h>
+#include "GraphContext.hpp"
+#include "RenderEngine/InternalResources/Semaphore.hpp"
+#include "RenderEngine/VulkanInfo.hpp"
+#include "ResourceManagement/RenderResources/Image.hpp"
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
-struct ImageInformation {
-    Size id;
-    std::string name;
-    Vector<U32, 2> size;
-};
+class RenderGraph;
+struct RenderInfo {
+    std::vector<Image> images;
+    // TODO: void* is just a placeholder for the render object
+    std::vector<std::vector<void*>> geometries;
+    std::vector<Semaphore> semaphores;
 
-struct RenderNode {
-    Size id;
-
-    std::string name;
-
-    std::function<void()> execute;
-
-    std::vector<Size> inputs;
-    std::vector<Size> outputs;
-
-    void* customResources = nullptr;
+    static RenderInfo create(
+            std::shared_ptr<VulkanInfo> vkInfo,
+            std::shared_ptr<RenderGraph> renderGraph,
+            Vector<U32, 2> windowSize
+    );
+    void shutdown();
 };
 
 class RenderGraph {
 public:
     std::vector<ImageInformation> images;
+    std::vector<GeometryInfomation> geometries;
+
     std::vector<RenderNode> nodes;
     std::vector<std::vector<Size>> adjacency;
 
     Size addImage(
-            std::string name,
-            Vector<U32, 2> size
-    ) {
-        ImageInformation info = {
-            .id = images.size(),
-            .name = name,
-            .size = size
-        };
-
-        images.push_back(info);
-
-        return info.id;
-    }
+            Vector<U32, 2> size,
+            Vector<F32, 2> factor,
+            ImageSizeType sizeType,
+            VkFormat format,
+            VkImageUsageFlags usage,
+            std::string name
+    );
 
     Size createNode(
             std::string name,
-
             std::function<void()> function,
-
-            std::vector<Size> inputs,
-            std::vector<Size> outputs,
-
-            void* customResources,
-
             std::vector<Size> dependencies
-    ) {
-        RenderNode node = {
-            .id = 0,
-            .name = name,
-            .execute = function,
-            .inputs = inputs,
-            .outputs = outputs,
-            .customResources = customResources
-        };
+    );
 
-        return insertNode(node, dependencies);
-    }
+    void addImageInput(Size nodeId, std::vector<Size> imageIds);
+    void addImageOutput(Size nodeId, std::vector<Size> imageIds);
+    void addGeometryInput(Size nodeId, std::vector<Size> geoIds);
+    void addGeometryOutput(Size nodeId, std::vector<Size> geoIds);
 
-    void printGraph() const {
-        for (Size i = 0; i < nodes.size(); i++) {
-            spdlog::info("Node {} : {}", nodes[i].id, nodes[i].name);
-            spdlog::info("\tDependencies: {}", fmt::join(adjacency[i], ", "));
-        }
-    }
+    Size getNode(std::string name);
+    void printGraph() const;
 
 private:
-    Size insertNode(RenderNode node, std::vector<Size> dependencies) {
-        node.id = nodes.size();
-        nodes.push_back(node);
-        adjacency.emplace_back(dependencies);
-        return node.id;
-    }
+    Size insertNode(RenderNode node, std::vector<Size> dependencies);
 
 };
 

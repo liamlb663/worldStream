@@ -4,8 +4,12 @@
 
 #include "../VulkanInfo.hpp"
 #include "FrameData.hpp"
-#include "RenderEngine/FrameManagement/SwapchainManager.hpp"
+#include "RenderEngine/RenderGraph/RenderGraph.hpp"
+#include "SwapchainManager.hpp"
 #include "Window.hpp"
+
+#include <vulkan/vulkan.h>
+
 #include <memory>
 
 class FrameManager {
@@ -16,28 +20,12 @@ public:
 
     std::shared_ptr<Window> getWindow() const { return m_window; }
 
-    U32 aquireNextSwap() {
-        U32 index = 0;
+    U32 aquireNextSwap();
+    SwapchainImage getSwapchainImage(U32 index);
 
-        bool swapSuccess =
-            m_swapchain->getNextImage(m_frameData[m_frameNumber].swapchainSemaphore.get(), &index);
+    void setRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
 
-        if (!swapSuccess) {
-            m_isResizing = true;
-            m_swapchain->resizeSwapchain(m_window);
-
-            //TODO regenerate frameData
-
-            return aquireNextSwap();
-        }
-
-        return index;
-    }
-
-    SwapchainImage getSwapchainImage(U32 index) {
-        return m_swapchain->getImage(index);
-    }
-
+    void waitOnFrames();
 
 private:
     std::shared_ptr<VulkanInfo> m_vkInfo;
@@ -47,5 +35,6 @@ private:
     Size m_frameNumber;
 
     bool m_isResizing;
+
 };
 

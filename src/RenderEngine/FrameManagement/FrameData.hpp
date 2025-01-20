@@ -12,7 +12,6 @@
 #include "../InternalResources/Semaphore.hpp"
 
 #include "RenderEngine/RenderGraph/RenderGraph.hpp"
-#include "ResourceManagement/RenderResources/Image.hpp"
 
 #include <memory>
 #include <vulkan/vulkan.h>
@@ -23,6 +22,7 @@ public:
     void shutdown();
 
     bool regenerate(Vector<U32, 2> size);
+    void changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;
@@ -33,15 +33,14 @@ public:
 
     DeletionQueue deletionQueue;
 
-    Image drawImage;
-    Image depthImage;
-
+    // Render Resources
+    RenderInfo renderContext;
     std::shared_ptr<RenderGraph> renderGraph;
 
 private:
-    bool createImages(Vector<U32, 2> size);
-
     std::shared_ptr<VulkanInfo> m_vkInfo;
     Size m_frameNumber;
+    Vector<U32, 2> m_currentWindowSize;
+
 };
 

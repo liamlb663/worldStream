@@ -7,7 +7,6 @@
 #include <spdlog/spdlog.h>
 
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 bool Buffer::init(
         std::shared_ptr<VulkanInfo> vkInfo,

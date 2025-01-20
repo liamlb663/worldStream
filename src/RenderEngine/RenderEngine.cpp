@@ -215,7 +215,8 @@ std::shared_ptr<CommandSubmitter> RenderEngine::getSubmitter() const {
 
 void RenderEngine::shutdown() {
     m_mainDeletionQueue.flush();
-
-
 }
 
+void RenderEngine::setRenderGraph(std::shared_ptr<RenderGraph> graph) {
+    m_frameManager->setRenderGraph(graph);
+}
