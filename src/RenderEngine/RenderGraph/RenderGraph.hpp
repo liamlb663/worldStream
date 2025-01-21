@@ -49,7 +49,7 @@ public:
 
     Size createNode(
             std::string name,
-            std::function<void()> function,
+            std::function<void(VkCommandBuffer)> function,
             std::vector<Size> dependencies
     );
 

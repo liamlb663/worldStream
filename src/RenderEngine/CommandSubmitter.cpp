@@ -67,6 +67,74 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
 }
 
 void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
+    FrameData frame = info.frameData;
+    std::shared_ptr<RenderGraph> graph = frame.renderGraph;
+
+    // TODO: Move to frameManager changeGraph
+    info.frameData.commandPool.resizeBuffers(graph->nodes.size());
+    info.frameData.commandPool.resetPool();
+
+    for (Size i = 0 ; i < graph->nodes.size(); i++) {
+        VkCommandBuffer cmd = info.frameData.commandPool.getBuffer(i);
+
+        VkCommandBufferBeginInfo beginInfo{
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr,
+        };
+
+        VkResult res;
+        res = vkBeginCommandBuffer(cmd, &beginInfo);
+        if (!VkUtils::checkVkResult(res, "Failed to begin recording transfer command buffer.")) {
+            return;
+        }
+
+        // Execute the lambda to record commands
+        graph->nodes[i].execute(cmd);
+
+        // End recording
+        res = vkEndCommandBuffer(cmd);
+        if (!VkUtils::checkVkResult(res, "Failed to record transfer command buffer.")) {
+            return;
+        }
+
+        std::vector<Size> depIndecies = frame.renderGraph->adjacency[i];
+        std::vector<VkSemaphore> deps;
+        deps.resize(depIndecies.size());
+        for (Size i = 0; i < depIndecies.size(); i++) {
+            deps[i] = frame.renderContext.semaphores[depIndecies[i]].get();
+        }
+
+        VkSemaphore signal = frame.renderContext.semaphores[i].get();
+
+        VkPipelineStageFlags flags = 0;
+        flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+
+        VkSubmitInfo submitInfo{
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+
+            .waitSemaphoreCount = static_cast<U32>(deps.size()),
+            .pWaitSemaphores = deps.data(),
+
+            .pWaitDstStageMask = &flags,
+
+            .commandBufferCount = 1,
+            .pCommandBuffers = &cmd,
+
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &signal,
+        };
+
+        res = vkQueueSubmit(m_vkInfo->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        if (!VkUtils::checkVkResult(res, "Failed to submit transfer command buffer.")) {
+            return;
+        }
+
+        vkQueueWaitIdle(m_vkInfo->graphicsQueue);
+    }
 }
 
 // Holy Shit

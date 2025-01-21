@@ -35,7 +35,7 @@ struct RenderNode {
     Size id;
 
     std::string name;
-    std::function<void()> execute;
+    std::function<void(VkCommandBuffer)> execute;
 
     std::vector<Size> imageInputs;
     std::vector<Size> imageOutputs;

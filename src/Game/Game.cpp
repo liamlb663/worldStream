@@ -40,14 +40,16 @@ bool Game::initialize(int argc, char* argv[]) {
 
     Size geometryPass = m_renderGraph->createNode(
             "Geometry",
-            [](){},
+            [](VkCommandBuffer cmd){
+            },
             {}
     );
     m_renderGraph->addImageOutput(geometryPass, {geometryImg});
 
     Size postFxPass = m_renderGraph->createNode(
             "Post Fx",
-            [](){},
+            [](VkCommandBuffer cmd){
+            },
             {geometryPass}
     );
     m_renderGraph->addImageInput(postFxPass, {geometryPass});
