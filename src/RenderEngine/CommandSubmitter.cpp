@@ -66,28 +66,10 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
     vkQueueWaitIdle(m_vkInfo->transferQueue);
 }
 
-bool waitAndResetFences(VkDevice device, FrameData& frame, Size frameNumber) {
-    VkFence renderFence = frame.renderFence.get();
-    VkResult res = vkWaitForFences(device, 1, &renderFence, VK_TRUE, UINT64_MAX);
-    if (!VkUtils::checkVkResult(res,
-                fmt::format("Waiting on Frame {}'s render fence failed!", frameNumber))) {
-        return false;
-    }
-
-    res = vkResetFences(device, 1, &renderFence);
-    return VkUtils::checkVkResult(res,
-            fmt::format("Resetting Frame {}'s render fence failed!", frameNumber));
-}
-
 void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
     FrameData frame = info.frameData;
     std::shared_ptr<RenderGraph> graph = frame.renderGraph;
 
-    if (!waitAndResetFences(m_vkInfo->device, info.frameData, info.frameNumber))
-        return;
-
-    // TODO: Move to frameManager changeGraph
-    info.frameData.commandPool.resizeBuffers(graph->nodes.size());
     info.frameData.commandPool.resetPool();
 
     for (Size i = 0 ; i < graph->nodes.size(); i++) {
@@ -148,11 +130,10 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
             .pSignalSemaphores = &signal,
         };
 
-        res = vkQueueSubmit(m_vkInfo->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        res = vkQueueSubmit(m_vkInfo->graphicsQueue, 1, &submitInfo, info.frameData.renderFence.get());
         if (!VkUtils::checkVkResult(res, "Failed to submit transfer command buffer.")) {
             return;
         }
-
     }
 }
 

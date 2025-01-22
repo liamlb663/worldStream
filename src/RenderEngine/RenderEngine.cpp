@@ -225,5 +225,6 @@ void RenderEngine::setRenderGraph(std::shared_ptr<RenderGraph> graph) {
 void RenderEngine::renderFrame() {
     FrameSubmitInfo info = m_frameManager->getNextFrameInfo();
     m_commandSubmitter->frameSubmit(info);
+    m_frameManager->presentFrame(info);
 }
 

@@ -24,6 +24,7 @@ public:
     U32 aquireNextSwap();
     SwapchainImage getSwapchainImage(U32 index);
     FrameSubmitInfo getNextFrameInfo();
+    void presentFrame(FrameSubmitInfo info);
 
     void setRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
 

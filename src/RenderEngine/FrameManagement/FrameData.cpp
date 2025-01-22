@@ -64,6 +64,11 @@ bool FrameData::regenerate(Vector<U32, 2> size) {
 void FrameData::changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
     if (renderGraph != nullptr) renderContext.shutdown();
     this->renderGraph = renderGraph;
-    renderContext = RenderInfo::create(m_vkInfo, renderGraph, m_currentWindowSize);
+    renderContext = RenderInfo::create(
+            m_vkInfo,
+            renderGraph,
+            m_currentWindowSize
+    );
+    commandPool.resizeBuffers(renderGraph->nodes.size());
 }
 
