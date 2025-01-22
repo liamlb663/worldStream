@@ -6,6 +6,7 @@
 
 #include "FrameManagement/FrameData.hpp"
 #include "FrameManagement/SwapchainManager.hpp"
+#include "RenderEngine/RenderGraph/RenderGraph.hpp"
 
 struct FrameSubmitInfo {
     Size frameNumber;
@@ -13,3 +14,7 @@ struct FrameSubmitInfo {
     SwapchainImage swapchainImage;
 };
 
+struct RecordInfo {
+    VkCommandBuffer commandBuffer;
+    RenderInfo* renderContext;
+};

@@ -10,6 +10,8 @@
 #include "RenderEngine/VulkanInfo.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
 
+struct RecordInfo;
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -49,7 +51,7 @@ public:
 
     Size createNode(
             std::string name,
-            std::function<void(VkCommandBuffer)> function,
+            std::function<void(RecordInfo)> function,
             std::vector<Size> dependencies
     );
 

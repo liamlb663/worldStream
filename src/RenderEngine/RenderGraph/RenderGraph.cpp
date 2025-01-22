@@ -86,7 +86,7 @@ Size RenderGraph::addImage(
 
 Size RenderGraph::createNode(
         std::string name,
-        std::function<void(VkCommandBuffer)> function,
+        std::function<void(RecordInfo)> function,
         std::vector<Size> dependencies
 ) {
     RenderNode node = {

@@ -66,9 +66,25 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
     vkQueueWaitIdle(m_vkInfo->transferQueue);
 }
 
+bool waitAndResetFences(VkDevice device, FrameData& frame, Size frameNumber) {
+    VkFence renderFence = frame.renderFence.get();
+    VkResult res = vkWaitForFences(device, 1, &renderFence, VK_TRUE, UINT64_MAX);
+    if (!VkUtils::checkVkResult(res,
+                fmt::format("Waiting on Frame {}'s render fence failed!", frameNumber))) {
+        return false;
+    }
+
+    res = vkResetFences(device, 1, &renderFence);
+    return VkUtils::checkVkResult(res,
+            fmt::format("Resetting Frame {}'s render fence failed!", frameNumber));
+}
+
 void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
     FrameData frame = info.frameData;
     std::shared_ptr<RenderGraph> graph = frame.renderGraph;
+
+    if (!waitAndResetFences(m_vkInfo->device, info.frameData, info.frameNumber))
+        return;
 
     // TODO: Move to frameManager changeGraph
     info.frameData.commandPool.resizeBuffers(graph->nodes.size());
@@ -91,7 +107,11 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
         }
 
         // Execute the lambda to record commands
-        graph->nodes[i].execute(cmd);
+        RecordInfo recordInfo = {
+            .commandBuffer = cmd,
+            .renderContext = &info.frameData.renderContext,
+        };
+        graph->nodes[i].execute(recordInfo);
 
         // End recording
         res = vkEndCommandBuffer(cmd);
@@ -133,7 +153,6 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
             return;
         }
 
-        vkQueueWaitIdle(m_vkInfo->graphicsQueue);
     }
 }
 
