@@ -99,6 +99,10 @@ VkCommandBuffer CommandPool::getBuffer(Size index) {
     return m_buffers[index];
 }
 
+std::vector<VkCommandBuffer>& CommandPool::getBuffers() {
+    return m_buffers;
+}
+
 void CommandPool::shutdown() {
     if (!m_buffers.empty()) {
         vkFreeCommandBuffers(m_vkInfo->device, m_pool, static_cast<uint32_t>(m_buffers.size()), m_buffers.data());

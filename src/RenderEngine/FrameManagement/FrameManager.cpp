@@ -119,11 +119,13 @@ FrameSubmitInfo FrameManager::getNextFrameInfo() {
 void FrameManager::presentFrame(FrameSubmitInfo info) {
     VkSwapchainKHR swapchain = m_swapchain->getSwapchain();
 
+    VkSemaphore swapchainSemaphore = info.frameData.swapchainSemaphore.get();
+
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = nullptr,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = nullptr,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &swapchainSemaphore,
         .swapchainCount = 1,
         .pSwapchains = &swapchain,
         .pImageIndices = &info.swapchainImage.index,

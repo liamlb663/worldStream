@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 #include <vulkan/vk_enum_string_helper.h>
+#include <vulkan/vulkan_core.h>
 
 bool CommandSubmitter::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
     m_vkInfo = vkInfo;
@@ -72,8 +73,19 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
 
     info.frameData.commandPool.resetPool();
 
-    for (Size i = 0 ; i < graph->nodes.size(); i++) {
-        VkCommandBuffer cmd = info.frameData.commandPool.getBuffer(i);
+    Size numNodes = graph->nodes.size();
+
+    std::vector<VkSubmitInfo> submits;
+    std::vector<VkCommandBuffer>& cmdBuffers = info.frameData.commandPool.getBuffers();
+    std::vector<std::vector<VkSemaphore>> semaphoreDeps(numNodes);
+    std::vector<VkSemaphore> signals;
+
+    VkPipelineStageFlags flags = 0;
+    flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+
+    for (Size i = 0; i < numNodes; i++) {
+        VkCommandBuffer cmd = cmdBuffers[i];
 
         VkCommandBufferBeginInfo beginInfo{
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -82,8 +94,7 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
             .pInheritanceInfo = nullptr,
         };
 
-        VkResult res;
-        res = vkBeginCommandBuffer(cmd, &beginInfo);
+        VkResult res = vkBeginCommandBuffer(cmd, &beginInfo);
         if (!VkUtils::checkVkResult(res, "Failed to begin recording transfer command buffer.")) {
             return;
         }
@@ -101,39 +112,45 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
             return;
         }
 
-        std::vector<Size> depIndecies = frame.renderGraph->adjacency[i];
-        std::vector<VkSemaphore> deps;
-        deps.resize(depIndecies.size());
-        for (Size i = 0; i < depIndecies.size(); i++) {
-            deps[i] = frame.renderContext.semaphores[depIndecies[i]].get();
+        // Resolve dependencies
+        std::vector<Size>& depIndecies = frame.renderGraph->adjacency[i];
+        spdlog::info("depIndecies: [{}]", fmt::join(depIndecies, ", "));
+
+        std::vector<VkSemaphore>& dependencys = semaphoreDeps[i];
+        for (Size j : depIndecies) {
+            VkSemaphore depSemaphore = frame.renderContext.semaphores[j].get();
+            if (!depSemaphore) {
+                spdlog::error("Dependency semaphore at index {} is null!", j);
+                return;
+            }
+            dependencys.push_back(depSemaphore);
         }
 
-        VkSemaphore signal = frame.renderContext.semaphores[i].get();
-
-        VkPipelineStageFlags flags = 0;
-        flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+        VkSemaphore signalSemaphore = frame.renderContext.semaphores[i].get();
+        if (!signalSemaphore) {
+            spdlog::error("Signal semaphore at index {} is null!", i);
+            return;
+        }
+        signals.push_back(signalSemaphore);
 
         VkSubmitInfo submitInfo{
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
             .pNext = nullptr,
-
-            .waitSemaphoreCount = static_cast<U32>(deps.size()),
-            .pWaitSemaphores = deps.data(),
-
+            .waitSemaphoreCount = static_cast<U32>(dependencys.size()),
+            .pWaitSemaphores = dependencys.data(),
             .pWaitDstStageMask = &flags,
-
             .commandBufferCount = 1,
-            .pCommandBuffers = &cmd,
-
+            .pCommandBuffers = &cmdBuffers[i],
             .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &signal,
+            .pSignalSemaphores = &signals.back(), // Ensure valid semaphore
         };
 
-        res = vkQueueSubmit(m_vkInfo->graphicsQueue, 1, &submitInfo, info.frameData.renderFence.get());
-        if (!VkUtils::checkVkResult(res, "Failed to submit transfer command buffer.")) {
-            return;
-        }
+        submits.push_back(submitInfo);
+    }
+
+    VkResult res = vkQueueSubmit(m_vkInfo->graphicsQueue, submits.size(), submits.data(), info.frameData.renderFence.get());
+    if (!VkUtils::checkVkResult(res, "Failed to submit transfer command buffer.")) {
+        return;
     }
 }
 
