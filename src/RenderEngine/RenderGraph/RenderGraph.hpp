@@ -19,7 +19,7 @@ struct RecordInfo;
 
 class RenderGraph;
 struct RenderInfo {
-    std::vector<Image> images;
+    std::vector<std::shared_ptr<Image>> images;
     // TODO: void* is just a placeholder for the render object
     std::vector<std::vector<void*>> geometries;
     std::vector<Semaphore> semaphores;
