@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <spdlog/spdlog.h>
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 
 VkResult CommandPool::initialize(
         std::shared_ptr<VulkanInfo> vkInfo,
@@ -97,6 +97,10 @@ VkCommandBuffer CommandPool::getBuffer(Size index) {
     }
 
     return m_buffers[index];
+}
+
+std::vector<VkCommandBuffer>& CommandPool::getBuffers() {
+    return m_buffers;
 }
 
 void CommandPool::shutdown() {

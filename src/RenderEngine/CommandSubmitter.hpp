@@ -17,6 +17,7 @@ public:
     void transferSubmit(const std::function<void(VkCommandBuffer)>& function);
     void frameSubmit(FrameSubmitInfo info);
 
+    void transitionVulkanImage(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
     void transitionImage(VkCommandBuffer cmd, std::shared_ptr<Image> image, VkImageLayout newLayout);
 
     void shutdown();

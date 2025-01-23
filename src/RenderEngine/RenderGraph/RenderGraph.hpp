@@ -10,6 +10,8 @@
 #include "RenderEngine/VulkanInfo.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
 
+struct RecordInfo;
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -17,7 +19,7 @@
 
 class RenderGraph;
 struct RenderInfo {
-    std::vector<Image> images;
+    std::vector<std::shared_ptr<Image>> images;
     // TODO: void* is just a placeholder for the render object
     std::vector<std::vector<void*>> geometries;
     std::vector<Semaphore> semaphores;
@@ -49,7 +51,7 @@ public:
 
     Size createNode(
             std::string name,
-            std::function<void()> function,
+            std::function<void(RecordInfo)> function,
             std::vector<Size> dependencies
     );
 

@@ -31,6 +31,7 @@ public:
 
     VkCommandPool getPool() { return m_pool; };
     VkCommandBuffer getBuffer(Size index);
+    std::vector<VkCommandBuffer>& getBuffers();
 
     void shutdown();
 

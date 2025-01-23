@@ -9,10 +9,11 @@
 bool Semaphore::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::string name) {
     m_vkInfo = vkInfo;
 
-    VkSemaphoreCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    createInfo.pNext = nullptr;
-    createInfo.flags = 0;
+    VkSemaphoreCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+    };
 
     VkResult result = vkCreateSemaphore(m_vkInfo->device, &createInfo, nullptr, &m_semaphore);
     if (!VkUtils::checkVkResult(result, "Failed to create Vulkan semaphore")) {

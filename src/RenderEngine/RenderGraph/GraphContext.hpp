@@ -5,6 +5,7 @@
 #include "Core/Types.hpp"
 #include "Core/Vector.hpp"
 
+struct RecordInfo;
 #include <vulkan/vulkan.h>
 
 #include <cmath>
@@ -35,7 +36,7 @@ struct RenderNode {
     Size id;
 
     std::string name;
-    std::function<void()> execute;
+    std::function<void(RecordInfo)> execute;
 
     std::vector<Size> imageInputs;
     std::vector<Size> imageOutputs;

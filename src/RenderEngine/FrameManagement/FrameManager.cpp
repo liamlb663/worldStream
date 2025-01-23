@@ -3,9 +3,13 @@
 #include "FrameManager.hpp"
 
 #include "../Config.hpp"
+
 #include "RenderEngine/FrameSubmitInfo.hpp"
+#include "RenderEngine/VkUtils.hpp"
 #include "SwapchainManager.hpp"
-#include "spdlog/spdlog.h"
+
+#include <spdlog/spdlog.h>
+#include <vulkan/vulkan.h>
 
 bool FrameManager::initializeWindow(std::shared_ptr<VulkanInfo> vkInfo) {
     m_vkInfo = vkInfo;
@@ -33,6 +37,8 @@ bool FrameManager::initializeFrames() {
 }
 
 void FrameManager::shutdown() {
+    vkDeviceWaitIdle(m_vkInfo->device);
+
     m_swapchain->shutdown();
     for (Size i = 0; i < Config::framesInFlight; i++) {
         m_frameData[i].shutdown();
@@ -40,11 +46,36 @@ void FrameManager::shutdown() {
     m_window->shutdown(m_vkInfo->instance);
 }
 
+bool waitAndResetFences(VkDevice device, FrameData& frame, Size frameNumber) {
+    VkFence renderFence = frame.renderFence.get();
+    VkResult res = vkWaitForFences(device, 1, &renderFence, VK_TRUE, UINT64_MAX);
+    if (!VkUtils::checkVkResult(res,
+                fmt::format("Waiting on Frame {}'s render fence failed!", frameNumber))) {
+        return false;
+    }
+
+    res = vkResetFences(device, 1, &renderFence);
+    return VkUtils::checkVkResult(res,
+            fmt::format("Resetting Frame {}'s render fence failed!", frameNumber));
+}
+
 U32 FrameManager::aquireNextSwap() {
     U32 index = 0;
 
     FrameData frame = m_frameData[m_frameNumber % Config::framesInFlight];
     Semaphore semaphore = frame.swapchainSemaphore;
+
+    bool waitSuccess = waitAndResetFences(
+            m_vkInfo->device,
+            frame,
+            m_frameNumber % Config::framesInFlight
+    );
+
+    if (!waitSuccess) {
+        spdlog::error("Error waiting on fences for frame[{}]",
+                m_frameNumber % Config::framesInFlight);
+        return -1;
+    }
 
     bool swapSuccess =
         m_swapchain->getNextImage(semaphore.get(), &index);
@@ -85,6 +116,28 @@ FrameSubmitInfo FrameManager::getNextFrameInfo() {
     m_frameNumber++;
 
     return info;
+}
+
+void FrameManager::presentFrame(FrameSubmitInfo info) {
+    VkSwapchainKHR swapchain = m_swapchain->getSwapchain();
+
+    VkSemaphore swapchainSemaphore = info.frameData.swapchainSemaphore.get();
+
+    VkPresentInfoKHR presentInfo = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &swapchainSemaphore,
+        .swapchainCount = 1,
+        .pSwapchains = &swapchain,
+        .pImageIndices = &info.swapchainImage.index,
+        .pResults = nullptr,
+    };
+
+    VkResult presentResult = vkQueuePresentKHR(m_vkInfo->graphicsQueue, &presentInfo);
+    if (presentResult == VK_ERROR_OUT_OF_DATE_KHR) {
+        //TODO Resize
+    }
 }
 
 void FrameManager::setRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {

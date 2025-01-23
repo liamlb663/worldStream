@@ -67,6 +67,89 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
 }
 
 void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
+    FrameData frame = info.frameData;
+    std::shared_ptr<RenderGraph> graph = frame.renderGraph;
+
+    info.frameData.commandPool.resetPool();
+
+    Size numNodes = graph->nodes.size();
+
+    std::vector<VkCommandBuffer>& cmdBuffers = info.frameData.commandPool.getBuffers();
+
+    VkPipelineStageFlags flags = 0;
+    flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+
+    for (Size i = 0; i < numNodes; i++) {
+        VkCommandBuffer cmd = cmdBuffers[i];
+
+        VkCommandBufferBeginInfo beginInfo{
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr,
+        };
+
+        VkResult res = vkBeginCommandBuffer(cmd, &beginInfo);
+        if (!VkUtils::checkVkResult(res, "Failed to begin recording transfer command buffer.")) {
+            return;
+        }
+
+        // Execute the lambda to record commands
+        RecordInfo recordInfo = {
+            .commandBuffer = cmd,
+            .renderContext = &info.frameData.renderContext,
+            .swapchainImage = &info.swapchainImage,
+            .commandSubmitter = this,
+        };
+        graph->nodes[i].execute(recordInfo);
+
+        // End recording
+        res = vkEndCommandBuffer(cmd);
+        if (!VkUtils::checkVkResult(res, "Failed to record transfer command buffer.")) {
+            return;
+        }
+
+        // Resolve dependencies
+        std::vector<Size>& depIndecies = frame.renderGraph->adjacency[i];
+        std::vector<VkSemaphore> dependencys;
+        for (Size j : depIndecies) {
+            VkSemaphore depSemaphore = frame.renderContext.semaphores[j].get();
+            if (!depSemaphore) {
+                spdlog::error("Dependency semaphore at index {} is null!", j);
+                return;
+            }
+            dependencys.push_back(depSemaphore);
+        }
+
+        VkSemaphore signalSemaphore = frame.renderContext.semaphores[i].get();
+        if (!signalSemaphore) {
+            spdlog::error("Signal semaphore at index {} is null!", i);
+            return;
+        }
+
+        VkSubmitInfo submitInfo{
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = static_cast<U32>(dependencys.size()),
+            .pWaitSemaphores = dependencys.data(),
+            .pWaitDstStageMask = &flags,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &cmdBuffers[i],
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &signalSemaphore,
+        };
+
+        VkFence renderFence = nullptr;
+        if (i == numNodes - 1) {
+            renderFence = info.frameData.renderFence.get();
+        }
+
+        res = vkQueueSubmit(m_vkInfo->graphicsQueue, 1, &submitInfo, renderFence);
+        if (!VkUtils::checkVkResult(res, "Failed to submit transfer command buffer.")) {
+            return;
+        }
+    }
 }
 
 // Holy Shit
@@ -141,18 +224,18 @@ StageAccessMasks getStageAccessMasks(VkImageLayout layout) {
     return masks;
 }
 
-void CommandSubmitter::transitionImage(VkCommandBuffer cmd, std::shared_ptr<Image> image, VkImageLayout newLayout) {
+void CommandSubmitter::transitionVulkanImage(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
     if (newLayout == VK_IMAGE_LAYOUT_UNDEFINED) {
         spdlog::error("Invalid layout transition: newLayout cannot be VK_IMAGE_LAYOUT_UNDEFINED.");
         return;
     }
 
-    if (image->layout == newLayout) {
+    if (oldLayout == newLayout) {
         spdlog::warn("Skipping transition: Image is already in the desired layout.");
         return;
     }
 
-    StageAccessMasks srcMasks = getStageAccessMasks(image->layout);
+    StageAccessMasks srcMasks = getStageAccessMasks(oldLayout);
     StageAccessMasks dstMasks = getStageAccessMasks(newLayout);
 
     VkImageAspectFlags aspectMask =
@@ -174,11 +257,11 @@ void CommandSubmitter::transitionImage(VkCommandBuffer cmd, std::shared_ptr<Imag
         .srcAccessMask  = srcMasks.accessMask,
         .dstStageMask   = dstMasks.stageMask,
         .dstAccessMask  = dstMasks.accessMask,
-        .oldLayout = image->layout,
+        .oldLayout = oldLayout,
         .newLayout = newLayout,
         .srcQueueFamilyIndex = 0,
         .dstQueueFamilyIndex = 0,
-        .image = image->image,
+        .image = image,
         .subresourceRange = subImage,
     };
 
@@ -190,6 +273,15 @@ void CommandSubmitter::transitionImage(VkCommandBuffer cmd, std::shared_ptr<Imag
     depInfo.pImageMemoryBarriers = &imageBarrier;
 
     vkCmdPipelineBarrier2(cmd, &depInfo);
+}
+
+void CommandSubmitter::transitionImage(VkCommandBuffer cmd, std::shared_ptr<Image> image, VkImageLayout newLayout) {
+    transitionVulkanImage(
+            cmd,
+            image->image, image->layout,
+            newLayout
+    );
+
     image->layout = newLayout;
 }
 

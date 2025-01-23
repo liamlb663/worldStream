@@ -17,6 +17,7 @@ typedef struct SwapchainImage {
     VkImage image;
     VkImageView imageView;
     Vector<U32, 2> size;
+    U32 index;
 } SwapchainImage;
 
 class Swapchain {
@@ -37,6 +38,7 @@ public:
             .image = m_images[index],
             .imageView = m_imageViews[index],
             .size = m_size,
+            .index = static_cast<U32>(index),
         };
     }
 

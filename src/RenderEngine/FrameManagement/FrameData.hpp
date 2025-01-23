@@ -4,13 +4,13 @@
 
 #include "Core/DeletionQueue.hpp"
 #include "Core/Types.hpp"
+#include "Core/Vector.hpp"
 
 #include "../VulkanInfo.hpp"
 
 #include "../InternalResources/CommandPool.hpp"
 #include "../InternalResources/Fence.hpp"
 #include "../InternalResources/Semaphore.hpp"
-
 #include "RenderEngine/RenderGraph/RenderGraph.hpp"
 
 #include <memory>
