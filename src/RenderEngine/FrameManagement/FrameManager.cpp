@@ -3,11 +3,13 @@
 #include "FrameManager.hpp"
 
 #include "../Config.hpp"
+
 #include "RenderEngine/FrameSubmitInfo.hpp"
 #include "RenderEngine/VkUtils.hpp"
 #include "SwapchainManager.hpp"
-#include "spdlog/spdlog.h"
-#include <vulkan/vulkan_core.h>
+
+#include <spdlog/spdlog.h>
+#include <vulkan/vulkan.h>
 
 bool FrameManager::initializeWindow(std::shared_ptr<VulkanInfo> vkInfo) {
     m_vkInfo = vkInfo;

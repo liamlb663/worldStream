@@ -7,7 +7,6 @@
 
 #include <spdlog/spdlog.h>
 #include <vulkan/vk_enum_string_helper.h>
-#include <vulkan/vulkan_core.h>
 
 bool CommandSubmitter::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
     m_vkInfo = vkInfo;
