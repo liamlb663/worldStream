@@ -4,6 +4,7 @@
 
 #include "Core/Types.hpp"
 #include "../Buffer.hpp"
+#include "ResourceManagement/RenderResources/RenderObjects/Materials.hpp"
 
 #include <glm/glm.hpp>
 #include <strings.h>
@@ -21,6 +22,7 @@ struct RenderObject {
     U32 startIndex;
     Buffer* indexBuffer;
 
+    std::shared_ptr<MaterialData> material;
 };
 
 class IRenderable {
