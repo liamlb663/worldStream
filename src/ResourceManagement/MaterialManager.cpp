@@ -73,6 +73,79 @@ VkSampleCountFlagBits getMultisampleCount(std::string input) {
     }
 }
 
+VkPolygonMode getPolygonMode(std::string input) {
+    std::unordered_map<std::string, VkPolygonMode> map = {
+        {"fill", VK_POLYGON_MODE_FILL},
+        {"line", VK_POLYGON_MODE_LINE},
+        {"point", VK_POLYGON_MODE_POINT},
+        {"fill_rectangle_NV", VK_POLYGON_MODE_FILL_RECTANGLE_NV},
+    };
+
+    auto it = map.find(input);
+    if (it != map.end()) {
+        return it->second;
+    } else {
+        spdlog::warn("Polygon mode not recognized: {}", input);
+        return VK_POLYGON_MODE_FILL;
+    }
+}
+
+VkCullModeFlags getCullMode(std::string input) {
+    std::unordered_map<std::string, VkCullModeFlags> map = {
+        {"none", VK_CULL_MODE_NONE},
+        {"front", VK_CULL_MODE_FRONT_BIT},
+        {"back", VK_CULL_MODE_BACK_BIT},
+        {"both", VK_CULL_MODE_FRONT_AND_BACK},
+    };
+
+    auto it = map.find(input);
+    if (it != map.end()) {
+        return it->second;
+    } else {
+        spdlog::warn("Cull mode not recognized: {}", input);
+        return VK_CULL_MODE_NONE;
+    }
+}
+
+VkFrontFace getFrontFace(std::string input) {
+    std::unordered_map<std::string, VkFrontFace> map = {
+        {"clockwise", VK_FRONT_FACE_CLOCKWISE},
+        {"counter-clockwise", VK_FRONT_FACE_COUNTER_CLOCKWISE},
+    };
+
+    auto it = map.find(input);
+    if (it != map.end()) {
+        return it->second;
+    } else {
+        spdlog::warn("Front face not recognized: {}", input);
+        return VK_FRONT_FACE_CLOCKWISE;
+    }
+}
+
+VkPrimitiveTopology getTopology(std::string input) {
+    std::unordered_map<std::string, VkPrimitiveTopology> map = {
+        {"point-list", VK_PRIMITIVE_TOPOLOGY_POINT_LIST},
+        {"line-list", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},
+        {"line-strip", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP},
+        {"triangle-list", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
+        {"triangle-strip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
+        {"triangle-fan", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN},
+        {"line-list-with-adjacency", VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY},
+        {"line-strip-with-adjacency", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY},
+        {"triangle-list-with-adjacency", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY},
+        {"triangle-strip-with-adjacency", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY},
+        {"patch-list", VK_PRIMITIVE_TOPOLOGY_PATCH_LIST}
+    };
+
+    auto it = map.find(input);
+    if (it != map.end()) {
+        return it->second;
+    } else {
+        spdlog::warn("Topology not recognized: {}", input);
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    }
+}
+
 MaterialInfo yamlToInfo(YAML::Node& yaml, VkDevice device) {
     PipelineBuilder builder;
 
@@ -82,6 +155,12 @@ MaterialInfo yamlToInfo(YAML::Node& yaml, VkDevice device) {
     builder.setColorFormat(getFormat(pipeline["color_format"].as<std::string>()));
     builder.setDepthFormat(Config::depthFormat);
     builder.setMultiSampling(getMultisampleCount(pipeline["multisampling"].as<std::string>()));
+    builder.setPolygonMode(getPolygonMode(pipeline["polygon_mode"].as<std::string>()));
+    builder.setCullMode(
+            getCullMode(pipeline["cull_mode"].as<std::string>()),
+            getFrontFace(pipeline["front_face"].as<std::string>())
+    );
+    builder.setInputTopology(getTopology(pipeline["topology"].as<std::string>()));
 
     PipelineInfo piplineInfo = builder.build(device);
     MaterialInfo output = {

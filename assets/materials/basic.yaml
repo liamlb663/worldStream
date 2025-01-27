@@ -20,12 +20,11 @@ pipeline:
 
   # Rasterization and Culling
   polygon_mode: "fill"  # Options: fill, line, point
-  cull_mode: "back"     # Options: none, front, back
-  front_face: "clockwise" # Options: clockwise, counter_clockwise
+  cull_mode: "back"     # Options: none, front, back, both
+  front_face: "clockwise" # Options: clockwise, counter-clockwise
 
   # Input Topology
-  # Options: point_list, line_list, triangle_list, etc.
-  topology: "triangle_list"
+  topology: "triangle-list"
 
   # Depth Information
   depth_info:
