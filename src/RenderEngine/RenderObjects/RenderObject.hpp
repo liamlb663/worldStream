@@ -1,10 +1,10 @@
-// src/ResourceManagement/RenderResources/RenderObjects/RenderObject.hpp
+// src/RenderEngine/RenderObjects/RenderObject.hpp
 
 #pragma once
 
 #include "Core/Types.hpp"
-#include "../Buffer.hpp"
-#include "ResourceManagement/RenderResources/RenderObjects/Materials.hpp"
+#include "ResourceManagement/RenderResources/Buffer.hpp"
+#include "Materials.hpp"
 
 #include <glm/glm.hpp>
 #include <strings.h>

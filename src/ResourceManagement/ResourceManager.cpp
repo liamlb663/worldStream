@@ -16,10 +16,15 @@ bool ResourceManager::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::shared
     m_vkInfo = vkInfo;
     m_submitter = submitter;
 
+    if (!m_materialManager.initialize(vkInfo))
+        return false;
+
     return true;
 }
 
 void ResourceManager::shutdown() {
+    m_materialManager.shutdown();
+
     // Clear all images
     for (auto& pair : m_images) {
         auto& refCount = pair.second;

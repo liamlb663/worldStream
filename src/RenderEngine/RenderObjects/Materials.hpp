@@ -1,9 +1,8 @@
-// src/ResourceManagement/RenderResources/RenderObjects/Materials.hpp
+// src/RenderEngine/RenderObjects/Materials.cpp
 
 #pragma once
 
-#include "../DescriptorBuffer.hpp"
-
+#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 #include <vulkan/vulkan.h>
 
 #include <memory>

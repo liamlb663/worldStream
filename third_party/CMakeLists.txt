@@ -46,6 +46,14 @@ add_subdirectory(vk-bootstrap)
 # Add VulkanMemoryAllocator
 add_subdirectory(VulkanMemoryAllocator)
 
+# Add yaml-cpp
+FetchContent_Declare(
+    yaml-cpp
+    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(yaml-cpp)
+
 # Create an INTERFACE target for third-party libraries
 add_library(third_party INTERFACE)
 
@@ -64,5 +72,6 @@ target_link_libraries(third_party INTERFACE
     glfw
     vk-bootstrap
     Vulkan::Vulkan
+    yaml-cpp::yaml-cpp
 )
 

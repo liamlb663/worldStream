@@ -7,6 +7,7 @@
 
 #include "RenderResources/Buffer.hpp"
 #include "RenderResources/Image.hpp"
+#include "ResourceManagement/MaterialManager.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -46,6 +47,7 @@ private:
 
     std::shared_ptr<VulkanInfo> m_vkInfo;
     std::shared_ptr<CommandSubmitter> m_submitter;
+    MaterialManager m_materialManager;
 
     fs::path resourceBasePath = "assets";
 

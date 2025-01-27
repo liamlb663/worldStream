@@ -17,12 +17,16 @@ set(RENDERENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/InternalResources/Semaphore.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderGraph/RenderGraph.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderObjects/PipelineBuilder.cpp
 )
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/RenderObjects)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FrameResources)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/InternalResources)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/RenderGraph)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/RenderObjects)
 
 set(ALL_SOURCES
     ${ALL_SOURCES}
