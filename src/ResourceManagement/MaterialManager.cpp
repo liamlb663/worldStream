@@ -146,10 +146,88 @@ VkPrimitiveTopology getTopology(std::string input) {
     }
 }
 
+VkCompareOp getCompareOp(std::string input) {
+    std::unordered_map<std::string, VkCompareOp> map = {
+        {"VK_COMPARE_OP_NEVER", VK_COMPARE_OP_NEVER},
+
+        {"VK_COMPARE_OP_LESS", VK_COMPARE_OP_LESS},
+        {"VK_COMPARE_OP_LESS_OR_EQUAL", VK_COMPARE_OP_LESS_OR_EQUAL},
+
+        {"VK_COMPARE_OP_GREATER", VK_COMPARE_OP_GREATER},
+        {"VK_COMPARE_OP_GREATER_OR_EQUAL", VK_COMPARE_OP_GREATER_OR_EQUAL},
+
+        {"VK_COMPARE_OP_EQUAL", VK_COMPARE_OP_EQUAL},
+        {"VK_COMPARE_OP_NOT_EQUAL", VK_COMPARE_OP_NOT_EQUAL},
+    };
+
+    auto it = map.find(input);
+    if (it != map.end()) {
+        return it->second;
+    } else {
+        spdlog::warn("Compare Op not recognized: {}", input);
+        return VK_COMPARE_OP_NEVER;
+    }
+}
+
+VkShaderStageFlags getShaderStageFlags(const std::vector<std::string>& stages) {
+    std::unordered_map<std::string, VkShaderStageFlagBits> stageMap = {
+        {"vertex", VK_SHADER_STAGE_VERTEX_BIT},
+        {"fragment", VK_SHADER_STAGE_FRAGMENT_BIT},
+        {"compute", VK_SHADER_STAGE_COMPUTE_BIT},
+        {"geometry", VK_SHADER_STAGE_GEOMETRY_BIT},
+        {"tessellation_control", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT},
+        {"tessellation_evaluation", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT},
+        {"all_graphics", VK_SHADER_STAGE_ALL_GRAPHICS},
+        {"all", VK_SHADER_STAGE_ALL},
+    };
+
+    VkShaderStageFlags flags = 0;
+    for (const auto& stage : stages) {
+        auto it = stageMap.find(stage);
+        if (it != stageMap.end()) {
+            flags |= it->second;
+        } else {
+            spdlog::warn("Shader stage not recognized: {}", stage);
+        }
+    }
+
+    return flags;
+}
+
+std::vector<VkPushConstantRange> parsePushConstants(YAML::Node& yaml) {
+    std::vector<VkPushConstantRange> pushConstants;
+
+    if (!yaml["push_constants"]) {
+        return pushConstants;
+    }
+
+    for (const auto& node : yaml["push_constants"]) {
+        VkPushConstantRange range{};
+        range.size = node["size"].as<uint32_t>();
+        range.offset = node["offset"].as<uint32_t>();
+
+        // Handle multiple shader stages
+        if (node["stages"].IsSequence()) {
+            std::vector<std::string> stages;
+            for (const auto& stage : node["stages"]) {
+                stages.push_back(stage.as<std::string>());
+            }
+            range.stageFlags = getShaderStageFlags(stages);
+        } else {
+            range.stageFlags = getShaderStageFlags({node["stages"].as<std::string>()});
+        }
+
+        pushConstants.push_back(range);
+    }
+
+    return pushConstants;
+}
+
 MaterialInfo yamlToInfo(YAML::Node& yaml, VkDevice device) {
     PipelineBuilder builder;
 
     YAML::Node pipeline = yaml["pipeline"];
+    YAML::Node depthInfo = pipeline["depth_info"];
 
     builder.setBlending(getBlendingMode(pipeline["blending"].as<std::string>()));
     builder.setColorFormat(getFormat(pipeline["color_format"].as<std::string>()));
@@ -161,13 +239,27 @@ MaterialInfo yamlToInfo(YAML::Node& yaml, VkDevice device) {
             getFrontFace(pipeline["front_face"].as<std::string>())
     );
     builder.setInputTopology(getTopology(pipeline["topology"].as<std::string>()));
+    builder.setDepthInfo(
+            depthInfo["depth_test"].as<bool>(),
+            depthInfo["write_depth"].as<bool>(),
+            getCompareOp(depthInfo["compare_op"].as<std::string>())
+    );
+
+    std::vector<VkPushConstantRange> pushConstants = parsePushConstants(yaml);
+    for (Size i = 0; i < pushConstants.size(); i++) {
+        builder.addPushConstant(
+                pushConstants[i].stageFlags,
+                pushConstants[i].size,
+                pushConstants[i].offset
+        );
+    }
 
     PipelineInfo piplineInfo = builder.build(device);
     MaterialInfo output = {
         .pipeline = piplineInfo.pipeline,
         .pipelineLayout = piplineInfo.layout,
         .descriptorLayouts = {},
-        .type = MaterialType::Opaque,
+        .type = MaterialType::Opaque,   // TODO: materialtypes
     };
 
     return output;
