@@ -38,6 +38,8 @@ public:
             VmaAllocationCreateFlags allocFlags
     );
 
+    MaterialManager* getMaterialManager() { return &m_materialManager; };
+
 private:
     template <typename ResourceType>
     struct RefCount {

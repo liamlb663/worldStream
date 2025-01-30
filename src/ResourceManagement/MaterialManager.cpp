@@ -2,6 +2,7 @@
 
 #include "MaterialManager.hpp"
 #include "RenderEngine/Config.hpp"
+#include "RenderEngine/RenderObjects/DescriptorLayoutBuilder.hpp"
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "RenderEngine/RenderObjects/PipelineBuilder.hpp"
 #include <spdlog/spdlog.h>
@@ -42,6 +43,7 @@ VkFormat getFormat(std::string input) {
         {"D32_SFLOAT_S8_UINT", VK_FORMAT_D32_SFLOAT_S8_UINT},
         {"D24_UNORM_S8_UINT", VK_FORMAT_D24_UNORM_S8_UINT},
         {"R8G8B8_UNORM", VK_FORMAT_R8G8B8_UNORM},
+        {"VK_FORMAT_R8G8B8A8_UNORM", VK_FORMAT_R8G8B8A8_UNORM},
     };
 
     auto it = map.find(input);
@@ -194,6 +196,33 @@ VkShaderStageFlags getShaderStageFlags(const std::vector<std::string>& stages) {
     return flags;
 }
 
+VkDescriptorType getDescriptorType(std::string input) {
+    std::unordered_map<std::string, VkDescriptorType> map = {
+        {"VK_DESCRIPTOR_TYPE_SAMPLER", VK_DESCRIPTOR_TYPE_SAMPLER},
+        {"VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER", VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
+        {"VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE", VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE},
+        {"VK_DESCRIPTOR_TYPE_STORAGE_IMAGE", VK_DESCRIPTOR_TYPE_STORAGE_IMAGE},
+        {"VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER", VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER},
+        {"VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER", VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER},
+        {"VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER", VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
+        {"VK_DESCRIPTOR_TYPE_STORAGE_BUFFER", VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
+        {"VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC", VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC},
+        {"VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC", VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC},
+        {"VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT", VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT},
+        {"VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT", VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT},
+        {"VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR", VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR},
+        {"VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV", VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV}
+    };
+
+    auto it = map.find(input);
+    if (it != map.end()) {
+        return it->second;
+    } else {
+        spdlog::warn("Descriptor Type not recognized: {}", input);
+        return it->second;
+    }
+}
+
 std::vector<VkPushConstantRange> parsePushConstants(YAML::Node& yaml) {
     std::vector<VkPushConstantRange> pushConstants;
 
@@ -223,11 +252,72 @@ std::vector<VkPushConstantRange> parsePushConstants(YAML::Node& yaml) {
     return pushConstants;
 }
 
-MaterialInfo yamlToInfo(YAML::Node& yaml, VkDevice device) {
+VkDescriptorSetLayout yamlToLayout(YAML::Node& yaml, VkDevice device) {
+    DescriptorLayoutBuilder builder;
+
+    YAML::Node bindings = yaml["descriptor_layout"]["bindings"];
+
+    for (const YAML::Node& node : bindings) {
+        uint32_t binding = node["binding"].as<uint32_t>();
+        VkDescriptorType descriptorType = getDescriptorType(node["descriptor_type"].as<std::string>());
+
+        // Convert shader stages
+        VkShaderStageFlags stageFlags = 0;
+        if (node["stages"].IsSequence()) {
+            std::vector<std::string> stages;
+            for (const auto& stage : node["stages"]) {
+                stages.push_back(stage.as<std::string>());
+            }
+            stageFlags = getShaderStageFlags(stages);
+        } else {
+            stageFlags = getShaderStageFlags({node["stages"].as<std::string>()});
+        }
+
+        // Add binding to builder
+        builder.addBinding(binding, descriptorType, stageFlags);
+    }
+
+    return builder.build(device);
+}
+
+VkDescriptorSetLayout MaterialManager::getLayout(std::string path) {
+    auto it = m_descriptorLayouts.find(path);
+    if (it != m_descriptorLayouts.end()) {
+        it->second.references++;
+        return it->second.value;
+    }
+
+    fs::path fullPath = resourceBasePath / layoutsPath / path;
+
+    if (!fs::exists(fullPath)) {
+        spdlog::error("Material Descriptor not found: {}", fullPath.string());
+    }
+
+    // Get Material Info
+    YAML::Node yaml = YAML::LoadFile(fullPath);
+    VkDescriptorSetLayout layout = yamlToLayout(yaml, m_vkInfo->device);
+
+    m_descriptorLayouts[path] = RefCount<VkDescriptorSetLayout>{
+        .value = layout,
+        .references = 1,
+    };
+
+    return m_descriptorLayouts[path].value;
+}
+
+MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, VkDevice device) {
     PipelineBuilder builder;
 
     YAML::Node pipeline = yaml["pipeline"];
     YAML::Node depthInfo = pipeline["depth_info"];
+
+    YAML::Node descriptors = pipeline["descriptor_layouts"];
+    std::vector<VkDescriptorSetLayout> layouts;
+    for (const YAML::Node& set : descriptors) {
+        VkDescriptorSetLayout setLayout = materialManager->getLayout(set.as<std::string>());
+        builder.addDescriptorLayout(setLayout);
+        layouts.push_back(setLayout);
+    }
 
     builder.setBlending(getBlendingMode(pipeline["blending"].as<std::string>()));
     builder.setColorFormat(getFormat(pipeline["color_format"].as<std::string>()));
@@ -258,7 +348,7 @@ MaterialInfo yamlToInfo(YAML::Node& yaml, VkDevice device) {
     MaterialInfo output = {
         .pipeline = piplineInfo.pipeline,
         .pipelineLayout = piplineInfo.layout,
-        .descriptorLayouts = {},
+        .descriptorLayouts = layouts,
         .type = MaterialType::Opaque,   // TODO: materialtypes
     };
 
@@ -272,7 +362,7 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
         return &it->second.value;
     }
 
-    fs::path fullPath = resourceBasePath / path;
+    fs::path fullPath = resourceBasePath / pipelinesPath / path;
 
     if (!fs::exists(fullPath)) {
         spdlog::error("Material Descriptor not found: {}", fullPath.string());
@@ -280,7 +370,7 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
 
     // Get Material Info
     YAML::Node yaml = YAML::LoadFile(fullPath);
-    MaterialInfo matInfo = yamlToInfo(yaml, m_vkInfo->device);
+    MaterialInfo matInfo = yamlToInfo(this, yaml, m_vkInfo->device);
 
     m_materialInfos[path] = RefCount<MaterialInfo>{
         .value = matInfo,

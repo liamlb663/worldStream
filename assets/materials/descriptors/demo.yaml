@@ -1,0 +1,17 @@
+descriptor_layout:
+  bindings:
+    - binding: 0
+      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
+      stages: ["vertex", "fragment"]
+
+    - binding: 1
+      descriptor_type: "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER"
+      stages: ["fragment"]
+
+    - binding: 2
+      descriptor_type: "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER"
+      stages: ["compute"]
+
+    - binding: 3
+      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC"
+      stages: ["vertex"]
