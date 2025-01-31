@@ -31,8 +31,6 @@ private:
     std::shared_ptr<VulkanInfo> m_vkInfo;
 
     fs::path resourceBasePath = "assets/materials";
-    fs::path pipelinesPath = "pipelines";
-    fs::path layoutsPath = "descriptors";
 
     std::unordered_map<std::string, RefCount<MaterialInfo>> m_materialInfos;
     std::unordered_map<std::string, RefCount<VkDescriptorSetLayout>> m_descriptorLayouts;

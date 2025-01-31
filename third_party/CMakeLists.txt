@@ -54,6 +54,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(yaml-cpp)
 
+# Add gslang for shader compilation
+find_package(glslang REQUIRED)
+
 # Create an INTERFACE target for third-party libraries
 add_library(third_party INTERFACE)
 
@@ -73,5 +76,6 @@ target_link_libraries(third_party INTERFACE
     vk-bootstrap
     Vulkan::Vulkan
     yaml-cpp::yaml-cpp
+    glslang
 )
 

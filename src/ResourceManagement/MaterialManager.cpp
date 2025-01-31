@@ -5,6 +5,8 @@
 #include "RenderEngine/RenderObjects/DescriptorLayoutBuilder.hpp"
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "RenderEngine/RenderObjects/PipelineBuilder.hpp"
+#include "ShaderLoading.hpp"
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
@@ -171,6 +173,28 @@ VkCompareOp getCompareOp(std::string input) {
     }
 }
 
+VkShaderStageFlagBits getShaderStageFlagBit(std::string stage) {
+    std::unordered_map<std::string, VkShaderStageFlagBits> stageMap = {
+        {"vertex", VK_SHADER_STAGE_VERTEX_BIT},
+        {"fragment", VK_SHADER_STAGE_FRAGMENT_BIT},
+        {"compute", VK_SHADER_STAGE_COMPUTE_BIT},
+        {"geometry", VK_SHADER_STAGE_GEOMETRY_BIT},
+        {"tessellation_control", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT},
+        {"tessellation_evaluation", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT},
+        {"all_graphics", VK_SHADER_STAGE_ALL_GRAPHICS},
+        {"all", VK_SHADER_STAGE_ALL},
+    };
+
+    auto it = stageMap.find(stage);
+    if (it != stageMap.end()) {
+        return it->second;
+    } else {
+        spdlog::error("Shader stage not recognized: {}", stage);
+        return VK_SHADER_STAGE_ALL;
+    }
+}
+
+
 VkShaderStageFlags getShaderStageFlags(const std::vector<std::string>& stages) {
     std::unordered_map<std::string, VkShaderStageFlagBits> stageMap = {
         {"vertex", VK_SHADER_STAGE_VERTEX_BIT},
@@ -287,7 +311,7 @@ VkDescriptorSetLayout MaterialManager::getLayout(std::string path) {
         return it->second.value;
     }
 
-    fs::path fullPath = resourceBasePath / layoutsPath / path;
+    fs::path fullPath = resourceBasePath / path;
 
     if (!fs::exists(fullPath)) {
         spdlog::error("Material Descriptor not found: {}", fullPath.string());
@@ -305,20 +329,38 @@ VkDescriptorSetLayout MaterialManager::getLayout(std::string path) {
     return m_descriptorLayouts[path].value;
 }
 
-MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, VkDevice device) {
+MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, fs::path& basePath, std::string& folder, VkDevice device) {
     PipelineBuilder builder;
 
     YAML::Node pipeline = yaml["pipeline"];
     YAML::Node depthInfo = pipeline["depth_info"];
 
+    // Descriptors
     YAML::Node descriptors = pipeline["descriptor_layouts"];
     std::vector<VkDescriptorSetLayout> layouts;
     for (const YAML::Node& set : descriptors) {
-        VkDescriptorSetLayout setLayout = materialManager->getLayout(set.as<std::string>());
+        VkDescriptorSetLayout setLayout = materialManager->getLayout(
+                fmt::format("{}/{}", folder, set.as<std::string>())
+        );
         builder.addDescriptorLayout(setLayout);
         layouts.push_back(setLayout);
     }
 
+    // Shaders
+    YAML::Node shaders = pipeline["shaders"];
+    std::vector<VkShaderModule> shaderModules;
+    for (const YAML::Node& shader : shaders) {
+        fs::path shaderPath = basePath / folder / shader["module"].as<std::string>();
+
+        std::string shaderStage = shader["stage"].as<std::string>();
+        VkShaderStageFlagBits stage = getShaderStageFlagBit(shaderStage);
+
+        VkShaderModule shaderModule = LoadAndCompileShader(device, shaderPath, stage);
+        builder.addShader(shaderModule, stage);
+    }
+
+
+    // Pipeline
     builder.setBlending(getBlendingMode(pipeline["blending"].as<std::string>()));
     builder.setColorFormat(getFormat(pipeline["color_format"].as<std::string>()));
     builder.setDepthFormat(Config::depthFormat);
@@ -352,6 +394,10 @@ MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, VkDe
         .type = MaterialType::Opaque,   // TODO: materialtypes
     };
 
+    for (VkShaderModule module : shaderModules) {
+        vkDestroyShaderModule(device, module, nullptr);
+    }
+
     return output;
 }
 
@@ -362,7 +408,8 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
         return &it->second.value;
     }
 
-    fs::path fullPath = resourceBasePath / pipelinesPath / path;
+    fs::path materialFolder = resourceBasePath / path;
+    fs::path fullPath = materialFolder / "pipeline.yaml";
 
     if (!fs::exists(fullPath)) {
         spdlog::error("Material Descriptor not found: {}", fullPath.string());
@@ -370,7 +417,7 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
 
     // Get Material Info
     YAML::Node yaml = YAML::LoadFile(fullPath);
-    MaterialInfo matInfo = yamlToInfo(this, yaml, m_vkInfo->device);
+    MaterialInfo matInfo = yamlToInfo(this, yaml, resourceBasePath, path, m_vkInfo->device);
 
     m_materialInfos[path] = RefCount<MaterialInfo>{
         .value = matInfo,

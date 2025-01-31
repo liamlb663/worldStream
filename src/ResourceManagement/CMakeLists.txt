@@ -4,6 +4,7 @@
 set(RESOURCE_MANAGEMENT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MaterialManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ShaderLoading.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Image.cpp

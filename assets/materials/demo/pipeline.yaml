@@ -1,15 +1,15 @@
 pipeline:
-  name: "Basic"
+  name: "Demo"
 
   # Shaders
   shaders:
-    - module: "basic/vertex.spv"
+    - module: "shader.vert"
       stage: "vertex"
-    - module: "basic/fragment.spv"
+    - module: "shader.frag"
       stage: "fragment"
 
   # Blending Mode
-  blending: "none" # Options: none, additive, alpha
+  blending: "None"
 
   # Formats
   color_format: "VK_FORMAT_R8G8B8A8_UNORM"
@@ -19,9 +19,9 @@ pipeline:
   multisampling: "VK_SAMPLE_COUNT_1_BIT"
 
   # Rasterization and Culling
-  polygon_mode: "fill"  # Options: fill, line, point
-  cull_mode: "back"     # Options: none, front, back, both
-  front_face: "clockwise" # Options: clockwise, counter-clockwise
+  polygon_mode: "fill"
+  cull_mode: "back"
+  front_face: "clockwise"
 
   # Input Topology
   topology: "triangle-list"
@@ -34,12 +34,14 @@ pipeline:
 
   # Descriptor Layouts
   descriptor_layouts:
-    - "layout_ubo" # Descriptor set layout names or IDs
-    - "layout_sampler"
+    - "demoDescriptors.yaml"
 
   # Push Constants
   push_constants:
-    - stage: "vertex"
+    - stages: ["vertex", "fragment"]
       size: 64
       offset: 0
+    - stages: ["vertex"]
+      size: 64
+      offset: 64
 

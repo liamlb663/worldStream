@@ -150,7 +150,7 @@ bool Game::initialize(int argc, char* argv[]) {
 void Game::run() {
     spdlog::info("Running Game");
 
-    //m_resources.getMaterialManager()->getInfo("demo.yaml");
+    m_resources.getMaterialManager()->getInfo("demo");
 
     std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
 
