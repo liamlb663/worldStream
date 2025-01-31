@@ -19,7 +19,10 @@ public:
     void shutdown();
 
     VkDescriptorSetLayout getLayout(std::string path);
+    void dropLayout(VkDescriptorSetLayout layout);
+
     MaterialInfo* getInfo(std::string path);
+    void dropMaterialInfo(MaterialInfo* info);
 
 private:
     template <typename ResourceType>

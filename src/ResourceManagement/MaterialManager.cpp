@@ -426,3 +426,29 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
 
     return &m_materialInfos[path].value;
 }
+
+void MaterialManager::dropMaterialInfo(MaterialInfo* info) {
+    auto it = m_materialInfos.find(path);
+    if (it != m_materialInfos.end()) {
+        it->second.references++;
+        return &it->second.value;
+    }
+
+    fs::path materialFolder = resourceBasePath / path;
+    fs::path fullPath = materialFolder / "pipeline.yaml";
+
+    if (!fs::exists(fullPath)) {
+        spdlog::error("Material Descriptor not found: {}", fullPath.string());
+    }
+
+    // Get Material Info
+    YAML::Node yaml = YAML::LoadFile(fullPath);
+    MaterialInfo matInfo = yamlToInfo(this, yaml, resourceBasePath, path, m_vkInfo->device);
+
+    m_materialInfos[path] = RefCount<MaterialInfo>{
+        .value = matInfo,
+        .references = 1,
+    };
+
+    return &m_materialInfos[path].value;
+}
