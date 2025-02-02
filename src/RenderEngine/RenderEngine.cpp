@@ -218,6 +218,11 @@ void RenderEngine::shutdown() {
     m_mainDeletionQueue.flush();
 }
 
+void RenderEngine::renderObjects(Size geoId, std::vector<RenderObject> objects) {
+    m_frameManager->addRenderObjects(geoId, objects);
+
+}
+
 void RenderEngine::setRenderGraph(std::shared_ptr<RenderGraph> graph) {
     m_frameManager->setRenderGraph(graph);
 }
@@ -226,5 +231,9 @@ void RenderEngine::renderFrame() {
     FrameSubmitInfo info = m_frameManager->getNextFrameInfo();
     m_commandSubmitter->frameSubmit(info);
     m_frameManager->presentFrame(info);
+}
+
+void RenderEngine::waitOnGpu() {
+    vkDeviceWaitIdle(m_vkInfo->device);
 }
 

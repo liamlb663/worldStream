@@ -72,3 +72,8 @@ void FrameData::changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
     commandPool.resizeBuffers(renderGraph->nodes.size());
 }
 
+void FrameData::addRenderObjects(Size geoId, std::vector<RenderObject> objects) {
+    renderContext.geometries[geoId].insert(
+            renderContext.geometries[geoId].end(), objects.begin(), objects.end());
+}
+

@@ -113,8 +113,6 @@ FrameSubmitInfo FrameManager::getNextFrameInfo() {
         .swapchainImage = swapchainImage,
     };
 
-    m_frameNumber++;
-
     return info;
 }
 
@@ -136,8 +134,12 @@ void FrameManager::presentFrame(FrameSubmitInfo info) {
 
     VkResult presentResult = vkQueuePresentKHR(m_vkInfo->graphicsQueue, &presentInfo);
     if (presentResult == VK_ERROR_OUT_OF_DATE_KHR) {
+        spdlog::error("VK_ERROR_OUT_OF_DATE_KHR hit during present");
         //TODO Resize
     }
+
+    m_frameNumber++;
+
 }
 
 void FrameManager::setRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
@@ -155,3 +157,7 @@ void FrameManager::waitOnFrames() {
     }
 }
 
+void FrameManager::addRenderObjects(Size geoId, std::vector<RenderObject> objects) {
+    m_frameData[m_frameNumber % Config::framesInFlight]
+        .addRenderObjects(geoId, objects);
+}

@@ -9,6 +9,7 @@
 #include "RenderEngine/InternalResources/Semaphore.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
+#include "../RenderObjects/RenderObject.hpp"
 
 struct RecordInfo;
 
@@ -20,8 +21,7 @@ struct RecordInfo;
 class RenderGraph;
 struct RenderInfo {
     std::vector<std::shared_ptr<Image>> images;
-    // TODO: void* is just a placeholder for the render object
-    std::vector<std::vector<void*>> geometries;
+    std::vector<std::vector<RenderObject>> geometries;
     std::vector<Semaphore> semaphores;
 
     static RenderInfo create(
@@ -35,7 +35,7 @@ struct RenderInfo {
 class RenderGraph {
 public:
     std::vector<ImageInformation> images;
-    std::vector<GeometryInfomation> geometries;
+    std::vector<GeometryInformation> geometries;
 
     std::vector<RenderNode> nodes;
     std::vector<std::vector<Size>> adjacency;
@@ -48,6 +48,8 @@ public:
             VkImageUsageFlags usage,
             std::string name
     );
+
+    Size addGeometry(std::string name);
 
     Size createNode(
             std::string name,

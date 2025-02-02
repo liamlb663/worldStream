@@ -37,5 +37,7 @@ private:
 
     std::unordered_map<std::string, RefCount<MaterialInfo>> m_materialInfos;
     std::unordered_map<std::string, RefCount<VkDescriptorSetLayout>> m_descriptorLayouts;
+
+    void destroyMaterialInfo(MaterialInfo* info);
 };
 

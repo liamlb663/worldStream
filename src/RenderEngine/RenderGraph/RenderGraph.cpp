@@ -5,6 +5,7 @@
 
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
+#include <string>
 
 RenderInfo RenderInfo::create(
         std::shared_ptr<VulkanInfo> vkInfo,
@@ -13,7 +14,7 @@ RenderInfo RenderInfo::create(
 ) {
     RenderInfo info = {
         .images = std::vector<std::shared_ptr<Image>>(renderGraph->images.size()),
-        .geometries = std::vector<std::vector<void*>>(renderGraph->geometries.size()),
+        .geometries = std::vector<std::vector<RenderObject>>(renderGraph->geometries.size()),
         .semaphores = std::vector<Semaphore>(renderGraph->nodes.size()),
     };
 
@@ -82,6 +83,16 @@ Size RenderGraph::addImage(
     };
 
     images.push_back(info);
+    return info.id;
+}
+
+Size RenderGraph::addGeometry(std::string name) {
+    GeometryInformation info = {
+        .id = geometries.size(),
+        .name = name,
+    };
+
+    geometries.push_back(info);
     return info.id;
 }
 

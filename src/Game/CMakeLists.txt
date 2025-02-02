@@ -3,6 +3,7 @@
 # Add the engine source files
 set(GAME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Game.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderGraphSetup.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

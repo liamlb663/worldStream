@@ -16,7 +16,14 @@ bool MaterialManager::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
 }
 
 void MaterialManager::shutdown() {
-
+    // Clear all images
+    for (auto& pair : m_materialInfos) {
+        auto& refCount = pair.second;
+        if (refCount.references > 0) {
+            destroyMaterialInfo(&refCount.value);
+        }
+    }
+    m_materialInfos.clear();
 }
 
 BlendingMode getBlendingMode(std::string input) {
@@ -46,6 +53,7 @@ VkFormat getFormat(std::string input) {
         {"D24_UNORM_S8_UINT", VK_FORMAT_D24_UNORM_S8_UINT},
         {"R8G8B8_UNORM", VK_FORMAT_R8G8B8_UNORM},
         {"VK_FORMAT_R8G8B8A8_UNORM", VK_FORMAT_R8G8B8A8_UNORM},
+        {"VK_FORMAT_R16G16B16A16_SFLOAT", VK_FORMAT_R16G16B16A16_SFLOAT},
     };
 
     auto it = map.find(input);
@@ -356,9 +364,10 @@ MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, fs::
         VkShaderStageFlagBits stage = getShaderStageFlagBit(shaderStage);
 
         VkShaderModule shaderModule = LoadAndCompileShader(device, shaderPath, stage);
-        builder.addShader(shaderModule, stage);
-    }
 
+        builder.addShader(shaderModule, stage);
+        shaderModules.push_back(shaderModule);
+    }
 
     // Pipeline
     builder.setBlending(getBlendingMode(pipeline["blending"].as<std::string>()));
@@ -427,28 +436,56 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
     return &m_materialInfos[path].value;
 }
 
+void MaterialManager::destroyMaterialInfo(MaterialInfo* info) {
+    vkDestroyPipeline(m_vkInfo->device, info->pipeline, nullptr);
+    vkDestroyPipelineLayout(m_vkInfo->device, info->pipelineLayout, nullptr);
+
+    for (VkDescriptorSetLayout layout : info->descriptorLayouts) {
+        this->dropLayout(layout);
+    }
+}
+
+bool compareMaterialInfo(MaterialInfo a, MaterialInfo b) {
+   return a.pipeline == b.pipeline &&
+          a.pipelineLayout == b.pipelineLayout &&
+          a.type == b.type &&
+          a.descriptorLayouts == b.descriptorLayouts;
+}
+
 void MaterialManager::dropMaterialInfo(MaterialInfo* info) {
-    auto it = m_materialInfos.find(path);
-    if (it != m_materialInfos.end()) {
-        it->second.references++;
-        return &it->second.value;
+    for (auto it = m_materialInfos.begin(); it != m_materialInfos.end(); ++it) {
+        auto sharedResource = it->second.value;
+        if (compareMaterialInfo(sharedResource, *info)) {
+            // Decrement reference count
+            it->second.references--;
+
+            if (it->second.references <= 0) {
+                // If reference count is zero, apply custom shutdown logic
+                destroyMaterialInfo(info);
+                m_materialInfos.erase(it);
+            }
+            return;
+        }
     }
 
-    fs::path materialFolder = resourceBasePath / path;
-    fs::path fullPath = materialFolder / "pipeline.yaml";
+    spdlog::error("Image not found for dropping!");
+}
 
-    if (!fs::exists(fullPath)) {
-        spdlog::error("Material Descriptor not found: {}", fullPath.string());
+void MaterialManager::dropLayout(VkDescriptorSetLayout layout) {
+    for (auto it = m_descriptorLayouts.begin(); it != m_descriptorLayouts.end(); ++it) {
+        auto sharedResource = it->second.value;
+        if (sharedResource == layout) {
+            // Decrement reference count
+            it->second.references--;
+
+            if (it->second.references <= 0) {
+                // If reference count is zero, apply custom shutdown logic
+                vkDestroyDescriptorSetLayout(m_vkInfo->device, layout, nullptr);
+                m_descriptorLayouts.erase(it);
+            }
+            return;
+        }
     }
 
-    // Get Material Info
-    YAML::Node yaml = YAML::LoadFile(fullPath);
-    MaterialInfo matInfo = yamlToInfo(this, yaml, resourceBasePath, path, m_vkInfo->device);
-
-    m_materialInfos[path] = RefCount<MaterialInfo>{
-        .value = matInfo,
-        .references = 1,
-    };
-
-    return &m_materialInfos[path].value;
+    spdlog::error("Image not found for dropping!");
 }

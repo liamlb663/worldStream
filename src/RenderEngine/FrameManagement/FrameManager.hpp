@@ -2,12 +2,14 @@
 
 #pragma once
 
-#include "../VulkanInfo.hpp"
 #include "FrameData.hpp"
-#include "RenderEngine/FrameSubmitInfo.hpp"
-#include "RenderEngine/RenderGraph/RenderGraph.hpp"
 #include "SwapchainManager.hpp"
 #include "Window.hpp"
+
+#include "../VulkanInfo.hpp"
+#include "../FrameSubmitInfo.hpp"
+#include "../RenderGraph/RenderGraph.hpp"
+#include "../RenderObjects/RenderObject.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -25,6 +27,8 @@ public:
     SwapchainImage getSwapchainImage(U32 index);
     FrameSubmitInfo getNextFrameInfo();
     void presentFrame(FrameSubmitInfo info);
+
+    void addRenderObjects(Size geoId, std::vector<RenderObject> objects);
 
     void setRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
 

@@ -22,7 +22,7 @@ struct RenderObject {
     U32 startIndex;
     Buffer* indexBuffer;
 
-    std::shared_ptr<MaterialData> material;
+    MaterialData* material;
 };
 
 class IRenderable {

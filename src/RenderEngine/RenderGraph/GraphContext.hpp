@@ -27,7 +27,7 @@ struct ImageInformation {
     std::string name;
 };
 
-struct GeometryInfomation {
+struct GeometryInformation {
     Size id;
     std::string name;
 };

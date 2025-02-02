@@ -11,7 +11,8 @@
 #include "../InternalResources/CommandPool.hpp"
 #include "../InternalResources/Fence.hpp"
 #include "../InternalResources/Semaphore.hpp"
-#include "RenderEngine/RenderGraph/RenderGraph.hpp"
+#include "../RenderGraph/RenderGraph.hpp"
+#include "../RenderObjects/RenderObject.hpp"
 
 #include <memory>
 #include <vulkan/vulkan.h>
@@ -23,6 +24,8 @@ public:
 
     bool regenerate(Vector<U32, 2> size);
     void changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
+
+    void addRenderObjects(Size geoId, std::vector<RenderObject> objects);
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;

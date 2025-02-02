@@ -26,7 +26,7 @@ struct DescriptorInfo {
 };
 
 struct MaterialData {
-    std::shared_ptr<MaterialInfo> pipeline;
+    MaterialInfo* pipeline;
     std::vector<DescriptorInfo> descriptors;
 
 };
