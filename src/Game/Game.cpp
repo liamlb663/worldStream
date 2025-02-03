@@ -49,15 +49,21 @@ void Game::run() {
 
     m_graphics.renderObjects(0, {obj});
     m_graphics.renderFrame();
-    sleep(1);
 
-    m_graphics.waitOnGpu();
-    m_resources.getMaterialManager()->dropMaterialInfo(demoMaterialInfo);
+    m_graphics.renderObjects(0, {obj});
+    m_graphics.renderFrame();
+
+    m_graphics.renderObjects(0, {obj});
+    m_graphics.renderFrame();
+
+    m_graphics.renderObjects(0, {obj});
+    m_graphics.renderFrame();
 }
 
 void Game::shutdown() {
     spdlog::info("Shutting Down Game");
 
+    m_graphics.waitOnGpu();
     m_resources.shutdown();
     m_graphics.shutdown();
 }
