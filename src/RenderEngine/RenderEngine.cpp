@@ -29,6 +29,7 @@ bool RenderEngine::initVulkan() {
 
     auto instanceReturn = builder.set_app_name("World Streaming Engine")
         .add_validation_feature_enable(VkValidationFeatureEnableEXT::VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT)
+        .add_validation_feature_enable(VkValidationFeatureEnableEXT::VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT)
         .request_validation_layers(Config::useValidationLayers)
         .set_debug_callback(Debug::CustomDebugCallback)
         .require_api_version(1, 3, 0)

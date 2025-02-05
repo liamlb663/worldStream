@@ -119,13 +119,16 @@ FrameSubmitInfo FrameManager::getNextFrameInfo() {
 void FrameManager::presentFrame(FrameSubmitInfo info) {
     VkSwapchainKHR swapchain = m_swapchain->getSwapchain();
 
-    VkSemaphore swapchainSemaphore = info.frameData.swapchainSemaphore.get();
+    std::array<VkSemaphore, 2> semaphores = {
+        info.frameData.swapchainSemaphore.get(),
+        info.frameData.renderContext.semaphores.back().get(),
+    };
 
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = nullptr,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &swapchainSemaphore,
+        .waitSemaphoreCount = 2,
+        .pWaitSemaphores = semaphores.data(),
         .swapchainCount = 1,
         .pSwapchains = &swapchain,
         .pImageIndices = &info.swapchainImage.index,
@@ -139,7 +142,6 @@ void FrameManager::presentFrame(FrameSubmitInfo info) {
     }
 
     m_frameNumber++;
-
 }
 
 void FrameManager::setRenderGraph(std::shared_ptr<RenderGraph> renderGraph) {
