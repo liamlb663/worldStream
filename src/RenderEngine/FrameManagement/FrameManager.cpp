@@ -48,6 +48,7 @@ void FrameManager::shutdown() {
 
 bool waitAndResetFences(VkDevice device, FrameData& frame, Size frameNumber) {
     VkFence renderFence = frame.renderFence.get();
+
     VkResult res = vkWaitForFences(device, 1, &renderFence, VK_TRUE, UINT64_MAX);
     if (!VkUtils::checkVkResult(res,
                 fmt::format("Waiting on Frame {}'s render fence failed!", frameNumber))) {
@@ -63,7 +64,6 @@ U32 FrameManager::aquireNextSwap() {
     U32 index = 0;
 
     FrameData frame = m_frameData[m_frameNumber % Config::framesInFlight];
-    Semaphore semaphore = frame.swapchainSemaphore;
 
     bool waitSuccess = waitAndResetFences(
             m_vkInfo->device,
@@ -76,6 +76,8 @@ U32 FrameManager::aquireNextSwap() {
                 m_frameNumber % Config::framesInFlight);
         return -1;
     }
+
+    Semaphore semaphore = frame.swapchainSemaphore;
 
     bool swapSuccess =
         m_swapchain->getNextImage(semaphore.get(), &index);
@@ -119,15 +121,14 @@ FrameSubmitInfo FrameManager::getNextFrameInfo() {
 void FrameManager::presentFrame(FrameSubmitInfo info) {
     VkSwapchainKHR swapchain = m_swapchain->getSwapchain();
 
-    std::array<VkSemaphore, 2> semaphores = {
-        info.frameData.swapchainSemaphore.get(),
+    std::array<VkSemaphore, 1> semaphores = {
         info.frameData.renderContext.semaphores.back().get(),
     };
 
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = nullptr,
-        .waitSemaphoreCount = 2,
+        .waitSemaphoreCount = static_cast<U32>(semaphores.size()),
         .pWaitSemaphores = semaphores.data(),
         .swapchainCount = 1,
         .pSwapchains = &swapchain,

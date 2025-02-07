@@ -76,9 +76,11 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
 
     std::vector<VkCommandBuffer>& cmdBuffers = info.frameData.commandPool.getBuffers();
 
-    VkPipelineStageFlags flags = 0;
-    flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    VkPipelineStageFlags pipelineStageFlags = 0;
+    //pipelineStageFlags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    //pipelineStageFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    //pipelineStageFlags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+    pipelineStageFlags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     for (Size i = 0; i < numNodes; i++) {
         VkCommandBuffer cmd = cmdBuffers[i];
@@ -128,22 +130,25 @@ void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {
             return;
         }
 
+        VkFence renderFence = nullptr;
+        if (i == numNodes - 1) {
+            dependencys.push_back(frame.swapchainSemaphore.get());
+            renderFence = info.frameData.renderFence.get();
+        }
+
+        std::vector<VkPipelineStageFlags> waitStages(dependencys.size(), pipelineStageFlags);
+
         VkSubmitInfo submitInfo{
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
             .pNext = nullptr,
             .waitSemaphoreCount = static_cast<U32>(dependencys.size()),
             .pWaitSemaphores = dependencys.data(),
-            .pWaitDstStageMask = &flags,
+            .pWaitDstStageMask = waitStages.data(),
             .commandBufferCount = 1,
             .pCommandBuffers = &cmdBuffers[i],
             .signalSemaphoreCount = 1,
             .pSignalSemaphores = &signalSemaphore,
         };
-
-        VkFence renderFence = nullptr;
-        if (i == numNodes - 1) {
-            renderFence = info.frameData.renderFence.get();
-        }
 
         res = vkQueueSubmit(m_vkInfo->graphicsQueue, 1, &submitInfo, renderFence);
         if (!VkUtils::checkVkResult(res, "Failed to submit transfer command buffer.")) {
@@ -164,7 +169,7 @@ StageAccessMasks getStageAccessMasks(VkImageLayout layout) {
     switch (layout) {
         case VK_IMAGE_LAYOUT_UNDEFINED:
             masks.stageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-            masks.accessMask = 0; // No previous access
+            masks.accessMask = VK_ACCESS_2_NONE; // No previous access
             break;
 
         case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
