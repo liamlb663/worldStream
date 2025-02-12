@@ -19,6 +19,7 @@ bool Game::initialize(int argc, char* argv[]) {
 
     m_graphics.initialize();
     m_resources.initialize(m_graphics.getInfo(), m_graphics.getSubmitter());
+    m_input = Input::create(m_graphics.getGLFWwindow());
 
     m_renderGraph = setupRenderGraph();
 
@@ -47,21 +48,23 @@ void Game::run() {
     std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
     m_resources.dropImage(img);
 
-    m_graphics.renderObjects(0, {obj});
-    m_graphics.renderFrame();
+    m_input->bindAction("Quit", GLFW_KEY_Q);
 
-    m_graphics.renderObjects(0, {obj});
-    m_graphics.renderFrame();
+    while (!m_input->shouldClose()) {
+        m_input->update();
 
-    m_graphics.renderObjects(0, {obj});
-    m_graphics.renderFrame();
+        if (m_input->isPressed("Quit"))
+            m_input->close();
 
-    m_graphics.renderObjects(0, {obj});
-    m_graphics.renderFrame();
+        m_graphics.renderObjects(0, {obj});
+        m_graphics.renderFrame();
+    }
 }
 
 void Game::shutdown() {
     spdlog::info("Shutting Down Game");
+
+    delete m_input;
 
     m_graphics.waitOnGpu();
     m_resources.shutdown();

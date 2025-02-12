@@ -30,6 +30,7 @@ public:
 
     void addRenderObjects(Size geoId, std::vector<RenderObject> objects);
 
+    GLFWwindow* getGLFWwindow() const { return m_window->getGLFWwindow(); };
     void setRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
 
     void waitOnFrames();

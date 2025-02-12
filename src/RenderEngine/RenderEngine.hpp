@@ -19,6 +19,7 @@ public:
 
     std::shared_ptr<VulkanInfo> getInfo() const;
     std::shared_ptr<CommandSubmitter> getSubmitter() const;
+    GLFWwindow* getGLFWwindow() const { return m_frameManager->getGLFWwindow(); };
 
     void renderObjects(Size geoId, std::vector<RenderObject> objects);
     void setRenderGraph(std::shared_ptr<RenderGraph> graph);
