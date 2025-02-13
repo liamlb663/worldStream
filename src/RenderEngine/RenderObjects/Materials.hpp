@@ -28,6 +28,5 @@ struct DescriptorInfo {
 struct MaterialData {
     MaterialInfo* pipeline;
     std::vector<DescriptorInfo> descriptors;
-
 };
 

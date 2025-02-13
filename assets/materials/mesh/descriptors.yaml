@@ -1,0 +1,5 @@
+descriptor_layout:
+  bindings:
+    - binding: 0
+      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
+      stages: ["vertex", "fragment"]

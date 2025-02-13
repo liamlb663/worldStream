@@ -20,7 +20,9 @@ struct Vertex {
 struct RenderObject {
     U32 indexCount;
     U32 startIndex;
+
     Buffer* indexBuffer;
+    Buffer* vertexBuffer;
 
     MaterialData* material;
 };
