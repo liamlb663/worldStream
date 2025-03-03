@@ -32,7 +32,8 @@ bool DescriptorBuffer::init(std::shared_ptr<VulkanInfo> vkInfo, Size size) {
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO;
 
     VmaAllocationCreateFlags allocFlags =
-        VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        VMA_ALLOCATION_CREATE_MAPPED_BIT |
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
     bool bufferReturn = m_buffer.init(
             vkInfo,

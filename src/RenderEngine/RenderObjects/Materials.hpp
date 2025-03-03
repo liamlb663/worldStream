@@ -5,7 +5,6 @@
 #include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 #include <vulkan/vulkan.h>
 
-#include <memory>
 #include <vector>
 
 enum MaterialType {
@@ -21,7 +20,7 @@ struct MaterialInfo {
 };
 
 struct DescriptorInfo {
-    std::shared_ptr<DescriptorBuffer> buffer;
+    DescriptorBuffer* buffer;
     U32 descriptorIndex;
 };
 

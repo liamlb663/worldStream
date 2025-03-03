@@ -24,6 +24,9 @@ public:
     MaterialInfo* getInfo(std::string path);
     void dropMaterialInfo(MaterialInfo* info);
 
+    MaterialData getData(std::string path);
+    void dropMaterialData(MaterialData* data);
+
 private:
     template <typename ResourceType>
     struct RefCount {

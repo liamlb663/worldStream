@@ -489,3 +489,17 @@ void MaterialManager::dropLayout(VkDescriptorSetLayout layout) {
 
     spdlog::error("Image not found for dropping!");
 }
+
+MaterialData MaterialManager::getData(std::string path) {
+    MaterialData data = {
+
+    };
+
+    return data;
+}
+
+void MaterialManager::dropMaterialData(MaterialData* data) {
+
+}
+
+

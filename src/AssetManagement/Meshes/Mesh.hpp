@@ -1,4 +1,4 @@
-// src/ResourceManagement/RenderResources/Image.hpp
+// src/AssetManagement/Meshes/Meshes.hpp
 
 #pragma once
 
@@ -8,6 +8,8 @@
 
 #include <vector>
 
+namespace assets {
+
 struct Surface {
     U32 indexStart;
     U32 indexCount;
@@ -16,11 +18,24 @@ struct Surface {
 
 struct Mesh {
     std::vector<Surface> surfaces;
-    std::vector<MaterialData> m_materials;
+    std::vector<MaterialData> materials;
     Buffer indexBuffer;
     Buffer vertexBuffer;
 
     DescriptorBuffer descriptor;
     Buffer materialBuffer;
+
+    void destroyMesh() {
+        surfaces.clear();
+        materials.clear();  // TODO: Doesn't actually unload materials
+
+        indexBuffer.shutdown();
+        vertexBuffer.shutdown();
+
+        descriptor.shutdown();
+        materialBuffer.shutdown();
+    }
 };
 
+
+}

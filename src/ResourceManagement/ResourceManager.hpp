@@ -8,10 +8,12 @@
 #include "RenderResources/Buffer.hpp"
 #include "RenderResources/Image.hpp"
 #include "ResourceManagement/MaterialManager.hpp"
+#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 
 #include <memory>
 #include <unordered_map>
 #include <filesystem>
+#include <expected>
 
 namespace fs = std::filesystem;
 
@@ -26,16 +28,21 @@ public:
     void dropImage(std::shared_ptr<Image> image);
 
     // Buffers
-    std::shared_ptr<Buffer> createStagingBuffer(Size size);
-    std::shared_ptr<Buffer> createVertexBuffer(Size size);
-    std::shared_ptr<Buffer> createUniformBuffer(Size size);
-    std::shared_ptr<Buffer> createStorageBuffer(Size size);
+    std::expected<Buffer, U32> createStagingBuffer(Size size);
+    std::expected<Buffer, U32> createIndexBuffer(Size size);
+    std::expected<Buffer, U32> createVertexBuffer(Size size);
+    std::expected<Buffer, U32> createUniformBuffer(Size size);
+    std::expected<Buffer, U32> createStorageBuffer(Size size);
 
-    std::shared_ptr<Buffer> createBuffer(
+    std::expected<Buffer, U32> createBuffer(
             Size size,
             VkBufferUsageFlags bufferUsage,
             VmaMemoryUsage memoryUsage,
             VmaAllocationCreateFlags allocFlags
+    );
+
+    std::expected<DescriptorBuffer, U32> createDescriptorBuffer(
+            Size size
     );
 
     MaterialManager* getMaterialManager() { return &m_materialManager; };

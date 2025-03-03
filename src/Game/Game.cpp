@@ -1,6 +1,8 @@
 // src/Game/Game.cpp
 
 #include "Game.hpp"
+#include "AssetManagement/Meshes/Mesh.hpp"
+#include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "Game/RenderGraphSetup.hpp"
 
 #include "RenderEngine/RenderObjects/Materials.hpp"
@@ -42,8 +44,11 @@ void Game::run() {
         .indexCount = 3,
         .startIndex = 0,
         .indexBuffer = nullptr,
+        .vertexBuffer = nullptr,
         .material = &data,
     };
+
+    assets::Mesh plane = createPlane(&m_resources);
 
     std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
     m_resources.dropImage(img);

@@ -18,6 +18,7 @@ add_subdirectory(Core)
 add_subdirectory(Game)
 add_subdirectory(RenderEngine)
 add_subdirectory(ResourceManagement)
+add_subdirectory(AssetManagement)
 
 # Main executable
 add_executable(worldStream ${ALL_SOURCES})
