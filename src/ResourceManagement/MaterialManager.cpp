@@ -284,7 +284,7 @@ std::vector<VkPushConstantRange> parsePushConstants(YAML::Node& yaml) {
     return pushConstants;
 }
 
-VkDescriptorSetLayout yamlToLayout(YAML::Node& yaml, VkDevice device) {
+DescriptorLayoutInfo yamlToLayout(YAML::Node& yaml, VkDevice device) {
     DescriptorLayoutBuilder builder;
 
     YAML::Node bindings = yaml["descriptor_layout"]["bindings"];
@@ -306,13 +306,13 @@ VkDescriptorSetLayout yamlToLayout(YAML::Node& yaml, VkDevice device) {
         }
 
         // Add binding to builder
-        builder.addBinding(binding, descriptorType, stageFlags);
+        builder.addBinding(binding, descriptorType, stageFlags, 0, 0);  // HACK: Dummy values for size/align
     }
 
-    return builder.build(device);
+    return builder.build(device).value();   // HACK: me when I unwrap()
 }
 
-VkDescriptorSetLayout MaterialManager::getLayout(std::string path) {
+DescriptorLayoutInfo MaterialManager::getLayout(std::string path) {
     auto it = m_descriptorLayouts.find(path);
     if (it != m_descriptorLayouts.end()) {
         it->second.references++;
@@ -327,9 +327,9 @@ VkDescriptorSetLayout MaterialManager::getLayout(std::string path) {
 
     // Get Material Info
     YAML::Node yaml = YAML::LoadFile(fullPath);
-    VkDescriptorSetLayout layout = yamlToLayout(yaml, m_vkInfo->device);
+    DescriptorLayoutInfo layout = yamlToLayout(yaml, m_vkInfo->device);
 
-    m_descriptorLayouts[path] = RefCount<VkDescriptorSetLayout>{
+    m_descriptorLayouts[path] = RefCount<DescriptorLayoutInfo>{
         .value = layout,
         .references = 1,
     };
@@ -345,9 +345,9 @@ MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, fs::
 
     // Descriptors
     YAML::Node descriptors = pipeline["descriptor_layouts"];
-    std::vector<VkDescriptorSetLayout> layouts;
+    std::vector<DescriptorLayoutInfo> layouts;
     for (const YAML::Node& set : descriptors) {
-        VkDescriptorSetLayout setLayout = materialManager->getLayout(
+        DescriptorLayoutInfo setLayout = materialManager->getLayout(
                 fmt::format("{}/{}", folder, set.as<std::string>())
         );
         builder.addDescriptorLayout(setLayout);
@@ -440,8 +440,8 @@ void MaterialManager::destroyMaterialInfo(MaterialInfo* info) {
     vkDestroyPipeline(m_vkInfo->device, info->pipeline, nullptr);
     vkDestroyPipelineLayout(m_vkInfo->device, info->pipelineLayout, nullptr);
 
-    for (VkDescriptorSetLayout layout : info->descriptorLayouts) {
-        this->dropLayout(layout);
+    for (DescriptorLayoutInfo layout : info->descriptorLayouts) {
+        this->dropLayout(&layout);
     }
 }
 
@@ -468,38 +468,68 @@ void MaterialManager::dropMaterialInfo(MaterialInfo* info) {
         }
     }
 
-    spdlog::error("Image not found for dropping!");
+    spdlog::error("MaterialInfo not found for dropping!");
 }
 
-void MaterialManager::dropLayout(VkDescriptorSetLayout layout) {
+void MaterialManager::destroyDescriptorLayoutInfo(DescriptorLayoutInfo* info) {
+    vkDestroyDescriptorSetLayout(m_vkInfo->device, info->layout, nullptr);
+    info->bindings.clear();
+}
+
+void MaterialManager::dropLayout(DescriptorLayoutInfo* layout) {
     for (auto it = m_descriptorLayouts.begin(); it != m_descriptorLayouts.end(); ++it) {
         auto sharedResource = it->second.value;
-        if (sharedResource == layout) {
+        if (sharedResource == *layout) {
             // Decrement reference count
             it->second.references--;
 
             if (it->second.references <= 0) {
                 // If reference count is zero, apply custom shutdown logic
-                vkDestroyDescriptorSetLayout(m_vkInfo->device, layout, nullptr);
+                destroyDescriptorLayoutInfo(layout);
                 m_descriptorLayouts.erase(it);
             }
             return;
         }
     }
 
-    spdlog::error("Image not found for dropping!");
+    spdlog::error("Layout not found for dropping!");
 }
 
 MaterialData MaterialManager::getData(std::string path) {
-    MaterialData data = {
+    // TODO: This needs a sober audit
+    MaterialInfo* materialInfo = getInfo(path);
 
+    Buffer buffer;
+    DescriptorBuffer descriptor;
+
+    std::vector<DescriptorInfo> descriptorInfos = {};
+
+    for (Size i = 0; i < materialInfo->descriptorLayouts.size(); i++) {
+        U32 bufferSize = 0;
+        for (DescriptorBindingInfo info : materialInfo->descriptorLayouts[i].bindings) {
+            bufferSize += info.size;
+        }
+        U32 index = descriptor.allocateBufferDescriptor(buffer, bufferSize);
+
+        DescriptorInfo info = {
+            .buffer = &descriptor,
+            .descriptorIndex = index,
+        };
+
+        descriptorInfos.push_back(info);
+    }
+
+    MaterialData data = {
+        .pipeline = materialInfo,
+        .descriptors = descriptorInfos,
     };
 
     return data;
 }
 
 void MaterialManager::dropMaterialData(MaterialData* data) {
-
+    // HACK: not now ^
+    (void) data;
 }
 
 

@@ -3,6 +3,8 @@
 #pragma once
 
 #include "Core/Types.hpp"
+#include "Materials.hpp"
+
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -11,13 +13,17 @@ public:
     DescriptorLayoutBuilder* addBinding(
             U32 binding,
             VkDescriptorType type,
-            VkShaderStageFlags stages
+            VkShaderStageFlags stages,
+            U32 size,
+            U32 align
     );
 
-    VkDescriptorSetLayout build(VkDevice device);
+    Option<DescriptorLayoutInfo> build(VkDevice device);
 
-    void clear() { m_bindings.clear(); };
+    void clear();
+
 private:
     std::vector<VkDescriptorSetLayoutBinding> m_bindings;
+    std::vector<DescriptorBindingInfo> m_bindingInfos;
 };
 

@@ -18,8 +18,8 @@ public:
     bool initialize(std::shared_ptr<VulkanInfo> vkInfo);
     void shutdown();
 
-    VkDescriptorSetLayout getLayout(std::string path);
-    void dropLayout(VkDescriptorSetLayout layout);
+    DescriptorLayoutInfo getLayout(std::string path);
+    void dropLayout(DescriptorLayoutInfo* layout);
 
     MaterialInfo* getInfo(std::string path);
     void dropMaterialInfo(MaterialInfo* info);
@@ -39,8 +39,9 @@ private:
     fs::path resourceBasePath = "assets/materials";
 
     std::unordered_map<std::string, RefCount<MaterialInfo>> m_materialInfos;
-    std::unordered_map<std::string, RefCount<VkDescriptorSetLayout>> m_descriptorLayouts;
+    std::unordered_map<std::string, RefCount<DescriptorLayoutInfo>> m_descriptorLayouts;
 
     void destroyMaterialInfo(MaterialInfo* info);
+    void destroyDescriptorLayoutInfo(DescriptorLayoutInfo* info);
 };
 
