@@ -1,6 +1,7 @@
 // src/AssetManagement/Meshes/PlaneGenerator.cpp
 
 #include "PlaneGenerator.hpp"
+#include "RenderEngine/RenderObjects/Materials.hpp"
 #include "RenderEngine/RenderObjects/RenderObject.hpp"
 #include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 
@@ -8,7 +9,7 @@
 
 #include <vector>
 
-assets::Mesh createPlane(ResourceManager* resourceManager) {
+assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialPath) {
 
     std::vector<Vertex> vertices = {
         { glm::vec3(-0.5f, -0.5f, 0.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f },
@@ -23,7 +24,7 @@ assets::Mesh createPlane(ResourceManager* resourceManager) {
         2, 3, 0   // Second triangle
     };
 
-    resourceManager->getMaterialManager();
+    MaterialData matData = resourceManager->getMaterialManager()->getData(materialPath);
 
     Buffer indexBuffer = resourceManager->createIndexBuffer(sizeof(U32) * indices.size()).value();
     Buffer vertexBuffer = resourceManager->createVertexBuffer(sizeof(Vertex) * vertices.size()).value();
@@ -34,18 +35,19 @@ assets::Mesh createPlane(ResourceManager* resourceManager) {
         .materialIndex = 0,
     };
 
+    // HACK: Standardize please!
     DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(1).value();
-    Buffer materialBuffer = resourceManager->createStorageBuffer(1).value();
+    Buffer materialBuffer = resourceManager->createStorageBuffer(256).value();
 
     assets::Mesh output = {
         .surfaces = {surface},
-        .materials = {},        // TODO: Thinking this'll just be an input or string input
+        .materials = {matData},
         .indexBuffer = indexBuffer,
         .vertexBuffer = vertexBuffer,
         .descriptor = descriptor,
         .materialBuffer = materialBuffer,
     };
 
-    return {};
+    return output;
 }
 

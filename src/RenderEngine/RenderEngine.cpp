@@ -52,28 +52,31 @@ bool RenderEngine::initVulkan() {
 
     //Pick and Create Devices
     VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeatures{};
-    descriptorBufferFeatures.descriptorBuffer = true;
+    descriptorBufferFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT;
+    descriptorBufferFeatures.descriptorBuffer = VK_TRUE;
 
     VkPhysicalDeviceVulkan13Features features13{};
+    features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
     features13.pNext = &descriptorBufferFeatures;
-    features13.dynamicRendering = true;
-    features13.synchronization2 = true;
+    features13.dynamicRendering = VK_TRUE;
+    features13.synchronization2 = VK_TRUE;
 
     VkPhysicalDeviceVulkan12Features features12{};
-    features12.bufferDeviceAddress = true;
-    features12.descriptorIndexing = true;
+    features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features12.pNext = &features13;
+    features12.bufferDeviceAddress = VK_TRUE;
+    features12.descriptorIndexing = VK_TRUE;
 
     VkPhysicalDeviceFeatures features10{};
-    features10.samplerAnisotropy = true;
-    features10.shaderSampledImageArrayDynamicIndexing = true;
-    features10.sparseBinding = true;
-    features10.sparseResidencyBuffer = true;
+    features10.samplerAnisotropy = VK_TRUE;
+    features10.shaderSampledImageArrayDynamicIndexing = VK_TRUE;
+    features10.sparseBinding = VK_TRUE;
+    features10.sparseResidencyBuffer = VK_TRUE;
 
     vkb::PhysicalDeviceSelector selector = vkb::PhysicalDeviceSelector(vkbInstance);
 
     auto physicalDeviceReturn = selector
         .set_minimum_version(1, 3)
-        .set_required_features_13(features13)
         .set_required_features_12(features12)
         .set_required_features(features10)
         .add_required_extension("VK_EXT_descriptor_buffer")

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "RenderEngine/RenderObjects/Materials.hpp"
+#include "RenderEngine/RenderObjects/RenderObject.hpp"
 #include "ResourceManagement/RenderResources/Buffer.hpp"
 #include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 
@@ -25,17 +26,9 @@ struct Mesh {
     DescriptorBuffer descriptor;
     Buffer materialBuffer;
 
-    void destroyMesh() {
-        surfaces.clear();
-        materials.clear();  // TODO: Doesn't actually unload materials
-
-        indexBuffer.shutdown();
-        vertexBuffer.shutdown();
-
-        descriptor.shutdown();
-        materialBuffer.shutdown();
-    }
+    void destroyMesh();
+    std::vector<RenderObject> draw();
 };
 
-
 }
+

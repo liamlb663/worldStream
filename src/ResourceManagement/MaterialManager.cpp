@@ -305,8 +305,11 @@ DescriptorLayoutInfo yamlToLayout(YAML::Node& yaml, VkDevice device) {
             stageFlags = getShaderStageFlags({node["stages"].as<std::string>()});
         }
 
+        U32 size = node["size"].as<U32>();
+        U32 align = node["alignment"].as<U32>();
+
         // Add binding to builder
-        builder.addBinding(binding, descriptorType, stageFlags, 0, 0);  // HACK: Dummy values for size/align
+        builder.addBinding(binding, descriptorType, stageFlags, size, align);
     }
 
     return builder.build(device).value();   // HACK: me when I unwrap()

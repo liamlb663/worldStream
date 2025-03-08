@@ -96,10 +96,13 @@ PipelineInfo PipelineBuilder::build(VkDevice device) {
         .pDynamicStates = dynamicStates.data(),
     };
 
+    VkPipelineCreateFlags pipelineFlags = 0;
+    pipelineFlags |= VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
+
     VkGraphicsPipelineCreateInfo pipelineInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &m_renderInfo,
-        .flags = 0,
+        .flags = pipelineFlags,
         .stageCount = static_cast<U32>(m_shaderStages.size()),
         .pStages = m_shaderStages.data(),
         .pVertexInputState = &m_vertexInputState,

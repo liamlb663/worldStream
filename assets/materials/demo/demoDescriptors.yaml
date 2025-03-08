@@ -3,15 +3,23 @@ descriptor_layout:
     - binding: 0
       descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
       stages: ["vertex", "fragment"]
+      size: 256
+      alignment: 256
 
     - binding: 1
       descriptor_type: "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER"
       stages: ["fragment"]
+      size: 0
+      alignment: 0
 
     - binding: 2
       descriptor_type: "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER"
       stages: ["compute"]
+      size: 512
+      alignment: 32
 
     - binding: 3
       descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC"
       stages: ["vertex"]
+      size: 256
+      alignment: 256

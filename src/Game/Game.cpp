@@ -48,10 +48,7 @@ void Game::run() {
         .material = &data,
     };
 
-    assets::Mesh plane = createPlane(&m_resources);
-
-    std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
-    m_resources.dropImage(img);
+    assets::Mesh plane = createPlane(&m_resources, "mesh");
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
 
@@ -61,7 +58,8 @@ void Game::run() {
         if (m_input->isPressed("Quit"))
             m_input->close();
 
-        m_graphics.renderObjects(0, {obj});
+        //m_graphics.renderObjects(0, {obj});
+        m_graphics.renderObjects(0, plane.draw());
         m_graphics.renderFrame();
     }
 }
