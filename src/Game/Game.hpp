@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "AssetManagement/Meshes/Mesh.hpp"
 #include "Game/Input/Input.hpp"
 #include "RenderEngine/RenderEngine.hpp"
 #include "RenderEngine/RenderGraph/RenderGraph.hpp"
@@ -23,6 +24,8 @@ private:
     RenderEngine m_graphics;
     ResourceManager m_resources;
     Input* m_input;
+
+    assets::Mesh plane;
 
     std::shared_ptr<RenderGraph> m_renderGraph;
 };

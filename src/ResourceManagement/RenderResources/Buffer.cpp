@@ -66,7 +66,7 @@ void Buffer::shutdown() {
 }
 
 void Buffer::map() {
-    if (!info.pMappedData) {
+    if (info.pMappedData != nullptr) {
         spdlog::warn("Attempted to map buffer twice!");
         return;
     }

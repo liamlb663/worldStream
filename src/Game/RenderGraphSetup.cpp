@@ -96,7 +96,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                         material->pipeline->pipelineLayout,
                         0, //U32 setLayout
                         0, //U32 bindingIndex
-                        0 //U32 DescriptorIndex
+                        material->descriptors[j].descriptorIndex
                     );
                 }
 

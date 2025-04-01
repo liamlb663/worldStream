@@ -498,12 +498,8 @@ void MaterialManager::dropLayout(DescriptorLayoutInfo* layout) {
     spdlog::error("Layout not found for dropping!");
 }
 
-MaterialData MaterialManager::getData(std::string path) {
-    // TODO: This needs a sober audit
+MaterialData MaterialManager::getData(std::string path, Buffer buffer, DescriptorBuffer descriptor) {
     MaterialInfo* materialInfo = getInfo(path);
-
-    Buffer buffer;
-    DescriptorBuffer descriptor;
 
     std::vector<DescriptorInfo> descriptorInfos = {};
 

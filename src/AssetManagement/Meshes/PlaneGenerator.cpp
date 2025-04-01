@@ -24,7 +24,10 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
         2, 3, 0   // Second triangle
     };
 
-    MaterialData matData = resourceManager->getMaterialManager()->getData(materialPath);
+    // HACK: Standardize please!
+    Buffer materialBuffer = resourceManager->createStorageBuffer(256*4).value();
+    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(100).value();
+    MaterialData matData = resourceManager->getMaterialManager()->getData(materialPath, materialBuffer, descriptor);
 
     Buffer indexBuffer = resourceManager->createIndexBuffer(sizeof(U32) * indices.size()).value();
     Buffer vertexBuffer = resourceManager->createVertexBuffer(sizeof(Vertex) * vertices.size()).value();
@@ -34,10 +37,6 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
         .indexCount = 6,
         .materialIndex = 0,
     };
-
-    // HACK: Standardize please!
-    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(1).value();
-    Buffer materialBuffer = resourceManager->createStorageBuffer(256).value();
 
     assets::Mesh output = {
         .surfaces = {surface},

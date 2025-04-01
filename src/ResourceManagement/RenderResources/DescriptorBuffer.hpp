@@ -35,6 +35,8 @@ private:
     VkDeviceSize m_currentOffset = 0;
     VkDeviceSize m_descriptorSize = 0;
 
+    VkPhysicalDeviceDescriptorBufferPropertiesEXT m_descriptorBufferProps = {};
+
     static PFN_vkCmdBindDescriptorBuffersEXT vkCmdBindDescriptorBuffersEXT;
     static PFN_vkCmdSetDescriptorBufferOffsetsEXT vkCmdSetDescriptorBufferOffsetsEXT;
 };
