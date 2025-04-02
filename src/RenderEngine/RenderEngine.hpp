@@ -17,7 +17,7 @@ public:
     bool initialize();
     void shutdown();
 
-    std::shared_ptr<VulkanInfo> getInfo() const;
+    VulkanInfo* getInfo() const;
     std::shared_ptr<CommandSubmitter> getSubmitter() const;
     GLFWwindow* getGLFWwindow() const { return m_frameManager->getGLFWwindow(); };
 
@@ -31,7 +31,7 @@ private:
     bool initVulkan();
     bool initFramedata();
 
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo m_vkInfo;
 
     std::shared_ptr<FrameManager> m_frameManager;
     std::shared_ptr<CommandSubmitter> m_commandSubmitter;

@@ -33,34 +33,26 @@ bool Game::initialize(int argc, char* argv[]) {
 void Game::run() {
     spdlog::info("Running Game");
 
-    MaterialInfo* demoMaterialInfo = m_resources.getMaterialManager()->getInfo("triangle");
+    plane = createPlane(&m_resources, "mesh");
 
-    MaterialData data = {
-        .pipeline = demoMaterialInfo,
-        .descriptors = {}
-    };
+/*
+    plane.descriptor.
+        verify(0, 0, "from mesh");
 
-    RenderObject obj = {
-        .indexCount = 3,
-        .startIndex = 0,
-        .indexBuffer = nullptr,
-        .vertexBuffer = nullptr,
-        .material = &data,
-    };
-
-    assets::Mesh plane = createPlane(&m_resources, "mesh");
+    plane.draw()[0].material->descriptors[0].buffer->
+        verify(0, 0, "from render Object");
+*/
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
+
+    m_graphics.renderObjects(0, plane.draw());
+    m_graphics.renderFrame();
 
     while (!m_input->shouldClose()) {
         m_input->update();
 
         if (m_input->isPressed("Quit"))
             m_input->close();
-
-        //m_graphics.renderObjects(0, {obj});
-        m_graphics.renderObjects(0, plane.draw());
-        m_graphics.renderFrame();
     }
 }
 
@@ -70,6 +62,9 @@ void Game::shutdown() {
     delete m_input;
 
     m_graphics.waitOnGpu();
+
+    plane.destroyMesh();
+
     m_resources.shutdown();
     m_graphics.shutdown();
 }

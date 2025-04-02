@@ -90,13 +90,14 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                 for (Size j = 0; j < material->descriptors.size(); j++) {
                     material->descriptors[j].buffer->bindDescriptorBuffer(recordInfo.commandBuffer);
 
+                    // TODO: Programatically use the correct set and binding
                     material->descriptors[j].buffer->bindDescriptorViaOffset(
                         recordInfo.commandBuffer,
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
                         material->pipeline->pipelineLayout,
                         0, //U32 setLayout
                         0, //U32 bindingIndex
-                        0 //U32 DescriptorIndex
+                        material->descriptors[j].descriptorIndex
                     );
                 }
 

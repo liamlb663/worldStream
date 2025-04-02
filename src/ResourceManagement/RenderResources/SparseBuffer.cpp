@@ -7,7 +7,7 @@
 #include <spdlog/spdlog.h>
 
 bool SparseBuffer::init(
-        std::shared_ptr<VulkanInfo> vkInfo,
+        VulkanInfo* vkInfo,
         Size size,
         VkBufferUsageFlags bufferUsage,
         VmaMemoryUsage memoryUsage,

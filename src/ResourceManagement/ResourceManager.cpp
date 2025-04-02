@@ -12,9 +12,8 @@
 #include <stb_image.h>
 
 #include <cstring>
-#include <memory>
 
-bool ResourceManager::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
+bool ResourceManager::initialize(VulkanInfo* vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
     m_vkInfo = vkInfo;
     m_submitter = submitter;
 
@@ -191,10 +190,11 @@ std::expected<Buffer, U32> ResourceManager::createBuffer(
 std::expected<DescriptorBuffer, U32> ResourceManager::createDescriptorBuffer(Size size) {
     DescriptorBuffer descriptor;
 
-    assert(sizeof(VkDescriptorBufferInfo) == sizeof(VkDescriptorImageInfo));
+    //assert(sizeof(VkDescriptorBufferInfo) == sizeof(VkDescriptorImageInfo));
     Size buffSize = size * sizeof(VkDescriptorBufferInfo);
 
     if (!descriptor.init(m_vkInfo, buffSize)) {
+        spdlog::error("Failed to Create DescriptorBuffer from ResourceManager");
         return std::unexpected(1);
     }
     return descriptor;

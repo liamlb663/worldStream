@@ -10,7 +10,7 @@
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
-bool MaterialManager::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
+bool MaterialManager::initialize(VulkanInfo* vkInfo) {
     m_vkInfo = vkInfo;
     return true;
 }
@@ -498,12 +498,8 @@ void MaterialManager::dropLayout(DescriptorLayoutInfo* layout) {
     spdlog::error("Layout not found for dropping!");
 }
 
-MaterialData MaterialManager::getData(std::string path) {
-    // TODO: This needs a sober audit
+MaterialData MaterialManager::getData(std::string path, Buffer buffer, DescriptorBuffer* descriptor) {
     MaterialInfo* materialInfo = getInfo(path);
-
-    Buffer buffer;
-    DescriptorBuffer descriptor;
 
     std::vector<DescriptorInfo> descriptorInfos = {};
 
@@ -512,10 +508,10 @@ MaterialData MaterialManager::getData(std::string path) {
         for (DescriptorBindingInfo info : materialInfo->descriptorLayouts[i].bindings) {
             bufferSize += info.size;
         }
-        U32 index = descriptor.allocateBufferDescriptor(buffer, bufferSize);
+        U32 index = descriptor->allocateBufferDescriptor(buffer, bufferSize);
 
         DescriptorInfo info = {
-            .buffer = &descriptor,
+            .buffer = descriptor,
             .descriptorIndex = index,
         };
 

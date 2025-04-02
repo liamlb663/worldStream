@@ -9,14 +9,13 @@
 #include <vk_mem_alloc.h>
 
 #include <vector>
-#include <memory>
 
 class SparseBuffer {
 public:
     Buffer buffer;
 
     bool init(
-            std::shared_ptr<VulkanInfo> vkInfo,
+            VulkanInfo* vkInfo,
             Size size,
             VkBufferUsageFlags bufferUsage,
             VmaMemoryUsage memoryUsage,
@@ -49,7 +48,7 @@ private:
     void* mapMemory(Size offset, Size size);
     void unmapMemory(Size offset);
 
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
     Size m_pageSize;
     VmaMemoryUsage m_memoryUsage;
     VmaAllocationCreateFlags m_allocFlags;

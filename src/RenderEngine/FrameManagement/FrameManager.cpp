@@ -11,7 +11,7 @@
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.h>
 
-bool FrameManager::initializeWindow(std::shared_ptr<VulkanInfo> vkInfo) {
+bool FrameManager::initializeWindow(VulkanInfo* vkInfo) {
     m_vkInfo = vkInfo;
 
     m_window = std::make_shared<Window>(1700, 900, "World Streamer");

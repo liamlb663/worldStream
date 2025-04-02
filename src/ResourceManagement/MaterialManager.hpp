@@ -7,7 +7,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include <memory>
 #include <unordered_map>
 #include <filesystem>
 
@@ -15,7 +14,7 @@ namespace fs = std::filesystem;
 
 class MaterialManager {
 public:
-    bool initialize(std::shared_ptr<VulkanInfo> vkInfo);
+    bool initialize(VulkanInfo* vkInfo);
     void shutdown();
 
     DescriptorLayoutInfo getLayout(std::string path);
@@ -24,7 +23,7 @@ public:
     MaterialInfo* getInfo(std::string path);
     void dropMaterialInfo(MaterialInfo* info);
 
-    MaterialData getData(std::string path);
+    MaterialData getData(std::string path, Buffer buffer, DescriptorBuffer* descriptor);
     void dropMaterialData(MaterialData* data);
 
 private:
@@ -34,7 +33,7 @@ private:
         Size references;
     };
 
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
 
     fs::path resourceBasePath = "assets/materials";
 

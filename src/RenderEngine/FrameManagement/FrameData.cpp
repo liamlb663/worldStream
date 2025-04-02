@@ -6,7 +6,7 @@
 
 #include <fmt/core.h>
 
-bool FrameData::init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Size frameNumber) {
+bool FrameData::init(VulkanInfo* vkInfo, Vector<U32, 2> size, Size frameNumber) {
     m_vkInfo = vkInfo;
     m_frameNumber = frameNumber;
 

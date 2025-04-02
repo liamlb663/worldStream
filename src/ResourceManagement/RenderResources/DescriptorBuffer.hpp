@@ -5,14 +5,14 @@
 #include "Buffer.hpp"
 #include "Core/Types.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
+#include "spdlog/spdlog.h"
 //#include "ResourceManagement/RenderResources/Image.hpp"
 
 #include <cstring>
-#include <memory>
 
 class DescriptorBuffer {
 public:
-    bool init(std::shared_ptr<VulkanInfo> vkInfo, Size size);
+    bool init(VulkanInfo* vkInfo, Size size);
     void shutdown();
 
     U32 allocateBufferDescriptor(const Buffer& buffer, Size range);
@@ -28,12 +28,16 @@ public:
         U32 descriptorIndex
     );
 
+    void verify(U32 descriptorIndex, U32 bindingIndex, const char* context) const;
+
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
     Buffer m_buffer;
 
     VkDeviceSize m_currentOffset = 0;
     VkDeviceSize m_descriptorSize = 0;
+
+    VkPhysicalDeviceDescriptorBufferPropertiesEXT m_descriptorBufferProps = {};
 
     static PFN_vkCmdBindDescriptorBuffersEXT vkCmdBindDescriptorBuffersEXT;
     static PFN_vkCmdSetDescriptorBufferOffsetsEXT vkCmdSetDescriptorBufferOffsetsEXT;
