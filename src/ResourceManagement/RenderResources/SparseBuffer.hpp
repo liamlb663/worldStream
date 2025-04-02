@@ -9,7 +9,6 @@
 #include <vk_mem_alloc.h>
 
 #include <vector>
-#include <memory>
 
 class SparseBuffer {
 public:

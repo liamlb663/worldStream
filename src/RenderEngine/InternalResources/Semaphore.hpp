@@ -4,7 +4,7 @@
 
 #include "../VulkanInfo.hpp"
 
-#include <memory>
+#include <string>
 #include <vulkan/vulkan.h>
 
 class Semaphore {

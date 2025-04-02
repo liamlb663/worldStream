@@ -5,8 +5,8 @@
 #include "../VulkanInfo.hpp"
 
 #include <cstdint>
-#include <memory>
 #include <vulkan/vulkan.h>
+#include <string>
 
 class Fence {
 public:

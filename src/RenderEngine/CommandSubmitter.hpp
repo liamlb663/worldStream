@@ -8,7 +8,6 @@
 #include <vulkan/vulkan.h>
 
 #include <functional>
-#include <memory>
 
 class CommandSubmitter {
 public:

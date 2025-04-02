@@ -4,7 +4,6 @@
 
 #include "../VulkanInfo.hpp"
 
-#include <memory>
 #include <vulkan/vulkan.h>
 
 #include <string>

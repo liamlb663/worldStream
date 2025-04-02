@@ -35,11 +35,13 @@ void Game::run() {
 
     plane = createPlane(&m_resources, "mesh");
 
+/*
     plane.descriptor.
-        verifyDescriptorBinding(0, 0, "from mesh");
+        verify(0, 0, "from mesh");
 
     plane.draw()[0].material->descriptors[0].buffer->
-        verifyDescriptorBinding(0, 0, "from render Object");
+        verify(0, 0, "from render Object");
+*/
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
 

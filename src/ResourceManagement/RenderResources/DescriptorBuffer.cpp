@@ -14,6 +14,7 @@ PFN_vkCmdSetDescriptorBufferOffsetsEXT DescriptorBuffer::vkCmdSetDescriptorBuffe
 bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
     m_vkInfo = vkInfo;
 
+    // Set function pointers
     vkCmdBindDescriptorBuffersEXT = reinterpret_cast<PFN_vkCmdBindDescriptorBuffersEXT>(
         vkGetDeviceProcAddr(vkInfo->device, "vkCmdBindDescriptorBuffersEXT"));
     vkCmdSetDescriptorBufferOffsetsEXT = reinterpret_cast<PFN_vkCmdSetDescriptorBufferOffsetsEXT>(
@@ -24,6 +25,7 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
         return false;
     }
 
+    // Get physical device properties that apply to descriptor buffers HACK: this is a little hacky
     m_descriptorBufferProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT;
     m_descriptorBufferProps.pNext = nullptr;
 
@@ -33,15 +35,7 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
 
     vkGetPhysicalDeviceProperties2(vkInfo->physicalDevice, &props2);
 
-spdlog::info("DescriptorBuffer Properties:");
-spdlog::info("\tstorageBufferDescriptorSize        = {}", m_descriptorBufferProps.storageBufferDescriptorSize);
-spdlog::info("\tuniformBufferDescriptorSize        = {}", m_descriptorBufferProps.uniformBufferDescriptorSize);
-spdlog::info("\tcombinedImageSamplerDescriptorSize = {}", m_descriptorBufferProps.combinedImageSamplerDescriptorSize);
-spdlog::info("\tdescriptorBufferOffsetAlignment    = {}", m_descriptorBufferProps.descriptorBufferOffsetAlignment);
-spdlog::info("\tmaxSamplerDescriptorBufferRange    = {}", m_descriptorBufferProps.maxSamplerDescriptorBufferRange);
-spdlog::info("\tmaxResourceDescriptorBufferRange   = {}", m_descriptorBufferProps.maxResourceDescriptorBufferRange);
-
-    // TODO: Use enum to determine descriptor size
+    // TODO: Use enum and props to determine descriptor size
     m_descriptorSize = m_descriptorBufferProps.uniformBufferDescriptorSize;
 
     VkDeviceSize alignment = m_descriptorBufferProps.descriptorBufferOffsetAlignment;
@@ -49,6 +43,7 @@ spdlog::info("\tmaxResourceDescriptorBufferRange   = {}", m_descriptorBufferProp
         m_descriptorSize = ((m_descriptorSize + alignment - 1) / alignment) * alignment;
     }
 
+    // Create buffer
     VkBufferUsageFlags bufferUsage =
         VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT |
         VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -71,8 +66,6 @@ spdlog::info("\tmaxResourceDescriptorBufferRange   = {}", m_descriptorBufferProp
     if (!bufferReturn) {
         return false;
     }
-
-    initited = true;
 
     m_currentOffset = 0;
     return true;
@@ -139,4 +132,40 @@ void DescriptorBuffer::bindDescriptorViaOffset(
         &descriptorOffset // Offset of the descriptor in the buffer
     );
 }
+
+void DescriptorBuffer::verify(U32 descriptorIndex, U32 bindingIndex, const char* context) const {
+    if (!m_buffer.info.pMappedData) {
+        spdlog::error("[{}] DescriptorBuffer is not mapped!", context);
+        return;
+    }
+
+    if (m_descriptorSize == 0) {
+        spdlog::error("[{}] Descriptor size is zero!", context);
+        return;
+    }
+
+    VkDeviceSize descriptorOffset = descriptorIndex * m_descriptorSize;
+
+    // Check if offset is aligned
+    VkDeviceSize alignment = m_descriptorBufferProps.descriptorBufferOffsetAlignment;
+    if (descriptorOffset % alignment != 0) {
+        spdlog::warn("[{}] Descriptor offset {} is not aligned to {}", context, descriptorOffset, alignment);
+    }
+
+    // Check if offset + size would overflow buffer
+    if (descriptorOffset + m_descriptorSize > m_buffer.info.size) {
+        spdlog::error("[{}] Descriptor offset {} + size {} exceeds buffer size {}!",
+                      context, descriptorOffset, m_descriptorSize, m_buffer.info.size);
+    }
+
+    // Optional: log detailed info for cross-checking
+    spdlog::info("[{}] Verifying descriptor binding:", context);
+    spdlog::info("\tdescriptorIndex: {}", descriptorIndex);
+    spdlog::info("\tdescriptorOffset: {}", descriptorOffset);
+    spdlog::info("\tdescriptorSize: {}", m_descriptorSize);
+    spdlog::info("\tbufferSize: {}", m_buffer.info.size);
+    spdlog::info("\tbindingIndex: {}", bindingIndex);
+    spdlog::info("\toffset alignment requirement: {}", alignment);
+}
+
 

@@ -3,11 +3,8 @@
 #pragma once
 
 #include "RenderEngine/VulkanInfo.hpp"
-#include "spdlog/spdlog.h"
 
 #include <vulkan/vulkan.h>
-
-#include <memory>
 
 class Buffer {
 public:

@@ -14,7 +14,6 @@
 #include "../RenderGraph/RenderGraph.hpp"
 #include "../RenderObjects/RenderObject.hpp"
 
-#include <memory>
 #include <vulkan/vulkan.h>
 
 class FrameData {

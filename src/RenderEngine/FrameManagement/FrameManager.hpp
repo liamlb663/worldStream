@@ -13,8 +13,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include <memory>
-
 class FrameManager {
 public:
     bool initializeWindow(VulkanInfo* vkInfo);

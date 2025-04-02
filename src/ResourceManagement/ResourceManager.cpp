@@ -12,7 +12,6 @@
 #include <stb_image.h>
 
 #include <cstring>
-#include <memory>
 
 bool ResourceManager::initialize(VulkanInfo* vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
     m_vkInfo = vkInfo;

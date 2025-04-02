@@ -11,7 +11,6 @@
 #include <vulkan/vulkan.h>
 
 #include <vector>
-#include <memory>
 
 typedef struct SwapchainImage {
     VkImage image;

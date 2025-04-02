@@ -7,7 +7,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include <memory>
+#include <string>
 
 class Image {
 public:

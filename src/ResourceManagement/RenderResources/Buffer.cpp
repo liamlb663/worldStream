@@ -53,8 +53,6 @@ bool Buffer::init(
     }
 
     m_vkInfo = vkInfo;
-    inited++;
-    spdlog::info("Buffer: {}, init: {}", static_cast<void*>(this), inited);
 
     return true;
 }

@@ -5,9 +5,7 @@
 #include "../Debug.hpp"
 #include "../VkUtils.hpp"
 
-#include <memory>
 #include <spdlog/spdlog.h>
-#include <vulkan/vulkan.h>
 
 VkResult CommandPool::initialize(
         VulkanInfo* vkInfo,
