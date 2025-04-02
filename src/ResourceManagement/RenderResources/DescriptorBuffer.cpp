@@ -33,7 +33,15 @@ bool DescriptorBuffer::init(std::shared_ptr<VulkanInfo> vkInfo, Size size) {
 
     vkGetPhysicalDeviceProperties2(vkInfo->physicalDevice, &props2);
 
-    //m_descriptorSize = m_descriptorBufferProps.storageBufferDescriptorSize;
+spdlog::info("DescriptorBuffer Properties:");
+spdlog::info("\tstorageBufferDescriptorSize        = {}", m_descriptorBufferProps.storageBufferDescriptorSize);
+spdlog::info("\tuniformBufferDescriptorSize        = {}", m_descriptorBufferProps.uniformBufferDescriptorSize);
+spdlog::info("\tcombinedImageSamplerDescriptorSize = {}", m_descriptorBufferProps.combinedImageSamplerDescriptorSize);
+spdlog::info("\tdescriptorBufferOffsetAlignment    = {}", m_descriptorBufferProps.descriptorBufferOffsetAlignment);
+spdlog::info("\tmaxSamplerDescriptorBufferRange    = {}", m_descriptorBufferProps.maxSamplerDescriptorBufferRange);
+spdlog::info("\tmaxResourceDescriptorBufferRange   = {}", m_descriptorBufferProps.maxResourceDescriptorBufferRange);
+
+    // TODO: Use enum to determine descriptor size
     m_descriptorSize = m_descriptorBufferProps.uniformBufferDescriptorSize;
 
     VkDeviceSize alignment = m_descriptorBufferProps.descriptorBufferOffsetAlignment;
@@ -63,6 +71,8 @@ bool DescriptorBuffer::init(std::shared_ptr<VulkanInfo> vkInfo, Size size) {
     if (!bufferReturn) {
         return false;
     }
+
+    initited = true;
 
     m_currentOffset = 0;
     return true;

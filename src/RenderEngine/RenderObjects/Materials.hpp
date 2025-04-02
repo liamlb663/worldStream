@@ -48,8 +48,8 @@ struct MaterialInfo {
 };
 
 struct DescriptorInfo {
-    DescriptorBuffer* buffer;
-    U32 descriptorIndex;
+    DescriptorBuffer* buffer = nullptr;
+    U32 descriptorIndex = -1;
 };
 
 struct MaterialData {

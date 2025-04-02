@@ -53,6 +53,8 @@ bool Buffer::init(
     }
 
     m_vkInfo = vkInfo;
+    inited++;
+    spdlog::info("Buffer: {}, init: {}", static_cast<void*>(this), inited);
 
     return true;
 }
@@ -90,6 +92,9 @@ void Buffer::unmap() {
 
 VkDeviceAddress Buffer::getAddress() {
     if (address != 0) return address;
+
+    spdlog::debug("getAddress() called on buffer: this={}, inited={}, m_vkInfo={}",
+              static_cast<void*>(this), inited, static_cast<void*>(m_vkInfo.get()));
 
     VkBufferDeviceAddressInfo info = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
