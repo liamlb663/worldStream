@@ -10,7 +10,7 @@
 
 bool Swapchain::initialize(
         std::shared_ptr<Window> window,
-        std::shared_ptr<VulkanInfo> vkInfo
+        VulkanInfo* vkInfo
 ) {
     m_vkInfo = vkInfo;
 

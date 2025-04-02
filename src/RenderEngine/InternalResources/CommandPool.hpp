@@ -20,7 +20,7 @@ public:
     CommandPool() : m_buffers() {};
 
     VkResult initialize(
-            std::shared_ptr<VulkanInfo> vkInfo,
+            VulkanInfo* vkInfo,
             CommandPoolType type,
             VkCommandPoolCreateFlags flags,
             std::string name
@@ -36,7 +36,7 @@ public:
     void shutdown();
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
     VkCommandPool m_pool;
     std::vector<VkCommandBuffer> m_buffers;
     std::string m_name;

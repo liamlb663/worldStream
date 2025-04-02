@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 
 class MaterialManager {
 public:
-    bool initialize(std::shared_ptr<VulkanInfo> vkInfo);
+    bool initialize(VulkanInfo* vkInfo);
     void shutdown();
 
     DescriptorLayoutInfo getLayout(std::string path);
@@ -34,7 +34,7 @@ private:
         Size references;
     };
 
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
 
     fs::path resourceBasePath = "assets/materials";
 

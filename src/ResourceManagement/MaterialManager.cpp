@@ -10,7 +10,7 @@
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
-bool MaterialManager::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
+bool MaterialManager::initialize(VulkanInfo* vkInfo) {
     m_vkInfo = vkInfo;
     return true;
 }

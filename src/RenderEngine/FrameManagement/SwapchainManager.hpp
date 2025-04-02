@@ -24,7 +24,7 @@ class Swapchain {
 public:
     bool initialize(
         std::shared_ptr<Window> window,
-        std::shared_ptr<VulkanInfo> vkInfo
+        VulkanInfo* vkInfo
     );
     void shutdown();
 
@@ -45,7 +45,7 @@ public:
     Vector<U32, 2> getSize() { return m_size; }
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
 
     VkSwapchainKHR m_swapchain;
 

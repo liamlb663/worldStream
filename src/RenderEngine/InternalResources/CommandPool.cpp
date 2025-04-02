@@ -10,7 +10,7 @@
 #include <vulkan/vulkan.h>
 
 VkResult CommandPool::initialize(
-        std::shared_ptr<VulkanInfo> vkInfo,
+        VulkanInfo* vkInfo,
         CommandPoolType type,
         VkCommandPoolCreateFlags flags,
         std::string name

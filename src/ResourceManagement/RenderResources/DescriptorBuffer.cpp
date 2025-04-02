@@ -11,7 +11,7 @@
 PFN_vkCmdBindDescriptorBuffersEXT DescriptorBuffer::vkCmdBindDescriptorBuffersEXT = nullptr;
 PFN_vkCmdSetDescriptorBufferOffsetsEXT DescriptorBuffer::vkCmdSetDescriptorBufferOffsetsEXT = nullptr;
 
-bool DescriptorBuffer::init(std::shared_ptr<VulkanInfo> vkInfo, Size size) {
+bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
     m_vkInfo = vkInfo;
 
     vkCmdBindDescriptorBuffersEXT = reinterpret_cast<PFN_vkCmdBindDescriptorBuffersEXT>(

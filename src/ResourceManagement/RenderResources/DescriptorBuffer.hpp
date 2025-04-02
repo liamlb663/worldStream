@@ -13,7 +13,7 @@
 
 class DescriptorBuffer {
 public:
-    bool init(std::shared_ptr<VulkanInfo> vkInfo, Size size);
+    bool init(VulkanInfo* vkInfo, Size size);
     void shutdown();
 
     U32 allocateBufferDescriptor(const Buffer& buffer, Size range);
@@ -65,7 +65,7 @@ void verifyDescriptorBinding(U32 descriptorIndex, U32 bindingIndex, const char* 
 }
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
     Buffer m_buffer;
 
     bool initited = false;

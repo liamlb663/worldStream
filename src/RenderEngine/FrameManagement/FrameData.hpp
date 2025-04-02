@@ -19,7 +19,7 @@
 
 class FrameData {
 public:
-    bool init(std::shared_ptr<VulkanInfo> vkInfo, Vector<U32, 2> size, Size frameNumber);
+    bool init(VulkanInfo* vkInfo, Vector<U32, 2> size, Size frameNumber);
     void shutdown();
 
     bool regenerate(Vector<U32, 2> size);
@@ -41,7 +41,7 @@ public:
     std::shared_ptr<RenderGraph> renderGraph;
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
     Size m_frameNumber;
     Vector<U32, 2> m_currentWindowSize;
 

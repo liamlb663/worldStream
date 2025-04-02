@@ -17,7 +17,7 @@
 
 class FrameManager {
 public:
-    bool initializeWindow(std::shared_ptr<VulkanInfo> vkInfo);
+    bool initializeWindow(VulkanInfo* vkInfo);
     bool initializeFrames();
     void shutdown();
 
@@ -36,7 +36,7 @@ public:
     void waitOnFrames();
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
     std::shared_ptr<Swapchain> m_swapchain;
     std::shared_ptr<Window> m_window;
     std::vector<FrameData> m_frameData;

@@ -10,7 +10,7 @@
 #include <fmt/core.h>
 
 bool Image::init(
-        std::shared_ptr<VulkanInfo> vkInfo,
+        VulkanInfo* vkInfo,
         const Vector<U32, 2>& imageSize,
         VkFormat imageFormat,
         VkImageUsageFlags usage,

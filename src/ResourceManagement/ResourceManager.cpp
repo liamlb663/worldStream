@@ -14,7 +14,7 @@
 #include <cstring>
 #include <memory>
 
-bool ResourceManager::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
+bool ResourceManager::initialize(VulkanInfo* vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
     m_vkInfo = vkInfo;
     m_submitter = submitter;
 

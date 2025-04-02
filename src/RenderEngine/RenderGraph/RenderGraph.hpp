@@ -25,7 +25,7 @@ struct RenderInfo {
     std::vector<Semaphore> semaphores;
 
     static RenderInfo create(
-            std::shared_ptr<VulkanInfo> vkInfo,
+            VulkanInfo* vkInfo,
             std::shared_ptr<RenderGraph> renderGraph,
             Vector<U32, 2> windowSize
     );
