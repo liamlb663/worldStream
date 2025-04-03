@@ -51,6 +51,9 @@ void Game::run() {
     while (!m_input->shouldClose()) {
         m_input->update();
 
+        m_graphics.renderObjects(0, plane.draw());
+        m_graphics.renderFrame();
+
         if (m_input->isPressed("Quit"))
             m_input->close();
     }

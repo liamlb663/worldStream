@@ -54,6 +54,9 @@ VkFormat getFormat(std::string input) {
         {"R8G8B8_UNORM", VK_FORMAT_R8G8B8_UNORM},
         {"VK_FORMAT_R8G8B8A8_UNORM", VK_FORMAT_R8G8B8A8_UNORM},
         {"VK_FORMAT_R16G16B16A16_SFLOAT", VK_FORMAT_R16G16B16A16_SFLOAT},
+        {"VK_FORMAT_R32_SFLOAT", VK_FORMAT_R32_SFLOAT},
+        {"VK_FORMAT_R32G32_SFLOAT", VK_FORMAT_R32G32_SFLOAT},
+        {"VK_FORMAT_R32G32B32_SFLOAT", VK_FORMAT_R32G32B32_SFLOAT},
     };
 
     auto it = map.find(input);
@@ -284,6 +287,54 @@ std::vector<VkPushConstantRange> parsePushConstants(YAML::Node& yaml) {
     return pushConstants;
 }
 
+std::pair<
+    std::vector<VkVertexInputBindingDescription>,
+    std::vector<VkVertexInputAttributeDescription>
+> parseVertexInput(YAML::Node& yaml) {
+    std::vector<VkVertexInputBindingDescription> bindings;
+    std::vector<VkVertexInputAttributeDescription> attributes;
+
+    if (!yaml["vertex_input"]) {
+        return {bindings, attributes};
+    }
+
+    YAML::Node input = yaml["vertex_input"];
+
+    if (input["bindings"]) {
+        for (const auto& node : input["bindings"]) {
+            VkVertexInputBindingDescription desc{};
+            desc.binding = node["binding"].as<uint32_t>();
+            desc.stride = node["stride"].as<uint32_t>();
+
+            std::string rate = node["input_rate"].as<std::string>();
+            if (rate == "vertex") {
+                desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            } else if (rate == "instance") {
+                desc.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+            } else {
+                throw std::runtime_error("Unknown input_rate: " + rate);
+            }
+
+            bindings.push_back(desc);
+        }
+    }
+
+    if (input["attributes"]) {
+        for (const auto& node : input["attributes"]) {
+            VkVertexInputAttributeDescription desc{
+                .location = node["location"].as<uint32_t>(),
+                .binding = node["binding"].as<uint32_t>(),
+                .format = getFormat(node["format"].as<std::string>()),
+                .offset = node["offset"].as<uint32_t>(),
+            };
+
+            attributes.push_back(desc);
+        }
+    }
+
+    return {bindings, attributes};
+}
+
 DescriptorLayoutInfo yamlToLayout(YAML::Node& yaml, VkDevice device) {
     DescriptorLayoutBuilder builder;
 
@@ -397,6 +448,9 @@ MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, fs::
                 pushConstants[i].offset
         );
     }
+
+    auto [bindings, attributes] = parseVertexInput(pipeline);
+    builder.setVertexInputState(bindings, attributes);
 
     PipelineInfo piplineInfo = builder.build(device);
     MaterialInfo output = {

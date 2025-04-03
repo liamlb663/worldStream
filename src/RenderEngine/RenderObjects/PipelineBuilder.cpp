@@ -296,6 +296,9 @@ PipelineBuilder* PipelineBuilder::setVertexInputState(
     const std::vector<VkVertexInputBindingDescription>& bindingDescriptions,
     const std::vector<VkVertexInputAttributeDescription>& attributeDescriptions
 ) {
+    m_vertexBindings = bindingDescriptions;
+    m_vertexAttributes = attributeDescriptions;
+
     m_vertexInputState.vertexBindingDescriptionCount = bindingDescriptions.size();
     m_vertexInputState.pVertexBindingDescriptions = bindingDescriptions.data();
     m_vertexInputState.vertexAttributeDescriptionCount = attributeDescriptions.size();

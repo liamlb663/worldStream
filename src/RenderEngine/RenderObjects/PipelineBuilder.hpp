@@ -56,6 +56,9 @@ private:
     std::vector<VkPushConstantRange> m_pushConstants;
     std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
 
+    std::vector<VkVertexInputBindingDescription> m_vertexBindings;
+    std::vector<VkVertexInputAttributeDescription> m_vertexAttributes;
+
     VkPipelineInputAssemblyStateCreateInfo m_inputAssembly;
     VkPipelineRasterizationStateCreateInfo m_rasterizer;
     VkPipelineColorBlendAttachmentState m_colorBlendAttachment;

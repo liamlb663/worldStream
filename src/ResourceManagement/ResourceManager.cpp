@@ -187,6 +187,20 @@ std::expected<Buffer, U32> ResourceManager::createBuffer(
     return buff;
 }
 
+void ResourceManager::copyToBuffer(const Buffer& src, const Buffer& dst, Size size) {
+    assert(m_submitter && "CommandSubmitter must be initialized!");
+
+    m_submitter->transferSubmit([&](VkCommandBuffer cmd) {
+        VkBufferCopy copyRegion = {
+            .srcOffset = 0,
+            .dstOffset = 0,
+            .size = size
+        };
+
+        vkCmdCopyBuffer(cmd, src.buffer, dst.buffer, 1, &copyRegion);
+    });
+}
+
 std::expected<DescriptorBuffer, U32> ResourceManager::createDescriptorBuffer(Size size) {
     DescriptorBuffer descriptor;
 

@@ -12,9 +12,8 @@
 
 struct Vertex {
     glm::vec3 position;
-    F32 uv_x;
     glm::vec3 normal;
-    F32 uv_y;
+    glm::vec2 uv;
 };
 
 struct RenderObject {

@@ -10,26 +10,45 @@
 #include <vector>
 
 assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialPath) {
-
     std::vector<Vertex> vertices = {
-        { glm::vec3(-0.5f, -0.5f, 0.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f },
-        { glm::vec3( 0.5f, -0.5f, 0.0f), 1.0f, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f },
-        { glm::vec3( 0.5f,  0.5f, 0.0f), 1.0f, glm::vec3(0.0f, 0.0f, 1.0f), 1.0f },
-        { glm::vec3(-0.5f,  0.5f, 0.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f), 1.0f },
+        { {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f} },
+        { { 0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },
+        { { 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+        { {-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f} }
+    };
+    std::vector<U32> indices = {
+        0, 1, 2,
+        2, 3, 0
     };
 
-    // Indices for two triangles forming the quad
-    std::vector<U32> indices = {
-        0, 1, 2,  // First triangle
-        2, 3, 0   // Second triangle
-    };
+    Size vertexSize = sizeof(Vertex) * vertices.size();
+    Size indexSize  = sizeof(U32) * indices.size();
+
+    // Create GPU-local buffers
+    Buffer vertexBuffer = resourceManager->createVertexBuffer(vertexSize).value();
+    Buffer indexBuffer  = resourceManager->createIndexBuffer(indexSize).value();
+
+    // Create staging buffers
+    Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize).value();
+    Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize).value();
+
+    // Copy vertex data into staging
+    std::memcpy(vertexStaging.info.pMappedData, vertices.data(), vertexSize);
+
+    // Copy index data into staging
+    std::memcpy(indexStaging.info.pMappedData, indices.data(), indexSize);
+
+    // Transfer to GPU-local buffers
+    resourceManager->copyToBuffer(vertexStaging, vertexBuffer, vertexSize);
+    resourceManager->copyToBuffer(indexStaging, indexBuffer, indexSize);
+
+    // Clean up staging
+    vertexStaging.shutdown();
+    indexStaging.shutdown();
 
     // HACK: Standardize please!
     Buffer materialBuffer = resourceManager->createStorageBuffer(256*4).value();
     DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(100).value();
-
-    Buffer indexBuffer = resourceManager->createIndexBuffer(sizeof(U32) * indices.size()).value();
-    Buffer vertexBuffer = resourceManager->createVertexBuffer(sizeof(Vertex) * vertices.size()).value();
 
     assets::Surface surface = {
         .indexStart = 0,

@@ -41,6 +41,8 @@ public:
             VmaAllocationCreateFlags allocFlags
     );
 
+    void copyToBuffer(const Buffer& src, const Buffer& dst, Size size);
+
     std::expected<DescriptorBuffer, U32> createDescriptorBuffer(
             Size size
     );

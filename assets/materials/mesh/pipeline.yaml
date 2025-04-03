@@ -32,6 +32,27 @@ pipeline:
     write_depth: true
     compare_op: "VK_COMPARE_OP_LESS"
 
+  # Vertex Information
+  vertex_input:
+    bindings:
+      - binding: 0
+        stride: 32
+        input_rate: "vertex"
+
+    attributes:
+      - location: 0
+        binding: 0
+        format: "VK_FORMAT_R32G32B32_SFLOAT"
+        offset: 0
+      - location: 1
+        binding: 0
+        format: "VK_FORMAT_R32G32B32_SFLOAT"
+        offset: 12
+      - location: 2
+        binding: 0
+        format: "VK_FORMAT_R32G32_SFLOAT"
+        offset: 24
+
   # Descriptor Layouts
   descriptor_layouts:
     - "descriptors.yaml"
