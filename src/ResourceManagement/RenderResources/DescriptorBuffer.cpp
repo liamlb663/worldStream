@@ -59,9 +59,12 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
         VMA_ALLOCATION_CREATE_MAPPED_BIT |
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
+
+    Size bufferSize = size * m_descriptorBufferProps.uniformBufferDescriptorSize;
+
     bool bufferReturn = m_buffer.init(
             vkInfo,
-            size,
+            bufferSize,
             bufferUsage,
             memoryUsage,
             allocFlags

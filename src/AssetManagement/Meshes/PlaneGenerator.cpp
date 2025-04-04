@@ -39,8 +39,8 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
     indexStaging.shutdown();
 
     // HACK: Standardize please!
-    Buffer materialBuffer = resourceManager->createUniformBuffer(256*4).value();
-    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(100).value();
+    Buffer materialBuffer = resourceManager->createUniformBuffer(256).value();
+    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(1).value();
 
     assets::Surface surface = {
         .indexStart = 0,
