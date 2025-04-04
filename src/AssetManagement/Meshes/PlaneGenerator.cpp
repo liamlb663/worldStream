@@ -24,35 +24,27 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
     Size vertexSize = sizeof(Vertex) * vertices.size();
     Size indexSize  = sizeof(U32) * indices.size();
 
-    // Create GPU-local buffers
     Buffer vertexBuffer = resourceManager->createVertexBuffer(vertexSize).value();
     Buffer indexBuffer  = resourceManager->createIndexBuffer(indexSize).value();
 
-    // Create staging buffers
     Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize).value();
     Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize).value();
 
-    // Copy vertex data into staging
     std::memcpy(vertexStaging.info.pMappedData, vertices.data(), vertexSize);
-
-    // Copy index data into staging
     std::memcpy(indexStaging.info.pMappedData, indices.data(), indexSize);
-
-    // Transfer to GPU-local buffers
     resourceManager->copyToBuffer(vertexStaging, vertexBuffer, vertexSize);
     resourceManager->copyToBuffer(indexStaging, indexBuffer, indexSize);
 
-    // Clean up staging
     vertexStaging.shutdown();
     indexStaging.shutdown();
 
     // HACK: Standardize please!
-    Buffer materialBuffer = resourceManager->createStorageBuffer(256*4).value();
+    Buffer materialBuffer = resourceManager->createUniformBuffer(256*4).value();
     DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(100).value();
 
     assets::Surface surface = {
         .indexStart = 0,
-        .indexCount = 6,
+        .indexCount = static_cast<U32>(indices.size()),
         .materialIndex = 0,
     };
 

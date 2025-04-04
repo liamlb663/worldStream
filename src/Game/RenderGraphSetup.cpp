@@ -83,7 +83,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                 MaterialData* material = objects[i].material;
 
                 vkCmdBindPipeline(
-                    recordInfo.commandBuffer, 
+                    recordInfo.commandBuffer,
                     VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline->pipeline
                 );
 
@@ -115,10 +115,13 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                     VK_INDEX_TYPE_UINT32
                 );
 
-                vkCmdDraw(
-                    recordInfo.commandBuffer, 
-                    objects[i].indexCount, 1,
-                    objects[i].startIndex, 0
+                vkCmdDrawIndexed(
+                    recordInfo.commandBuffer,
+                    objects[i].indexCount,
+                    1,
+                    objects[i].startIndex,
+                    0,
+                    0
                 );
             }
 

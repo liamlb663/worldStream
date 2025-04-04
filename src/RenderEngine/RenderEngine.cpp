@@ -173,7 +173,11 @@ bool RenderEngine::initVulkan() {
 
     // Create Transfer Pool
     m_vkInfo.transferPool = new CommandPool();
-    m_vkInfo.transferPool->initialize(&m_vkInfo, CommandPoolType::Transfer, 0, "Transfer Pool");
+    m_vkInfo.transferPool->initialize(
+        &m_vkInfo, CommandPoolType::Transfer,
+        VkCommandPoolCreateFlagBits::VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        "Transfer Pool"
+    );
 
     m_mainDeletionQueue.push([this]() {
         m_vkInfo.transferPool->shutdown();
