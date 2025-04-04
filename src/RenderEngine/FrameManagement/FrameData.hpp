@@ -25,6 +25,8 @@ public:
     void changeRenderGraph(std::shared_ptr<RenderGraph> renderGraph);
 
     void addRenderObjects(Size geoId, std::vector<RenderObject> objects);
+    void clearRenderObjects(Size geoId);
+    void clearAllRenderObjects();
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;

@@ -142,6 +142,9 @@ void FrameManager::presentFrame(FrameSubmitInfo info) {
         //TODO Resize
     }
 
+    m_frameData[m_frameNumber % Config::framesInFlight]
+        .clearAllRenderObjects();
+
     m_frameNumber++;
 }
 

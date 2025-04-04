@@ -77,3 +77,12 @@ void FrameData::addRenderObjects(Size geoId, std::vector<RenderObject> objects) 
             renderContext.geometries[geoId].end(), objects.begin(), objects.end());
 }
 
+void FrameData::clearRenderObjects(Size geoId) {
+    renderContext.geometries[geoId].clear();
+}
+
+void FrameData::clearAllRenderObjects() {
+    for (Size i = 0; i < renderContext.geometries.size(); i++) {
+        clearRenderObjects(i);
+    }
+}

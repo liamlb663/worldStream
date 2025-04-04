@@ -78,7 +78,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             VkRect2D scissor = {.offset = {0, 0}, .extent = outputImg->size};
             vkCmdSetScissor(recordInfo.commandBuffer, 0, 1, &scissor);
 
-            std::vector<RenderObject> objects = recordInfo.renderContext->geometries[geometry];
+            std::vector<RenderObject>& objects = recordInfo.renderContext->geometries[geometry];
             for (Size i = 0; i < objects.size(); i++) {
                 MaterialData* material = objects[i].material;
 
