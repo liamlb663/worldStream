@@ -15,7 +15,7 @@ public:
     bool init(VulkanInfo* vkInfo, Size size);
     void shutdown();
 
-    U32 allocateBufferDescriptor(const Buffer& buffer, Size range);
+    U32 allocateBufferDescriptor(Buffer& buffer, Size range);
     //U32 allocateImageSamplerDescriptor(const Image& image, VkSampler sampler);
 
     void bindDescriptorBuffer(VkCommandBuffer commandBuffer);
@@ -41,5 +41,6 @@ private:
 
     static PFN_vkCmdBindDescriptorBuffersEXT vkCmdBindDescriptorBuffersEXT;
     static PFN_vkCmdSetDescriptorBufferOffsetsEXT vkCmdSetDescriptorBufferOffsetsEXT;
+    static PFN_vkGetDescriptorEXT vkGetDescriptorEXT;
 };
 

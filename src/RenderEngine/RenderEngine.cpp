@@ -78,6 +78,7 @@ bool RenderEngine::initVulkan() {
         .set_required_features_12(features12)
         .set_required_features(features10)
         .add_required_extension("VK_EXT_descriptor_buffer")
+        .disable_portability_subset()
         .set_surface(m_frameManager->getWindow()->getSurface())
         .select();
 

@@ -21,7 +21,7 @@ pipeline:
   # Rasterization and Culling
   polygon_mode: "fill"
   cull_mode: "back"
-  front_face: "clockwise"
+  front_face: "counter-clockwise"
 
   # Input Topology
   topology: "triangle-list"

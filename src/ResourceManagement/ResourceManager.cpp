@@ -159,7 +159,8 @@ std::expected<Buffer, U32> ResourceManager::createVertexBuffer(Size size) {
 }
 
 std::expected<Buffer, U32> ResourceManager::createUniformBuffer(Size size) {
-    VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                               VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     VmaAllocationCreateFlags allocFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 

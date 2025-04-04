@@ -5,11 +5,13 @@
 #include <spdlog/spdlog.h>
 
 #include <cstring>
+#include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
 
 // Static function pointers
 PFN_vkCmdBindDescriptorBuffersEXT DescriptorBuffer::vkCmdBindDescriptorBuffersEXT = nullptr;
 PFN_vkCmdSetDescriptorBufferOffsetsEXT DescriptorBuffer::vkCmdSetDescriptorBufferOffsetsEXT = nullptr;
+PFN_vkGetDescriptorEXT DescriptorBuffer::vkGetDescriptorEXT = nullptr;
 
 bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
     m_vkInfo = vkInfo;
@@ -19,6 +21,8 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
         vkGetDeviceProcAddr(vkInfo->device, "vkCmdBindDescriptorBuffersEXT"));
     vkCmdSetDescriptorBufferOffsetsEXT = reinterpret_cast<PFN_vkCmdSetDescriptorBufferOffsetsEXT>(
         vkGetDeviceProcAddr(vkInfo->device, "vkCmdSetDescriptorBufferOffsetsEXT"));
+    vkGetDescriptorEXT = reinterpret_cast<PFN_vkGetDescriptorEXT>(
+        vkGetDeviceProcAddr(vkInfo->device, "vkGetDescriptorEXT"));
 
     if (!vkCmdBindDescriptorBuffersEXT || !vkCmdSetDescriptorBufferOffsetsEXT) {
         spdlog::error("Failed to load VK_EXT_descriptor_buffer functions");
@@ -75,7 +79,7 @@ void DescriptorBuffer::shutdown() {
     m_buffer.shutdown();
 }
 
-U32 DescriptorBuffer::allocateBufferDescriptor(const Buffer& buffer, Size range) {
+U32 DescriptorBuffer::allocateBufferDescriptor(Buffer& buffer, Size range) {
     if (m_currentOffset + m_descriptorSize > m_buffer.info.size) {
         spdlog::error("Descriptor buffer overflow: tried to allocate beyond size");
         return -1;
@@ -84,9 +88,18 @@ U32 DescriptorBuffer::allocateBufferDescriptor(const Buffer& buffer, Size range)
     VkDescriptorAddressInfoEXT addressInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
         .pNext = nullptr,
-        .address = buffer.address,
+        .address = buffer.getAddress(),
         .range = range,
         .format = VK_FORMAT_UNDEFINED,
+    };
+
+    VkDescriptorGetInfoEXT getInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        .pNext = nullptr,
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .data = {
+            .pUniformBuffer = &addressInfo,
+        }
     };
 
     if (!m_buffer.info.pMappedData) {
@@ -95,7 +108,7 @@ U32 DescriptorBuffer::allocateBufferDescriptor(const Buffer& buffer, Size range)
     }
 
     void* data = static_cast<char*>(m_buffer.info.pMappedData) + m_currentOffset;
-    std::memcpy(data, &addressInfo, sizeof(addressInfo));
+    vkGetDescriptorEXT(m_vkInfo->device, &getInfo, m_descriptorSize, data);
 
     U32 descriptorIndex = static_cast<uint32_t>(m_currentOffset / m_descriptorSize);
     m_currentOffset += m_descriptorSize;
