@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <cstring>  // for memcpy
+#include <cstring>
 
 bool Game::initialize(int argc, char* argv[]) {
     (void) argc;
