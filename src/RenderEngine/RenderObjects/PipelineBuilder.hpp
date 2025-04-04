@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Core/Types.hpp"
+#include "RenderEngine/RenderObjects/Materials.hpp"
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -41,7 +42,7 @@ public:
 
     PipelineBuilder* setDepthInfo(bool depthTest, bool writeDepth, VkCompareOp op);
 
-    PipelineBuilder* addDescriptorLayout(VkDescriptorSetLayout layout);
+    PipelineBuilder* addDescriptorLayout(DescriptorLayoutInfo layout);
     PipelineBuilder* addPushConstant(VkShaderStageFlags stageFlags, U32 size, U32 offset);
 
     PipelineBuilder* setNoVertexInputState();
@@ -54,6 +55,9 @@ private:
     std::vector<VkDescriptorSetLayout> m_descriptors;
     std::vector<VkPushConstantRange> m_pushConstants;
     std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
+
+    std::vector<VkVertexInputBindingDescription> m_vertexBindings;
+    std::vector<VkVertexInputAttributeDescription> m_vertexAttributes;
 
     VkPipelineInputAssemblyStateCreateInfo m_inputAssembly;
     VkPipelineRasterizationStateCreateInfo m_rasterizer;

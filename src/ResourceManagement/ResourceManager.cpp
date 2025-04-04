@@ -12,9 +12,8 @@
 #include <stb_image.h>
 
 #include <cstring>
-#include <memory>
 
-bool ResourceManager::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
+bool ResourceManager::initialize(VulkanInfo* vkInfo, std::shared_ptr<CommandSubmitter> submitter) {
     m_vkInfo = vkInfo;
     m_submitter = submitter;
 
@@ -160,7 +159,8 @@ std::expected<Buffer, U32> ResourceManager::createVertexBuffer(Size size) {
 }
 
 std::expected<Buffer, U32> ResourceManager::createUniformBuffer(Size size) {
-    VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                               VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     VmaAllocationCreateFlags allocFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
@@ -188,13 +188,28 @@ std::expected<Buffer, U32> ResourceManager::createBuffer(
     return buff;
 }
 
+void ResourceManager::copyToBuffer(const Buffer& src, const Buffer& dst, Size size) {
+    assert(m_submitter && "CommandSubmitter must be initialized!");
+
+    m_submitter->transferSubmit([&](VkCommandBuffer cmd) {
+        VkBufferCopy copyRegion = {
+            .srcOffset = 0,
+            .dstOffset = 0,
+            .size = size
+        };
+
+        vkCmdCopyBuffer(cmd, src.buffer, dst.buffer, 1, &copyRegion);
+    });
+}
+
 std::expected<DescriptorBuffer, U32> ResourceManager::createDescriptorBuffer(Size size) {
     DescriptorBuffer descriptor;
 
-    assert(sizeof(VkDescriptorBufferInfo) == sizeof(VkDescriptorImageInfo));
+    //assert(sizeof(VkDescriptorBufferInfo) == sizeof(VkDescriptorImageInfo));
     Size buffSize = size * sizeof(VkDescriptorBufferInfo);
 
     if (!descriptor.init(m_vkInfo, buffSize)) {
+        spdlog::error("Failed to Create DescriptorBuffer from ResourceManager");
         return std::unexpected(1);
     }
     return descriptor;

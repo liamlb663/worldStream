@@ -19,7 +19,7 @@ namespace fs = std::filesystem;
 
 class ResourceManager {
 public:
-    bool initialize(std::shared_ptr<VulkanInfo> vkInfo, std::shared_ptr<CommandSubmitter> submitter);
+    bool initialize(VulkanInfo* vkInfo, std::shared_ptr<CommandSubmitter> submitter);
     void shutdown();
 
     // Images
@@ -41,6 +41,8 @@ public:
             VmaAllocationCreateFlags allocFlags
     );
 
+    void copyToBuffer(const Buffer& src, const Buffer& dst, Size size);
+
     std::expected<DescriptorBuffer, U32> createDescriptorBuffer(
             Size size
     );
@@ -54,7 +56,7 @@ private:
         Size references;
     };
 
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
     std::shared_ptr<CommandSubmitter> m_submitter;
     MaterialManager m_materialManager;
 

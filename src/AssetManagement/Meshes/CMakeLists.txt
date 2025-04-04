@@ -2,6 +2,7 @@
 
 # Add the engine source files
 set(MESH_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Mesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PlaneGenerator.cpp
 )
 

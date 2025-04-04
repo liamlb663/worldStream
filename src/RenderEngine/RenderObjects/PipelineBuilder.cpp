@@ -96,10 +96,13 @@ PipelineInfo PipelineBuilder::build(VkDevice device) {
         .pDynamicStates = dynamicStates.data(),
     };
 
+    VkPipelineCreateFlags pipelineFlags = 0;
+    pipelineFlags |= VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
+
     VkGraphicsPipelineCreateInfo pipelineInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &m_renderInfo,
-        .flags = 0,
+        .flags = pipelineFlags,
         .stageCount = static_cast<U32>(m_shaderStages.size()),
         .pStages = m_shaderStages.data(),
         .pVertexInputState = &m_vertexInputState,
@@ -261,8 +264,8 @@ PipelineBuilder* PipelineBuilder::setDepthInfo(bool depthTest, bool writeDepth, 
     return this;
 }
 
-PipelineBuilder* PipelineBuilder::addDescriptorLayout(VkDescriptorSetLayout layout) {
-    m_descriptors.push_back(layout);
+PipelineBuilder* PipelineBuilder::addDescriptorLayout(DescriptorLayoutInfo layout) {
+    m_descriptors.push_back(layout.layout);
 
     return this;
 };
@@ -293,6 +296,9 @@ PipelineBuilder* PipelineBuilder::setVertexInputState(
     const std::vector<VkVertexInputBindingDescription>& bindingDescriptions,
     const std::vector<VkVertexInputAttributeDescription>& attributeDescriptions
 ) {
+    m_vertexBindings = bindingDescriptions;
+    m_vertexAttributes = attributeDescriptions;
+
     m_vertexInputState.vertexBindingDescriptionCount = bindingDescriptions.size();
     m_vertexInputState.pVertexBindingDescriptions = bindingDescriptions.data();
     m_vertexInputState.vertexAttributeDescriptionCount = attributeDescriptions.size();

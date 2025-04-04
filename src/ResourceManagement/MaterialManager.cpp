@@ -10,7 +10,7 @@
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
-bool MaterialManager::initialize(std::shared_ptr<VulkanInfo> vkInfo) {
+bool MaterialManager::initialize(VulkanInfo* vkInfo) {
     m_vkInfo = vkInfo;
     return true;
 }
@@ -54,6 +54,9 @@ VkFormat getFormat(std::string input) {
         {"R8G8B8_UNORM", VK_FORMAT_R8G8B8_UNORM},
         {"VK_FORMAT_R8G8B8A8_UNORM", VK_FORMAT_R8G8B8A8_UNORM},
         {"VK_FORMAT_R16G16B16A16_SFLOAT", VK_FORMAT_R16G16B16A16_SFLOAT},
+        {"VK_FORMAT_R32_SFLOAT", VK_FORMAT_R32_SFLOAT},
+        {"VK_FORMAT_R32G32_SFLOAT", VK_FORMAT_R32G32_SFLOAT},
+        {"VK_FORMAT_R32G32B32_SFLOAT", VK_FORMAT_R32G32B32_SFLOAT},
     };
 
     auto it = map.find(input);
@@ -284,7 +287,55 @@ std::vector<VkPushConstantRange> parsePushConstants(YAML::Node& yaml) {
     return pushConstants;
 }
 
-VkDescriptorSetLayout yamlToLayout(YAML::Node& yaml, VkDevice device) {
+std::pair<
+    std::vector<VkVertexInputBindingDescription>,
+    std::vector<VkVertexInputAttributeDescription>
+> parseVertexInput(YAML::Node& yaml) {
+    std::vector<VkVertexInputBindingDescription> bindings;
+    std::vector<VkVertexInputAttributeDescription> attributes;
+
+    if (!yaml["vertex_input"]) {
+        return {bindings, attributes};
+    }
+
+    YAML::Node input = yaml["vertex_input"];
+
+    if (input["bindings"]) {
+        for (const auto& node : input["bindings"]) {
+            VkVertexInputBindingDescription desc{};
+            desc.binding = node["binding"].as<uint32_t>();
+            desc.stride = node["stride"].as<uint32_t>();
+
+            std::string rate = node["input_rate"].as<std::string>();
+            if (rate == "vertex") {
+                desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            } else if (rate == "instance") {
+                desc.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+            } else {
+                throw std::runtime_error("Unknown input_rate: " + rate);
+            }
+
+            bindings.push_back(desc);
+        }
+    }
+
+    if (input["attributes"]) {
+        for (const auto& node : input["attributes"]) {
+            VkVertexInputAttributeDescription desc{
+                .location = node["location"].as<uint32_t>(),
+                .binding = node["binding"].as<uint32_t>(),
+                .format = getFormat(node["format"].as<std::string>()),
+                .offset = node["offset"].as<uint32_t>(),
+            };
+
+            attributes.push_back(desc);
+        }
+    }
+
+    return {bindings, attributes};
+}
+
+DescriptorLayoutInfo yamlToLayout(YAML::Node& yaml, VkDevice device) {
     DescriptorLayoutBuilder builder;
 
     YAML::Node bindings = yaml["descriptor_layout"]["bindings"];
@@ -305,14 +356,17 @@ VkDescriptorSetLayout yamlToLayout(YAML::Node& yaml, VkDevice device) {
             stageFlags = getShaderStageFlags({node["stages"].as<std::string>()});
         }
 
+        U32 size = node["size"].as<U32>();
+        U32 align = node["alignment"].as<U32>();
+
         // Add binding to builder
-        builder.addBinding(binding, descriptorType, stageFlags);
+        builder.addBinding(binding, descriptorType, stageFlags, size, align);
     }
 
-    return builder.build(device);
+    return builder.build(device).value();   // HACK: me when I unwrap()
 }
 
-VkDescriptorSetLayout MaterialManager::getLayout(std::string path) {
+DescriptorLayoutInfo MaterialManager::getLayout(std::string path) {
     auto it = m_descriptorLayouts.find(path);
     if (it != m_descriptorLayouts.end()) {
         it->second.references++;
@@ -327,9 +381,9 @@ VkDescriptorSetLayout MaterialManager::getLayout(std::string path) {
 
     // Get Material Info
     YAML::Node yaml = YAML::LoadFile(fullPath);
-    VkDescriptorSetLayout layout = yamlToLayout(yaml, m_vkInfo->device);
+    DescriptorLayoutInfo layout = yamlToLayout(yaml, m_vkInfo->device);
 
-    m_descriptorLayouts[path] = RefCount<VkDescriptorSetLayout>{
+    m_descriptorLayouts[path] = RefCount<DescriptorLayoutInfo>{
         .value = layout,
         .references = 1,
     };
@@ -345,9 +399,9 @@ MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, fs::
 
     // Descriptors
     YAML::Node descriptors = pipeline["descriptor_layouts"];
-    std::vector<VkDescriptorSetLayout> layouts;
+    std::vector<DescriptorLayoutInfo> layouts;
     for (const YAML::Node& set : descriptors) {
-        VkDescriptorSetLayout setLayout = materialManager->getLayout(
+        DescriptorLayoutInfo setLayout = materialManager->getLayout(
                 fmt::format("{}/{}", folder, set.as<std::string>())
         );
         builder.addDescriptorLayout(setLayout);
@@ -395,6 +449,9 @@ MaterialInfo yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, fs::
         );
     }
 
+    auto [bindings, attributes] = parseVertexInput(pipeline);
+    builder.setVertexInputState(bindings, attributes);
+
     PipelineInfo piplineInfo = builder.build(device);
     MaterialInfo output = {
         .pipeline = piplineInfo.pipeline,
@@ -440,8 +497,8 @@ void MaterialManager::destroyMaterialInfo(MaterialInfo* info) {
     vkDestroyPipeline(m_vkInfo->device, info->pipeline, nullptr);
     vkDestroyPipelineLayout(m_vkInfo->device, info->pipelineLayout, nullptr);
 
-    for (VkDescriptorSetLayout layout : info->descriptorLayouts) {
-        this->dropLayout(layout);
+    for (DescriptorLayoutInfo layout : info->descriptorLayouts) {
+        this->dropLayout(&layout);
     }
 }
 
@@ -468,38 +525,64 @@ void MaterialManager::dropMaterialInfo(MaterialInfo* info) {
         }
     }
 
-    spdlog::error("Image not found for dropping!");
+    spdlog::error("MaterialInfo not found for dropping!");
 }
 
-void MaterialManager::dropLayout(VkDescriptorSetLayout layout) {
+void MaterialManager::destroyDescriptorLayoutInfo(DescriptorLayoutInfo* info) {
+    vkDestroyDescriptorSetLayout(m_vkInfo->device, info->layout, nullptr);
+    info->bindings.clear();
+}
+
+void MaterialManager::dropLayout(DescriptorLayoutInfo* layout) {
     for (auto it = m_descriptorLayouts.begin(); it != m_descriptorLayouts.end(); ++it) {
         auto sharedResource = it->second.value;
-        if (sharedResource == layout) {
+        if (sharedResource == *layout) {
             // Decrement reference count
             it->second.references--;
 
             if (it->second.references <= 0) {
                 // If reference count is zero, apply custom shutdown logic
-                vkDestroyDescriptorSetLayout(m_vkInfo->device, layout, nullptr);
+                destroyDescriptorLayoutInfo(layout);
                 m_descriptorLayouts.erase(it);
             }
             return;
         }
     }
 
-    spdlog::error("Image not found for dropping!");
+    spdlog::error("Layout not found for dropping!");
 }
 
-MaterialData MaterialManager::getData(std::string path) {
-    MaterialData data = {
+MaterialData MaterialManager::getData(std::string path, Buffer buffer, DescriptorBuffer* descriptor) {
+    MaterialInfo* materialInfo = getInfo(path);
 
+    std::vector<DescriptorInfo> descriptorInfos = {};
+
+    for (Size i = 0; i < materialInfo->descriptorLayouts.size(); i++) {
+        U32 bufferSize = 0;
+        for (DescriptorBindingInfo info : materialInfo->descriptorLayouts[i].bindings) {
+            bufferSize += info.size;
+        }
+        U32 index = descriptor->allocateBufferDescriptor(buffer, bufferSize);
+
+        DescriptorInfo info = {
+            .buffer = descriptor,
+            .descriptorIndex = index,
+        };
+
+        descriptorInfos.push_back(info);
+    }
+
+    MaterialData data = {
+        .pipeline = materialInfo,
+        .descriptors = descriptorInfos,
     };
 
     return data;
 }
 
 void MaterialManager::dropMaterialData(MaterialData* data) {
-
+    // HACK: not now ^
+    (void) data;
 }
 
 

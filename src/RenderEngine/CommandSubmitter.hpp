@@ -8,11 +8,10 @@
 #include <vulkan/vulkan.h>
 
 #include <functional>
-#include <memory>
 
 class CommandSubmitter {
 public:
-    bool initialize(std::shared_ptr<VulkanInfo> vkInfo);
+    bool initialize(VulkanInfo* vkInfo);
 
     void transferSubmit(const std::function<void(VkCommandBuffer)>& function);
     void frameSubmit(FrameSubmitInfo info);
@@ -23,7 +22,7 @@ public:
     void shutdown();
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
 
 };
 

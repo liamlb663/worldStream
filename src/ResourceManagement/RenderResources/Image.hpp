@@ -7,7 +7,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include <memory>
+#include <string>
 
 class Image {
 public:
@@ -19,7 +19,7 @@ public:
     VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     bool init(
-            std::shared_ptr<VulkanInfo> vkInfo,
+            VulkanInfo* vkInfo,
             const Vector<U32, 2>& imageSize,
             VkFormat imageFormat,
             VkImageUsageFlags usage,
@@ -29,7 +29,7 @@ public:
     void shutdown();
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
 
 };
 

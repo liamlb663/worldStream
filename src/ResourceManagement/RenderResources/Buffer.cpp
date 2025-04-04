@@ -9,7 +9,7 @@
 #include <vector>
 
 bool Buffer::init(
-        std::shared_ptr<VulkanInfo> vkInfo,
+        VulkanInfo* vkInfo,
         Size size,
         VkBufferUsageFlags bufferUsage,
         VmaMemoryUsage memoryUsage,
@@ -66,7 +66,7 @@ void Buffer::shutdown() {
 }
 
 void Buffer::map() {
-    if (!info.pMappedData) {
+    if (info.pMappedData != nullptr) {
         spdlog::warn("Attempted to map buffer twice!");
         return;
     }

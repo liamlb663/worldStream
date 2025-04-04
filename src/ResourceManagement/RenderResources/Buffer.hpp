@@ -6,8 +6,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include <memory>
-
 class Buffer {
 public:
     VkBuffer buffer = VK_NULL_HANDLE;
@@ -16,7 +14,7 @@ public:
     VkDeviceAddress address = 0;
 
     bool init(
-            std::shared_ptr<VulkanInfo> vkInfo,
+            VulkanInfo* vkInfo,
             Size size,
             VkBufferUsageFlags bufferUsage,
             VmaMemoryUsage memoryUsage,
@@ -31,7 +29,8 @@ public:
     VkDeviceAddress getAddress();
 
 private:
-    std::shared_ptr<VulkanInfo> m_vkInfo;
+    VulkanInfo* m_vkInfo;
 
+    U32 inited = 0;
 };
 

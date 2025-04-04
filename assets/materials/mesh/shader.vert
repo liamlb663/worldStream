@@ -1,21 +1,33 @@
 #version 450
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec2 inUV;
+
+layout(location = 0) out vec3 fragNormal;
+layout(location = 1) out vec2 fragUV;
+
+layout(set = 0, binding = 0) uniform UBO {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
+
+layout(push_constant) uniform PushConstants {
+    vec4 data0;  // you can repurpose this 128-byte space as needed
+    vec4 data1;
+    vec4 data2;
+    vec4 data3;
+    vec4 data4;
+    vec4 data5;
+    vec4 data6;
+    vec4 data7;
+} pc;
 
 void main() {
-    vec2 positions[3] = vec2[](
-        vec2( 0.0, -0.5), // Bottom
-        vec2( 0.5,  0.5), // Right
-        vec2(-0.5,  0.5)  // Left
-    );
+    fragNormal = mat3(transpose(inverse(ubo.model))) * inNormal;
+    fragUV = inUV;
 
-    vec3 colors[3] = vec3[](
-        vec3(1.0, 0.0, 0.0), // Red
-        vec3(0.0, 1.0, 0.0), // Green
-        vec3(0.0, 0.0, 1.0)  // Blue
-    );
-
-    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
-    fragColor = colors[gl_VertexIndex];
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
 }
 

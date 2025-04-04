@@ -6,7 +6,7 @@
 #include "../VkUtils.hpp"
 #include "spdlog/spdlog.h"
 
-bool Fence::initialize(std::shared_ptr<VulkanInfo> vkInfo, bool signaled, std::string name) {
+bool Fence::initialize(VulkanInfo* vkInfo, bool signaled, std::string name) {
     m_vkInfo = vkInfo;
 
     VkFenceCreateFlags flags = 0;

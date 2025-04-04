@@ -5,13 +5,14 @@
 #include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "Game/RenderGraphSetup.hpp"
 
-#include "RenderEngine/RenderObjects/Materials.hpp"
-
+#include <cmath>
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.h>
 
 #include <unistd.h>
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <cstring>
 
 bool Game::initialize(int argc, char* argv[]) {
     (void) argc;
@@ -33,36 +34,54 @@ bool Game::initialize(int argc, char* argv[]) {
 void Game::run() {
     spdlog::info("Running Game");
 
-    MaterialInfo* demoMaterialInfo = m_resources.getMaterialManager()->getInfo("triangle");
+    plane = createPlane(&m_resources, "mesh");
 
-    MaterialData data = {
-        .pipeline = demoMaterialInfo,
-        .descriptors = {}
-    };
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::mat4 viewMatrix = glm::lookAt(
+        glm::vec3(2.0f, 2.0f, 2.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+    glm::mat4 projMatrix = glm::perspective(
+        glm::radians(45.0f),
+        1.0f,
+        0.1f,
+        10.0f
+    );
+    projMatrix[1][1] *= -1.0f;
 
-    RenderObject obj = {
-        .indexCount = 3,
-        .startIndex = 0,
-        .indexBuffer = nullptr,
-        .vertexBuffer = nullptr,
-        .material = &data,
-    };
-
-    assets::Mesh plane = createPlane(&m_resources);
-
-    std::shared_ptr<Image> img = m_resources.loadImage("clouds.png");
-    m_resources.dropImage(img);
+    void* mappedData = plane.materialBuffer.info.pMappedData;
+    float* dst = static_cast<float*>(mappedData);
+    memcpy(dst,               &modelMatrix, sizeof(glm::mat4));
+    memcpy(dst + 16,          &viewMatrix,  sizeof(glm::mat4));
+    memcpy(dst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
 
+    m_graphics.renderObjects(0, plane.draw());
+    m_graphics.renderFrame();
+
+    double time = 0;
+
     while (!m_input->shouldClose()) {
         m_input->update();
+        time += 0.01;
+
+        viewMatrix = glm::lookAt(
+            glm::vec3(2.0f * sin(time), 2.0f * cos(time), 2.0f),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 1.0f)
+        );
+
+        memcpy(dst,               &modelMatrix, sizeof(glm::mat4));
+        memcpy(dst + 16,          &viewMatrix,  sizeof(glm::mat4));
+        memcpy(dst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+
+        m_graphics.renderObjects(0, plane.draw());
+        m_graphics.renderFrame();
 
         if (m_input->isPressed("Quit"))
             m_input->close();
-
-        m_graphics.renderObjects(0, {obj});
-        m_graphics.renderFrame();
     }
 }
 
@@ -72,6 +91,9 @@ void Game::shutdown() {
     delete m_input;
 
     m_graphics.waitOnGpu();
+
+    plane.destroyMesh();
+
     m_resources.shutdown();
     m_graphics.shutdown();
 }

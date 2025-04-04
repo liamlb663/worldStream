@@ -4,6 +4,8 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <expected>
+#include <optional>
 
 // Unsigned integer types
 using U8  = uint8_t;
@@ -23,4 +25,12 @@ using F64 = double;
 
 // Platform-specific pointer and size types
 using Size = size_t;
+
+// Result type
+template <typename T, typename E>
+using Result = std::expected<T, E>;
+
+// Option type
+template <typename T>
+using Option = std::optional<T>;
 

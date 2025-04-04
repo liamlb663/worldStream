@@ -6,7 +6,7 @@
 #include "spdlog/spdlog.h"
 
 
-bool Semaphore::initialize(std::shared_ptr<VulkanInfo> vkInfo, std::string name) {
+bool Semaphore::initialize(VulkanInfo* vkInfo, std::string name) {
     m_vkInfo = vkInfo;
 
     VkSemaphoreCreateInfo createInfo = {

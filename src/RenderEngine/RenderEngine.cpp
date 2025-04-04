@@ -22,8 +22,6 @@ bool RenderEngine::initialize() {
 }
 
 bool RenderEngine::initVulkan() {
-    m_vkInfo = std::make_shared<VulkanInfo>();
-
     //Create Instance + debug
     vkb::InstanceBuilder builder;
 
@@ -41,42 +39,46 @@ bool RenderEngine::initVulkan() {
     }
     vkb::Instance vkbInstance = instanceReturn.value();
 
-    m_vkInfo->instance = vkbInstance.instance;
-    m_vkInfo->debugMessenger = vkbInstance.debug_messenger;
+    m_vkInfo.instance = vkbInstance.instance;
+    m_vkInfo.debugMessenger = vkbInstance.debug_messenger;
 
     // Load Vulkan debug functions
-    Debug::LoadDebugUtils(m_vkInfo->instance);
+    Debug::LoadDebugUtils(m_vkInfo.instance);
 
     m_frameManager = std::make_shared<FrameManager>();
-    m_frameManager->initializeWindow(m_vkInfo);
+    m_frameManager->initializeWindow(&m_vkInfo);
 
     //Pick and Create Devices
     VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeatures{};
-    descriptorBufferFeatures.descriptorBuffer = true;
+    descriptorBufferFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT;
+    descriptorBufferFeatures.descriptorBuffer = VK_TRUE;
 
     VkPhysicalDeviceVulkan13Features features13{};
+    features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
     features13.pNext = &descriptorBufferFeatures;
-    features13.dynamicRendering = true;
-    features13.synchronization2 = true;
+    features13.dynamicRendering = VK_TRUE;
+    features13.synchronization2 = VK_TRUE;
 
     VkPhysicalDeviceVulkan12Features features12{};
-    features12.bufferDeviceAddress = true;
-    features12.descriptorIndexing = true;
+    features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features12.pNext = &features13;
+    features12.bufferDeviceAddress = VK_TRUE;
+    features12.descriptorIndexing = VK_TRUE;
 
     VkPhysicalDeviceFeatures features10{};
-    features10.samplerAnisotropy = true;
-    features10.shaderSampledImageArrayDynamicIndexing = true;
-    features10.sparseBinding = true;
-    features10.sparseResidencyBuffer = true;
+    features10.samplerAnisotropy = VK_TRUE;
+    features10.shaderSampledImageArrayDynamicIndexing = VK_TRUE;
+    features10.sparseBinding = VK_TRUE;
+    features10.sparseResidencyBuffer = VK_TRUE;
 
     vkb::PhysicalDeviceSelector selector = vkb::PhysicalDeviceSelector(vkbInstance);
 
     auto physicalDeviceReturn = selector
         .set_minimum_version(1, 3)
-        .set_required_features_13(features13)
         .set_required_features_12(features12)
         .set_required_features(features10)
         .add_required_extension("VK_EXT_descriptor_buffer")
+        .disable_portability_subset()
         .set_surface(m_frameManager->getWindow()->getSurface())
         .select();
 
@@ -99,8 +101,8 @@ bool RenderEngine::initVulkan() {
     }
     vkb::Device vkbDevice = deviceReturn.value();
 
-    m_vkInfo->device = vkbDevice.device;
-    m_vkInfo->physicalDevice = physicalDevice.physical_device;
+    m_vkInfo.device = vkbDevice.device;
+    m_vkInfo.physicalDevice = physicalDevice.physical_device;
 
     // Graphics Queue
     auto graphicsQueueReturn = vkbDevice.get_queue(vkb::QueueType::graphics);
@@ -110,7 +112,7 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo->graphicsQueue = graphicsQueueReturn.value();
+    m_vkInfo.graphicsQueue = graphicsQueueReturn.value();
 
     auto graphicsQueueFamilyReturn = vkbDevice.get_queue_index(vkb::QueueType::graphics);
     if (!graphicsQueueFamilyReturn) {
@@ -119,7 +121,7 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo->graphicsQueueFamily = graphicsQueueFamilyReturn.value();
+    m_vkInfo.graphicsQueueFamily = graphicsQueueFamilyReturn.value();
 
     // Transfer Queue
     auto transferQueueReturn = vkbDevice.get_queue(vkb::QueueType::transfer);
@@ -129,7 +131,7 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo->transferQueue = transferQueueReturn.value();
+    m_vkInfo.transferQueue = transferQueueReturn.value();
 
     auto transferQueueFamilyReturn = vkbDevice.get_queue_index(vkb::QueueType::transfer);
     if (!transferQueueFamilyReturn) {
@@ -138,27 +140,27 @@ bool RenderEngine::initVulkan() {
 
         return false;
     }
-    m_vkInfo->transferQueueFamily = transferQueueFamilyReturn.value();
+    m_vkInfo.transferQueueFamily = transferQueueFamilyReturn.value();
 
     m_mainDeletionQueue.push([this]() {
-            vkDestroyDevice(m_vkInfo->device, nullptr);
-            vkb::destroy_debug_utils_messenger(m_vkInfo->instance, m_vkInfo->debugMessenger);
-            vkDestroyInstance(m_vkInfo->instance, nullptr);
+            vkDestroyDevice(m_vkInfo.device, nullptr);
+            vkb::destroy_debug_utils_messenger(m_vkInfo.instance, m_vkInfo.debugMessenger);
+            vkDestroyInstance(m_vkInfo.instance, nullptr);
     });
 
     // Create VMA
     VmaAllocatorCreateInfo vmaInfo{};
-    vmaInfo.physicalDevice = m_vkInfo->physicalDevice;
-    vmaInfo.device = m_vkInfo->device;
-    vmaInfo.instance = m_vkInfo->instance;
+    vmaInfo.physicalDevice = m_vkInfo.physicalDevice;
+    vmaInfo.device = m_vkInfo.device;
+    vmaInfo.instance = m_vkInfo.instance;
     vmaInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 
-    auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo->allocator);
+    auto res = vmaCreateAllocator(&vmaInfo, &m_vkInfo.allocator);
     if (!VkUtils::checkVkResult(res, "Failed to create vma allocator")) return false;
 
     m_mainDeletionQueue.push([this]() {
         VmaTotalStatistics stats;
-        vmaCalculateStatistics(m_vkInfo->allocator, &stats);
+        vmaCalculateStatistics(m_vkInfo.allocator, &stats);
 
         Size bytesLeft = stats.total.statistics.allocationBytes;
 
@@ -166,21 +168,25 @@ bool RenderEngine::initVulkan() {
             spdlog::error("Attempted to destroy VmaAllocator with allocated bytes");
             spdlog::error("{} bytes left allocated not destroying VmaAllocator", bytesLeft);
         } else {
-            vmaDestroyAllocator(m_vkInfo->allocator);
+            vmaDestroyAllocator(m_vkInfo.allocator);
         }
     });
 
     // Create Transfer Pool
-    m_vkInfo->transferPool = new CommandPool();
-    m_vkInfo->transferPool->initialize(m_vkInfo, CommandPoolType::Transfer, 0, "Transfer Pool");
+    m_vkInfo.transferPool = new CommandPool();
+    m_vkInfo.transferPool->initialize(
+        &m_vkInfo, CommandPoolType::Transfer,
+        VkCommandPoolCreateFlagBits::VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        "Transfer Pool"
+    );
 
     m_mainDeletionQueue.push([this]() {
-        m_vkInfo->transferPool->shutdown();
-        delete m_vkInfo->transferPool;
+        m_vkInfo.transferPool->shutdown();
+        delete m_vkInfo.transferPool;
     });
 
     m_commandSubmitter = std::make_shared<CommandSubmitter>();
-    if (!m_commandSubmitter->initialize(m_vkInfo)) {
+    if (!m_commandSubmitter->initialize(&m_vkInfo)) {
         spdlog::error("Failed to initialze CommandSubmitter");
         return false;
     }
@@ -193,7 +199,7 @@ bool RenderEngine::initVulkan() {
 }
 
 bool RenderEngine::initFramedata() {
-    m_vkInfo->transferPool->resizeBuffers(Config::framesInFlight);
+    m_vkInfo.transferPool->resizeBuffers(Config::framesInFlight);
 
     if (!m_frameManager->initializeFrames()) {
         spdlog::error("Failed to initialize FrameManager!");
@@ -207,8 +213,8 @@ bool RenderEngine::initFramedata() {
     return true;
 }
 
-std::shared_ptr<VulkanInfo> RenderEngine::getInfo() const {
-    return m_vkInfo;
+VulkanInfo* RenderEngine::getInfo() const {
+    return const_cast<VulkanInfo*>(&m_vkInfo);
 }
 
 std::shared_ptr<CommandSubmitter> RenderEngine::getSubmitter() const {
@@ -235,6 +241,6 @@ void RenderEngine::renderFrame() {
 }
 
 void RenderEngine::waitOnGpu() {
-    vkDeviceWaitIdle(m_vkInfo->device);
+    vkDeviceWaitIdle(m_vkInfo.device);
 }
 

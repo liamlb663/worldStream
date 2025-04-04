@@ -1,6 +1,7 @@
 // src/AssetManagement/Meshes/PlaneGenerator.cpp
 
 #include "PlaneGenerator.hpp"
+#include "RenderEngine/RenderObjects/Materials.hpp"
 #include "RenderEngine/RenderObjects/RenderObject.hpp"
 #include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 
@@ -8,44 +9,57 @@
 
 #include <vector>
 
-assets::Mesh createPlane(ResourceManager* resourceManager) {
-
+assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialPath) {
     std::vector<Vertex> vertices = {
-        { glm::vec3(-0.5f, -0.5f, 0.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f },
-        { glm::vec3( 0.5f, -0.5f, 0.0f), 1.0f, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f },
-        { glm::vec3( 0.5f,  0.5f, 0.0f), 1.0f, glm::vec3(0.0f, 0.0f, 1.0f), 1.0f },
-        { glm::vec3(-0.5f,  0.5f, 0.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f), 1.0f },
+        { {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f} },
+        { { 0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },
+        { { 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+        { {-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f} }
     };
-
-    // Indices for two triangles forming the quad
     std::vector<U32> indices = {
-        0, 1, 2,  // First triangle
-        2, 3, 0   // Second triangle
+        0, 1, 2,
+        2, 3, 0
     };
 
-    resourceManager->getMaterialManager();
+    Size vertexSize = sizeof(Vertex) * vertices.size();
+    Size indexSize  = sizeof(U32) * indices.size();
 
-    Buffer indexBuffer = resourceManager->createIndexBuffer(sizeof(U32) * indices.size()).value();
-    Buffer vertexBuffer = resourceManager->createVertexBuffer(sizeof(Vertex) * vertices.size()).value();
+    Buffer vertexBuffer = resourceManager->createVertexBuffer(vertexSize).value();
+    Buffer indexBuffer  = resourceManager->createIndexBuffer(indexSize).value();
+
+    Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize).value();
+    Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize).value();
+
+    std::memcpy(vertexStaging.info.pMappedData, vertices.data(), vertexSize);
+    std::memcpy(indexStaging.info.pMappedData, indices.data(), indexSize);
+    resourceManager->copyToBuffer(vertexStaging, vertexBuffer, vertexSize);
+    resourceManager->copyToBuffer(indexStaging, indexBuffer, indexSize);
+
+    vertexStaging.shutdown();
+    indexStaging.shutdown();
+
+    // HACK: Standardize please!
+    Buffer materialBuffer = resourceManager->createUniformBuffer(256*4).value();
+    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(100).value();
 
     assets::Surface surface = {
         .indexStart = 0,
-        .indexCount = 6,
+        .indexCount = static_cast<U32>(indices.size()),
         .materialIndex = 0,
     };
 
-    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(1).value();
-    Buffer materialBuffer = resourceManager->createStorageBuffer(1).value();
-
     assets::Mesh output = {
         .surfaces = {surface},
-        .materials = {},        // TODO: Thinking this'll just be an input or string input
+        .materials = {},
         .indexBuffer = indexBuffer,
         .vertexBuffer = vertexBuffer,
         .descriptor = descriptor,
         .materialBuffer = materialBuffer,
     };
 
-    return {};
+    MaterialData matData = resourceManager->getMaterialManager()->getData(materialPath, output.materialBuffer, &output.descriptor);
+    output.materials = {matData};
+
+    return output;
 }
 

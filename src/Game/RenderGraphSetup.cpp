@@ -7,6 +7,7 @@
 #include <RenderEngine/CommandSubmitter.hpp>
 
 #include <memory>
+#include <vulkan/vulkan.h>
 
 std::shared_ptr<RenderGraph> setupRenderGraph() {
     auto renderGraph = std::make_shared<RenderGraph>();
@@ -77,10 +78,52 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             VkRect2D scissor = {.offset = {0, 0}, .extent = outputImg->size};
             vkCmdSetScissor(recordInfo.commandBuffer, 0, 1, &scissor);
 
-            MaterialInfo* material = recordInfo.renderContext->geometries[geometry][0].material->pipeline;
+            std::vector<RenderObject> objects = recordInfo.renderContext->geometries[geometry];
+            for (Size i = 0; i < objects.size(); i++) {
+                MaterialData* material = objects[i].material;
 
-            vkCmdBindPipeline(recordInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
-            vkCmdDraw(recordInfo.commandBuffer, 3, 1, 0, 0);
+                vkCmdBindPipeline(
+                    recordInfo.commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline->pipeline
+                );
+
+                for (Size j = 0; j < material->descriptors.size(); j++) {
+                    material->descriptors[j].buffer->bindDescriptorBuffer(recordInfo.commandBuffer);
+
+                    // TODO: Programatically use the correct set and binding
+                    material->descriptors[j].buffer->bindDescriptorViaOffset(
+                        recordInfo.commandBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        material->pipeline->pipelineLayout,
+                        0, //U32 setLayout
+                        0, //U32 bindingIndex
+                        material->descriptors[j].descriptorIndex
+                    );
+                }
+
+                VkDeviceSize offsets[] = {0};
+                vkCmdBindVertexBuffers(
+                    recordInfo.commandBuffer,
+                    0, 1,
+                    &objects[i].vertexBuffer->buffer,
+                    offsets
+                );
+                vkCmdBindIndexBuffer(
+                    recordInfo.commandBuffer,
+                    objects[i].indexBuffer->buffer,
+                    0,
+                    VK_INDEX_TYPE_UINT32
+                );
+
+                vkCmdDrawIndexed(
+                    recordInfo.commandBuffer,
+                    objects[i].indexCount,
+                    1,
+                    objects[i].startIndex,
+                    0,
+                    0
+                );
+            }
 
             vkCmdEndRendering(recordInfo.commandBuffer);
         },

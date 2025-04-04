@@ -5,44 +5,63 @@
 #include "RenderEngine/VkUtils.hpp"
 
 DescriptorLayoutBuilder* DescriptorLayoutBuilder::addBinding(
-        U32 binding,
+        U32 bindingNumber,
         VkDescriptorType type,
-        VkShaderStageFlags stages
+        VkShaderStageFlags stages,
+        U32 size,
+        U32 align
 ) {
-    VkDescriptorSetLayoutBinding bindingInfo = {
-        .binding = binding,
+    VkDescriptorSetLayoutBinding binding = {
+        .binding = bindingNumber,
         .descriptorType = type,
         .descriptorCount = 1,
         .stageFlags = stages,
         .pImmutableSamplers = nullptr,
     };
 
-    m_bindings.push_back(bindingInfo);
+    DescriptorBindingInfo bindingInfo = {
+        .binding = bindingNumber,
+        .descriptorType = type,
+        .stages = stages,
+        .size = size,
+        .alignment = align
+    };
+
+    m_bindings.push_back(binding);
+    m_bindingInfos.push_back(bindingInfo);
 
     return this;
 }
 
-VkDescriptorSetLayout DescriptorLayoutBuilder::build(VkDevice device) {
+Option<DescriptorLayoutInfo> DescriptorLayoutBuilder::build(VkDevice device) {
     VkDescriptorSetLayoutCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
-        .flags = 0,
+        .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
         .bindingCount = static_cast<U32>(m_bindings.size()),
         .pBindings = m_bindings.data()
 
     };
 
-    VkDescriptorSetLayout output;
+    VkDescriptorSetLayout layout;
     VkResult result = vkCreateDescriptorSetLayout(
             device,
             &info,
             nullptr,
-            &output
+            &layout
     );
     if (!VkUtils::checkVkResult(result, "Error creating descriptor set layout!")) {
-        return nullptr;
+        return std::nullopt;
     }
+
+    DescriptorLayoutInfo output = {
+        .layout = layout,
+        .bindings = m_bindingInfos
+    };
 
     return output;
 }
 
+void DescriptorLayoutBuilder::clear() { 
+    m_bindings.clear(); 
+};
