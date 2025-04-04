@@ -11,7 +11,9 @@
 #include <vulkan/vulkan.h>
 
 #include <unistd.h>
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <cstring>  // for memcpy
 
 bool Game::initialize(int argc, char* argv[]) {
     (void) argc;
@@ -35,6 +37,37 @@ void Game::run() {
 
     plane = createPlane(&m_resources, "mesh");
 
+// Default Model Matrix: identity (no transform)
+glm::mat4 modelMatrix = glm::mat4(1.0f);
+
+// Default View Matrix: look from Z+ toward origin
+glm::mat4 viewMatrix = glm::lookAt(
+    glm::vec3(0.0f, 0.0f, -2.0f),  // camera position
+    glm::vec3(0.0f, 0.0f, 0.0f),  // target
+    glm::vec3(0.0f, 0.0f, 1.0f)   // up vector
+);
+
+// Default Projection Matrix: 45° perspective, right-handed
+glm::mat4 projMatrix = glm::perspective(
+    glm::radians(45.0f),
+    1.0f,      // aspect ratio (square viewport for now)
+    0.1f,      // near clip
+    10.0f      // far clip
+);
+
+// Vulkan-style projection fix: invert Y for GLM to match Vulkan clip space
+projMatrix[1][1] *= -1.0f;
+
+// Pointer to mapped data
+void* mappedData = plane.materialBuffer.info.pMappedData;
+
+// Cast to float* for direct matrix copy
+float* dst = static_cast<float*>(mappedData);
+
+// Copy model, view, and projection matrices (16 floats each)
+memcpy(dst,               &modelMatrix, sizeof(glm::mat4));
+memcpy(dst + 16,          &viewMatrix,  sizeof(glm::mat4));
+memcpy(dst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
 /*
     plane.descriptor.
         verify(0, 0, "from mesh");
