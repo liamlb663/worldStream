@@ -3,7 +3,9 @@
 #include "RenderGraphSetup.hpp"
 
 #include "RenderEngine/Config.hpp"
+#include "RenderEngine/Debug.hpp"
 #include "RenderEngine/FrameSubmitInfo.hpp"
+#include "imgui_impl_vulkan.h"
 #include <RenderEngine/CommandSubmitter.hpp>
 
 #include <memory>
@@ -185,6 +187,52 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                 recordInfo.commandBuffer,
                 recordInfo.swapchainImage->image,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            );
+
+            VkRenderingAttachmentInfo colorAttachment = {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = recordInfo.swapchainImage->imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = nullptr,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                .clearValue = {},
+            };
+
+            VkRenderingInfo renderingInfo = {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .renderArea = {.offset = {0, 0}, .extent = outputImg->size},
+                .layerCount = 1,
+                .viewMask = 0,
+                .colorAttachmentCount = 1,
+                .pColorAttachments = &colorAttachment,
+                .pDepthAttachment = nullptr,
+                .pStencilAttachment = nullptr,
+            };
+
+            glm::vec3 imguiLabel = {};
+            imguiLabel.r = 112.0f / 255.0f;
+            imguiLabel.g = 156.0f / 255.0f;
+            imguiLabel.b = 211.0f / 255.0f;
+
+            Debug::SetCmdLabel(recordInfo.commandBuffer, imguiLabel, "ImGui");
+            vkCmdBeginRendering(recordInfo.commandBuffer, &renderingInfo);
+
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), recordInfo.commandBuffer);
+
+            vkCmdEndRendering(recordInfo.commandBuffer);
+            Debug::RemoveCmdLabel(recordInfo.commandBuffer);
+
+            recordInfo.commandSubmitter->transitionVulkanImage(
+                recordInfo.commandBuffer,
+                recordInfo.swapchainImage->image,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
             );
         },

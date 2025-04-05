@@ -35,8 +35,8 @@ void Input::cursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
     }
 
     // Pass mouse position to ImGui
-    //ImGuiIO& io = ImGui::GetIO();
-    //io.MousePos = ImVec2(static_cast<float>(xpos), static_cast<float>(ypos));
+    ImGuiIO& io = ImGui::GetIO();
+    io.MousePos = ImVec2(static_cast<float>(xpos), static_cast<float>(ypos));
 }
 
 void Input::glfwErrorCallback(int error, const char* description) {

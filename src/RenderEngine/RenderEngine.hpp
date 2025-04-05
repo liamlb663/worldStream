@@ -21,6 +21,7 @@ public:
     std::shared_ptr<CommandSubmitter> getSubmitter() const;
     GLFWwindow* getGLFWwindow() const { return m_frameManager->getGLFWwindow(); };
 
+    void StartImGui();
     void renderObjects(Size geoId, std::vector<RenderObject> objects);
     void setRenderGraph(std::shared_ptr<RenderGraph> graph);
     void renderFrame();
@@ -30,6 +31,7 @@ public:
 private:
     bool initVulkan();
     bool initFramedata();
+    bool initImGui();
 
     VulkanInfo m_vkInfo;
 
