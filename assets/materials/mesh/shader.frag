@@ -23,11 +23,6 @@ layout(push_constant) uniform PushConstants {
 } pc;
 
 void main() {
-    vec3 normal = normalize(fragNormal);
-    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
-    float lighting = max(dot(normal, lightDir), 0.0);
-
-    vec3 baseColor = vec3(fragUV, 1.0);  // UV as color demo
-    outColor = vec4(baseColor * lighting, 1.0);
+    outColor = vec4(fragUV, 0.0, 1.0);
 }
 

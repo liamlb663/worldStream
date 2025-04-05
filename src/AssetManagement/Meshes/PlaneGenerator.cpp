@@ -16,6 +16,7 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
         { { 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
         { {-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f} }
     };
+
     std::vector<U32> indices = {
         0, 1, 2,
         2, 3, 0

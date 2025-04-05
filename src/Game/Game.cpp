@@ -65,7 +65,7 @@ void Game::run() {
 
     while (!m_input->shouldClose()) {
         m_input->update();
-        time += 0.01;
+        time += 0.0005;
 
         viewMatrix = glm::lookAt(
             glm::vec3(2.0f * sin(time), 2.0f * cos(time), 2.0f),

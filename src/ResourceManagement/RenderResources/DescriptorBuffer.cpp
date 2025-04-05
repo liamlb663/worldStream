@@ -60,7 +60,7 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
 
-    Size bufferSize = size * m_descriptorBufferProps.uniformBufferDescriptorSize;
+    Size bufferSize = size * m_descriptorSize;
 
     bool bufferReturn = m_buffer.init(
             vkInfo,
@@ -111,7 +111,7 @@ U32 DescriptorBuffer::allocateBufferDescriptor(Buffer& buffer, Size range) {
     }
 
     void* data = static_cast<char*>(m_buffer.info.pMappedData) + m_currentOffset;
-    vkGetDescriptorEXT(m_vkInfo->device, &getInfo, m_descriptorSize, data);
+    vkGetDescriptorEXT(m_vkInfo->device, &getInfo, m_descriptorBufferProps.uniformBufferDescriptorSize, data);
 
     U32 descriptorIndex = static_cast<uint32_t>(m_currentOffset / m_descriptorSize);
     m_currentOffset += m_descriptorSize;
