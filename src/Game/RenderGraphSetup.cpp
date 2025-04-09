@@ -33,7 +33,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
     Size geometryPass = renderGraph->createNode(
         "Geometry",
         [finalImg, geometry](RecordInfo recordInfo) {
-            std::shared_ptr<Image> outputImg = recordInfo.renderContext->images[finalImg];
+            Image* outputImg = &recordInfo.renderContext->images[finalImg];
 
             recordInfo.commandSubmitter->transitionImage(
                 recordInfo.commandBuffer,
@@ -138,7 +138,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
     Size postFxPass = renderGraph->createNode(
         "Post Fx",
         [finalImg](RecordInfo recordInfo) {
-            std::shared_ptr<Image> outputImg = recordInfo.renderContext->images[finalImg];
+            Image* outputImg = &recordInfo.renderContext->images[finalImg];
 
             recordInfo.commandSubmitter->transitionImage(
                 recordInfo.commandBuffer,

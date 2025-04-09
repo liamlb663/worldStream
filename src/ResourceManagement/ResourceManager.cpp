@@ -30,7 +30,7 @@ void ResourceManager::shutdown() {
     for (auto& pair : m_images) {
         auto& refCount = pair.second;
         if (refCount.references > 0) {
-            refCount.value->shutdown();
+            refCount.value.shutdown();
         }
     }
     m_images.clear();
@@ -38,11 +38,11 @@ void ResourceManager::shutdown() {
     spdlog::info("ResourceManager shutdown completed");
 }
 
-std::shared_ptr<Image> ResourceManager::loadImage(std::string path) {
+Image* ResourceManager::loadImage(std::string path) {
     auto it = m_images.find(path);
     if (it != m_images.end()) {
         it->second.references++;
-        return it->second.value;
+        return &it->second.value;
     }
 
     fs::path fullPath = resourceBasePath / path;
@@ -61,21 +61,21 @@ std::shared_ptr<Image> ResourceManager::loadImage(std::string path) {
     VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
     VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-    std::shared_ptr<Image> img = std::make_shared<Image>();
-    img->init(m_vkInfo, Vector<U32, 2>(width, height), format, usage, path);
+    Image img;
+    img.init(m_vkInfo, Vector<U32, 2>(width, height), format, usage, path);
 
-    copyToImage(data, width * height * 4, img);
+    copyToImage(data, width * height * 4, &img);
     stbi_image_free(data);
 
-    m_images[path] = RefCount<std::shared_ptr<Image>>{
+    m_images[path] = RefCount<Image>{
         .value = img,
         .references = 1,
     };
 
-    return img;
+    return &m_images[path].value;
 }
 
-void ResourceManager::copyToImage(void* data, Size size, std::shared_ptr<Image> image) {
+void ResourceManager::copyToImage(void* data, Size size, Image* image) {
     // Create and fill buffer
     std::expected<Buffer, U32> stagingReturn = createStagingBuffer(size + 1);
 
@@ -110,10 +110,10 @@ void ResourceManager::copyToImage(void* data, Size size, std::shared_ptr<Image> 
     staging.shutdown();
 }
 
-void ResourceManager::dropImage(std::shared_ptr<Image> image) {
+void ResourceManager::dropImage(Image* image) {
     for (auto it = m_images.begin(); it != m_images.end(); ++it) {
         auto sharedResource = it->second.value;
-        if (sharedResource == image) {
+        if (sharedResource.image == image->image) {
             // Decrement reference count
             it->second.references--;
 

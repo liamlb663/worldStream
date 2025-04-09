@@ -23,9 +23,9 @@ public:
     void shutdown();
 
     // Images
-    std::shared_ptr<Image> loadImage(std::string path);
-    void copyToImage(void* data, Size size, std::shared_ptr<Image> image);
-    void dropImage(std::shared_ptr<Image> image);
+    Image* loadImage(std::string path);
+    void copyToImage(void* data, Size size, Image* image);
+    void dropImage(Image* image);
 
     // Buffers
     std::expected<Buffer, U32> createStagingBuffer(Size size);
@@ -62,6 +62,6 @@ private:
 
     fs::path resourceBasePath = "assets";
 
-    std::unordered_map<std::string, RefCount<std::shared_ptr<Image>>> m_images;
+    std::unordered_map<std::string, RefCount<Image>> m_images;
 };
 

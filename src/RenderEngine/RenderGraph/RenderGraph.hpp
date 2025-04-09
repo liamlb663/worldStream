@@ -20,7 +20,7 @@ struct RecordInfo;
 
 class RenderGraph;
 struct RenderInfo {
-    std::vector<std::shared_ptr<Image>> images;
+    std::vector<Image> images;
     std::vector<std::vector<RenderObject>> geometries;
     std::vector<Semaphore> semaphores;
 

@@ -280,7 +280,7 @@ void CommandSubmitter::transitionVulkanImage(VkCommandBuffer cmd, VkImage image,
     vkCmdPipelineBarrier2(cmd, &depInfo);
 }
 
-void CommandSubmitter::transitionImage(VkCommandBuffer cmd, std::shared_ptr<Image> image, VkImageLayout newLayout) {
+void CommandSubmitter::transitionImage(VkCommandBuffer cmd, Image* image, VkImageLayout newLayout) {
     transitionVulkanImage(
             cmd,
             image->image, image->layout,

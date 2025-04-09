@@ -13,7 +13,7 @@ RenderInfo RenderInfo::create(
         Vector<U32, 2> windowSize
 ) {
     RenderInfo info = {
-        .images = std::vector<std::shared_ptr<Image>>(renderGraph->images.size()),
+        .images = std::vector<Image>(renderGraph->images.size()),
         .geometries = std::vector<std::vector<RenderObject>>(renderGraph->geometries.size()),
         .semaphores = std::vector<Semaphore>(renderGraph->nodes.size()),
     };
@@ -34,8 +34,8 @@ RenderInfo RenderInfo::create(
                 break;
         }
 
-        info.images[i] = std::make_shared<Image>();
-        info.images[i]->init(
+        info.images[i] = {};
+        info.images[i].init(
                 vkInfo,
                 imageSize,
                 imgInfo.format,
@@ -56,7 +56,7 @@ RenderInfo RenderInfo::create(
 
 void RenderInfo::shutdown() {
     for (Size i = 0; i < images.size(); i++) {
-        images[i]->shutdown();
+        images[i].shutdown();
     }
 
     for (Size i = 0; i < semaphores.size(); i++) {
