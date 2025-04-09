@@ -2,6 +2,8 @@
 
 #include "stringParsers.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace MaterialManagerUtils {
 
 VkDescriptorType getDescriptorType(std::string input) {

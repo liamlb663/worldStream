@@ -12,6 +12,7 @@
 
 #include "Core/Types.hpp"
 #include <vulkan/vulkan.h>
+#include <fmt/format.h>
 
 #include <string>
 

@@ -58,8 +58,21 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
         .materialBuffer = materialBuffer,
     };
 
-    MaterialData matData = resourceManager->getMaterialManager()->getData(materialPath, output.materialBuffer, &output.descriptor);
+    MaterialData matData = resourceManager->getMaterialManager()->getData(materialPath, &output.descriptor);
     output.materials = {matData};
+
+    // Map buffers
+    for (Size i = 0; i < matData.descriptorSets.size(); i++) {
+        DescriptorSetData set = matData.descriptorSets[i];
+        for (Size j = 0; j < set.bindings.size(); j++) {
+            DescriptorBindingData binding = set.bindings[j];
+            set.buffer->mapUniformBuffer(
+                binding.descriptorIndex,
+                &materialBuffer,
+                matData.pipeline->descriptorLayouts[i].bindings[j].size
+            );
+        }
+    }
 
     return output;
 }

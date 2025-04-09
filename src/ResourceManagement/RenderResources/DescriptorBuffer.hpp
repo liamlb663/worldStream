@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "Buffer.hpp"
 #include "Core/Types.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
-#include "spdlog/spdlog.h"
-//#include "ResourceManagement/RenderResources/Image.hpp"
+
+#include "Buffer.hpp"
+#include "Image.hpp"
 
 #include <cstring>
 
@@ -15,8 +15,9 @@ public:
     bool init(VulkanInfo* vkInfo, Size size);
     void shutdown();
 
-    U32 allocateBufferDescriptor(Buffer& buffer, Size range);
-    //U32 allocateImageSamplerDescriptor(const Image& image, VkSampler sampler);
+    U32 allocateSlot();
+    void mapUniformBuffer(U32 index, Buffer* buffer, Size range);
+    void mapImageSampler(U32 index, Image* image, VkSampler sampler);
 
     void bindDescriptorBuffer(VkCommandBuffer commandBuffer);
     void bindDescriptorViaOffset(
@@ -38,6 +39,8 @@ private:
     VkDeviceSize m_descriptorSize = 0;
 
     VkPhysicalDeviceDescriptorBufferPropertiesEXT m_descriptorBufferProps = {};
+
+    U32 indexToOffset(U32 index);
 
     static PFN_vkCmdBindDescriptorBuffersEXT vkCmdBindDescriptorBuffersEXT;
     static PFN_vkCmdSetDescriptorBufferOffsetsEXT vkCmdSetDescriptorBufferOffsetsEXT;

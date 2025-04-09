@@ -82,16 +82,29 @@ void DescriptorBuffer::shutdown() {
     m_buffer.shutdown();
 }
 
-U32 DescriptorBuffer::allocateBufferDescriptor(Buffer& buffer, Size range) {
+U32 DescriptorBuffer::allocateSlot() {
+
     if (m_currentOffset + m_descriptorSize > m_buffer.info.size) {
         spdlog::error("Descriptor buffer overflow: tried to allocate beyond size");
         return -1;
     }
 
+    if (!m_buffer.info.pMappedData) {
+        spdlog::error("Descriptor buffer is not mapped!");
+        return -1;
+    }
+
+    U32 descriptorIndex = static_cast<uint32_t>(m_currentOffset / m_descriptorSize);
+    m_currentOffset += m_descriptorSize;
+
+    return descriptorIndex;
+};
+
+void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range) {
     VkDescriptorAddressInfoEXT addressInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
         .pNext = nullptr,
-        .address = buffer.getAddress(),
+        .address = buffer->getAddress(),
         .range = range,
         .format = VK_FORMAT_UNDEFINED,
     };
@@ -107,16 +120,11 @@ U32 DescriptorBuffer::allocateBufferDescriptor(Buffer& buffer, Size range) {
 
     if (!m_buffer.info.pMappedData) {
         spdlog::error("Descriptor buffer is not mapped!");
-        return -1;
+        return;
     }
 
-    void* data = static_cast<char*>(m_buffer.info.pMappedData) + m_currentOffset;
+    void* data = static_cast<char*>(m_buffer.info.pMappedData) + indexToOffset(index);
     vkGetDescriptorEXT(m_vkInfo->device, &getInfo, m_descriptorBufferProps.uniformBufferDescriptorSize, data);
-
-    U32 descriptorIndex = static_cast<uint32_t>(m_currentOffset / m_descriptorSize);
-    m_currentOffset += m_descriptorSize;
-
-    return descriptorIndex;
 }
 
 void DescriptorBuffer::bindDescriptorBuffer(VkCommandBuffer commandBuffer) {
@@ -184,4 +192,6 @@ void DescriptorBuffer::verify(U32 descriptorIndex, U32 bindingIndex, const char*
     spdlog::info("\toffset alignment requirement: {}", alignment);
 }
 
-
+U32 DescriptorBuffer::indexToOffset(U32 index) {
+    return index * m_descriptorSize;
+}

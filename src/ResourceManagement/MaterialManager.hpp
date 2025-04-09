@@ -23,7 +23,7 @@ public:
     MaterialInfo* getInfo(std::string path);
     void dropMaterialInfo(MaterialInfo* info);
 
-    MaterialData getData(std::string path, Buffer buffer, DescriptorBuffer* descriptor);
+    MaterialData getData(std::string path, DescriptorBuffer* descriptor);
     void dropMaterialData(MaterialData* data);
 
 private:
