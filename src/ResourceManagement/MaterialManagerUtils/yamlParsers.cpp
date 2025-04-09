@@ -39,10 +39,9 @@ Result<DescriptorLayoutInfo, std::string> yamlToLayout(YAML::Node& yaml, VkDevic
         }
 
         U32 size = node["size"].as<U32>();
-        U32 align = node["alignment"].as<U32>();
 
         // Add binding to builder
-        builder.addBinding(binding, descriptorType, stageFlags, size, align);
+        builder.addBinding(binding, descriptorType, stageFlags, size);
     }
 
     return builder.build(device).value();

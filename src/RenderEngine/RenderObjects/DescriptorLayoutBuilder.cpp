@@ -8,8 +8,7 @@ DescriptorLayoutBuilder* DescriptorLayoutBuilder::addBinding(
         U32 bindingNumber,
         VkDescriptorType type,
         VkShaderStageFlags stages,
-        U32 size,
-        U32 align
+        U32 size
 ) {
     VkDescriptorSetLayoutBinding binding = {
         .binding = bindingNumber,
@@ -23,8 +22,7 @@ DescriptorLayoutBuilder* DescriptorLayoutBuilder::addBinding(
         .binding = bindingNumber,
         .descriptorType = type,
         .stages = stages,
-        .size = size,
-        .alignment = align
+        .size = size
     };
 
     m_bindings.push_back(binding);

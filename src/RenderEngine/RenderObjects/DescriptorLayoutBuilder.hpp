@@ -14,8 +14,7 @@ public:
             U32 binding,
             VkDescriptorType type,
             VkShaderStageFlags stages,
-            U32 size,
-            U32 align
+            U32 size
     );
 
     Option<DescriptorLayoutInfo> build(VkDevice device);

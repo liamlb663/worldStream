@@ -86,21 +86,27 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
 
                 vkCmdBindPipeline(
                     recordInfo.commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline->pipeline
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    material->pipeline->pipeline
                 );
 
-                for (Size j = 0; j < material->descriptors.size(); j++) {
-                    material->descriptors[j].buffer->bindDescriptorBuffer(recordInfo.commandBuffer);
+                for (Size setIndex = 0; setIndex < material->descriptorSets.size(); setIndex++) {
+                    DescriptorSetData setData = material->descriptorSets[setIndex];
 
-                    // TODO: Programatically use the correct set and binding
-                    material->descriptors[j].buffer->bindDescriptorViaOffset(
-                        recordInfo.commandBuffer,
-                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        material->pipeline->pipelineLayout,
-                        0, //U32 setLayout
-                        0, //U32 bindingIndex
-                        material->descriptors[j].descriptorIndex
-                    );
+                    setData.buffer->bindDescriptorBuffer(recordInfo.commandBuffer);
+                    for (Size bindingIndex = 0; bindingIndex < setData.bindings.size(); bindingIndex++) {
+                        DescriptorBindingData bindingData = setData.bindings[bindingIndex];
+
+                        setData.buffer->bindDescriptorViaOffset(
+                            recordInfo.commandBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            material->pipeline->pipelineLayout,
+                            setData.set,
+                            bindingData.binding,
+                            bindingData.descriptorIndex
+                        );
+                    }
+
                 }
 
                 VkDeviceSize offsets[] = {0};

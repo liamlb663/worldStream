@@ -138,26 +138,33 @@ void MaterialManager::dropLayout(DescriptorLayoutInfo* layout) {
 MaterialData MaterialManager::getData(std::string path, Buffer buffer, DescriptorBuffer* descriptor) {
     MaterialInfo* materialInfo = getInfo(path);
 
-    std::vector<DescriptorInfo> descriptorInfos = {};
+    std::vector<DescriptorSetData> descriptorSets = {};
 
     for (Size i = 0; i < materialInfo->descriptorLayouts.size(); i++) {
-        U32 bufferSize = 0;
+        std::vector<DescriptorBindingData> bindingDatas;
         for (DescriptorBindingInfo info : materialInfo->descriptorLayouts[i].bindings) {
-            bufferSize += info.size;
-        }
-        U32 index = descriptor->allocateBufferDescriptor(buffer, bufferSize);
+            U32 index = descriptor->allocateBufferDescriptor(buffer, info.size);
 
-        DescriptorInfo info = {
+            DescriptorBindingData bindingData = {
+                .binding = info.binding,
+                .descriptorIndex = index,
+            };
+
+            bindingDatas.push_back(bindingData);
+        }
+
+        DescriptorSetData info = {
             .buffer = descriptor,
-            .descriptorIndex = index,
+            .set = static_cast<U32>(i),
+            .bindings = bindingDatas,
         };
 
-        descriptorInfos.push_back(info);
+        descriptorSets.push_back(info);
     }
 
     MaterialData data = {
         .pipeline = materialInfo,
-        .descriptors = descriptorInfos,
+        .descriptorSets = descriptorSets,
     };
 
     return data;
