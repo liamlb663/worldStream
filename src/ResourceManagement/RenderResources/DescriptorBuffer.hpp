@@ -16,7 +16,7 @@ public:
     void shutdown();
 
     U32 allocateSlot();
-    void mapUniformBuffer(U32 index, Buffer* buffer, Size range);
+    void mapUniformBuffer(U32 index, Buffer* buffer, Size range, Size offset);
     void mapImageSampler(U32 index, Image* image, VkSampler sampler);
 
     void bindDescriptorBuffer(VkCommandBuffer commandBuffer);

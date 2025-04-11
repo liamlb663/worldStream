@@ -52,10 +52,11 @@ void Game::run() {
     projMatrix[1][1] *= -1.0f;
 
     void* mappedData = plane.materialBuffer.info.pMappedData;
-    float* dst = static_cast<float*>(mappedData);
-    memcpy(dst,               &modelMatrix, sizeof(glm::mat4));
-    memcpy(dst + 16,          &viewMatrix,  sizeof(glm::mat4));
-    memcpy(dst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+
+    float* matrixDst = static_cast<float*>(mappedData);
+    memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
+    memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
+    memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
     m_input->update();
@@ -84,9 +85,9 @@ void Game::run() {
             glm::vec3(0.0f, 0.0f, 1.0f)
         );
 
-        memcpy(dst,               &modelMatrix, sizeof(glm::mat4));
-        memcpy(dst + 16,          &viewMatrix,  sizeof(glm::mat4));
-        memcpy(dst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+        memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
+        memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
+        memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
 
         m_graphics.renderObjects(0, plane.draw());
         m_graphics.renderFrame();

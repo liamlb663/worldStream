@@ -7,6 +7,7 @@
 #include <cstring>
 #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 // Static function pointers
 PFN_vkCmdBindDescriptorBuffersEXT DescriptorBuffer::vkCmdBindDescriptorBuffersEXT = nullptr;
@@ -100,11 +101,16 @@ U32 DescriptorBuffer::allocateSlot() {
     return descriptorIndex;
 };
 
-void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range) {
+void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range, Size offset) {
+    spdlog::info("Mapping:");
+    spdlog::info("\tIndex: {}", index);
+    spdlog::info("\tRange: {}", range);
+    spdlog::info("\tOfset: {}", offset);
+
     VkDescriptorAddressInfoEXT addressInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
         .pNext = nullptr,
-        .address = buffer->getAddress(),
+        .address = buffer->getAddress() + offset,
         .range = range,
         .format = VK_FORMAT_UNDEFINED,
     };
@@ -128,12 +134,15 @@ void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range) {
 }
 
 void DescriptorBuffer::bindDescriptorBuffer(VkCommandBuffer commandBuffer) {
-    VkDescriptorBufferBindingInfoEXT bindingInfo = {};
-    bindingInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT;
-    bindingInfo.address = m_buffer.getAddress();
-    bindingInfo.usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
+    VkDescriptorBufferBindingInfoEXT bindingInfos[2] = {};
 
-    vkCmdBindDescriptorBuffersEXT(commandBuffer, 1, &bindingInfo);
+    for (int i = 0; i < 2; ++i) {
+        bindingInfos[i].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT;
+        bindingInfos[i].address = m_buffer.getAddress();
+        bindingInfos[i].usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
+    }
+
+    vkCmdBindDescriptorBuffersEXT(commandBuffer, 2, bindingInfos);
 }
 
 void DescriptorBuffer::bindDescriptorViaOffset(
