@@ -51,12 +51,18 @@ void Game::run() {
     );
     projMatrix[1][1] *= -1.0f;
 
+    glm::vec3 offset = glm::vec3(0.0f, 0.0f, 0.0f);
+
     void* mappedData = plane.materialBuffer.info.pMappedData;
 
     float* matrixDst = static_cast<float*>(mappedData);
     memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
     memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
     memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+
+    float* offsetDst = static_cast<float*>(mappedData) + 256;
+    memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
+
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
     m_input->update();

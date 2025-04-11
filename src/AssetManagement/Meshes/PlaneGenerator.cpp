@@ -41,7 +41,7 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
 
     // HACK: Standardize please!
     Buffer materialBuffer = resourceManager->createUniformBuffer(256*2).value();
-    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(1).value();
+    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(4).value();
 
     assets::Surface surface = {
         .indexStart = 0,
@@ -64,15 +64,17 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
     // Map buffers
     for (Size i = 0; i < matData.descriptorSets.size(); i++) {
         DescriptorSetData set = matData.descriptorSets[i];
+        DescriptorLayoutInfo setInfo = matData.pipeline->descriptorLayouts[i];
         for (Size j = 0; j < set.bindings.size(); j++) {
             DescriptorBindingData binding = set.bindings[j];
+            DescriptorBindingInfo bindingInfo = setInfo.bindings[j];
 
             Size offset = j * 256;
 
             set.buffer->mapUniformBuffer(
                 binding.descriptorIndex,
                 &materialBuffer,
-                matData.pipeline->descriptorLayouts[i].bindings[j].size,
+                bindingInfo.size,
                 offset
             );
         }

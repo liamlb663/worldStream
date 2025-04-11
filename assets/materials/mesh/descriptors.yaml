@@ -3,7 +3,7 @@ descriptor_layout:
     - binding: 0
       descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
       stages: ["vertex", "fragment"]
-      size: 192
+      size: 256
 
     - binding: 1
       descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
