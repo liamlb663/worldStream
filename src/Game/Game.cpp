@@ -60,7 +60,7 @@ void Game::run() {
     memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
     memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
 
-    float* offsetDst = static_cast<float*>(mappedData) + 256;
+    float* offsetDst = static_cast<float*>(mappedData) + 192;
     memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
 
 
@@ -91,9 +91,12 @@ void Game::run() {
             glm::vec3(0.0f, 0.0f, 1.0f)
         );
 
-        memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
-        memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
-        memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+        //memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
+        //memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
+        //memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+
+        offset = glm::vec3(0.0f, 0.0f, 5.0f*sin(time));
+        memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
 
         m_graphics.renderObjects(0, plane.draw());
         m_graphics.renderFrame();

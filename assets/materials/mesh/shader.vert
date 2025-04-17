@@ -33,6 +33,6 @@ void main() {
     fragNormal = mat3(transpose(inverse(ubo.model))) * inNormal;
     fragUV = inUV;
 
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition + offsetUBO.positionOffset, 1.0);
 }
 

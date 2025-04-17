@@ -94,19 +94,14 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                     DescriptorSetData setData = material->descriptorSets[setIndex];
 
                     setData.buffer->bindDescriptorBuffer(recordInfo.commandBuffer);
-                    for (Size bindingIndex = 0; bindingIndex < setData.bindings.size(); bindingIndex++) {
-                        DescriptorBindingData bindingData = setData.bindings[bindingIndex];
-
-                        setData.buffer->bindDescriptorViaOffset(
-                            recordInfo.commandBuffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            material->pipeline->pipelineLayout,
-                            setData.set,
-                            bindingData.binding,
-                            bindingData.descriptorIndex
-                        );
-                    }
-
+                    setData.buffer->bindDescriptorViaOffset(
+                        recordInfo.commandBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        material->pipeline->pipelineLayout,
+                        setData.set,
+                        0,
+                        setData.descriptorIndex
+                    );
                 }
 
                 VkDeviceSize offsets[] = {0};

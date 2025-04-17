@@ -141,21 +141,18 @@ MaterialData MaterialManager::getData(std::string path, DescriptorBuffer* descri
     std::vector<DescriptorSetData> descriptorSets = {};
 
     for (Size i = 0; i < materialInfo->descriptorLayouts.size(); i++) {
-        std::vector<DescriptorBindingData> bindingDatas;
+        std::vector<U32> bindingDatas;
+
+        U32 index = descriptor->allocateSlot();
+
         for (DescriptorBindingInfo info : materialInfo->descriptorLayouts[i].bindings) {
-            U32 index = descriptor->allocateSlot();
-
-            DescriptorBindingData bindingData = {
-                .binding = info.binding,
-                .descriptorIndex = index,
-            };
-
-            bindingDatas.push_back(bindingData);
+            bindingDatas.push_back(info.binding);
         }
 
         DescriptorSetData info = {
             .buffer = descriptor,
             .set = static_cast<U32>(i),
+            .descriptorIndex = index,
             .bindings = bindingDatas,
         };
 

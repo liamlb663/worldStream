@@ -25,7 +25,7 @@ public:
         VkPipelineBindPoint pipelineBindPoint,
         VkPipelineLayout pipelineLayout,
         U32 setIndex,
-        U32 bindingIndex,
+        U32 bufferIndex,
         U32 descriptorIndex
     );
 

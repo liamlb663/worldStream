@@ -65,18 +65,17 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
     for (Size i = 0; i < matData.descriptorSets.size(); i++) {
         DescriptorSetData set = matData.descriptorSets[i];
         DescriptorLayoutInfo setInfo = matData.pipeline->descriptorLayouts[i];
+
+        Size offset = 0;
         for (Size j = 0; j < set.bindings.size(); j++) {
-            DescriptorBindingData binding = set.bindings[j];
-            DescriptorBindingInfo bindingInfo = setInfo.bindings[j];
-
-            Size offset = j * 256;
-
             set.buffer->mapUniformBuffer(
-                binding.descriptorIndex,
+                set.descriptorIndex,
                 &materialBuffer,
-                bindingInfo.size,
+                setInfo.bindings[j].size,
                 offset
             );
+
+            offset += setInfo.bindings[j].size;
         }
     }
 

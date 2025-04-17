@@ -52,7 +52,8 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
     VkBufferUsageFlags bufferUsage =
         VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT |
         VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
 
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO;
 
@@ -84,7 +85,6 @@ void DescriptorBuffer::shutdown() {
 }
 
 U32 DescriptorBuffer::allocateSlot() {
-
     if (m_currentOffset + m_descriptorSize > m_buffer.info.size) {
         spdlog::error("Descriptor buffer overflow: tried to allocate beyond size");
         return -1;
@@ -102,11 +102,9 @@ U32 DescriptorBuffer::allocateSlot() {
 };
 
 void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range, Size offset) {
-    spdlog::info("Mapping:");
-    spdlog::info("\tIndex: {}", index);
-    spdlog::info("\tRange: {}", range);
-    spdlog::info("\tOfset: {}", offset);
-
+    spdlog::info("Mapping");
+    spdlog::info("\tSize {}", range);
+    spdlog::info("\tOffset {}", offset);
     VkDescriptorAddressInfoEXT addressInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
         .pNext = nullptr,
@@ -129,20 +127,22 @@ void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range, S
         return;
     }
 
-    void* data = static_cast<char*>(m_buffer.info.pMappedData) + indexToOffset(index);
-    vkGetDescriptorEXT(m_vkInfo->device, &getInfo, m_descriptorBufferProps.uniformBufferDescriptorSize, data);
+    void* base = m_buffer.info.pMappedData;
+    VkDeviceSize bindingOffset = (index * m_descriptorSize * NUM_BINDINGS) + (bindingIndex * m_descriptorSize);
+
+    //void* data = static_cast<char*>(m_buffer.info.pMappedData) + indexToOffset(index);
+    //vkGetDescriptorEXT(m_vkInfo->device, &getInfo, m_descriptorBufferProps.uniformBufferDescriptorSize, data);
 }
 
 void DescriptorBuffer::bindDescriptorBuffer(VkCommandBuffer commandBuffer) {
-    VkDescriptorBufferBindingInfoEXT bindingInfos[2] = {};
+    VkDescriptorBufferBindingInfoEXT bindingInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
+        .pNext = nullptr,
+        .address = m_buffer.getAddress(),
+        .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT,
+    };
 
-    for (int i = 0; i < 2; ++i) {
-        bindingInfos[i].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT;
-        bindingInfos[i].address = m_buffer.getAddress();
-        bindingInfos[i].usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
-    }
-
-    vkCmdBindDescriptorBuffersEXT(commandBuffer, 2, bindingInfos);
+    vkCmdBindDescriptorBuffersEXT(commandBuffer, 1, &bindingInfo);
 }
 
 void DescriptorBuffer::bindDescriptorViaOffset(
@@ -150,7 +150,7 @@ void DescriptorBuffer::bindDescriptorViaOffset(
         VkPipelineBindPoint pipelineBindPoint,
         VkPipelineLayout pipelineLayout,
         uint32_t setIndex,
-        uint32_t bindingIndex,
+        uint32_t bufferIndex,
         uint32_t descriptorIndex
 ) {
     VkDeviceSize descriptorOffset = descriptorIndex * m_descriptorSize;
@@ -160,9 +160,9 @@ void DescriptorBuffer::bindDescriptorViaOffset(
         pipelineBindPoint,
         pipelineLayout,
         setIndex,
-        1,                // Number of bindings
-        &bindingIndex,    // Binding index in the set
-        &descriptorOffset // Offset of the descriptor in the buffer
+        1,                  // Number of bindings
+        &bufferIndex,       // Buffer index of the set
+        &descriptorOffset   // Offset of the descriptor in the buffer
     );
 }
 

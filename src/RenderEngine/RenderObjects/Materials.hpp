@@ -43,15 +43,11 @@ struct MaterialInfo {
     MaterialType type;
 };
 
-struct DescriptorBindingData {
-    U32 binding;
-    U32 descriptorIndex;
-};
-
 struct DescriptorSetData {
     DescriptorBuffer* buffer;
     U32 set;
-    std::vector<DescriptorBindingData> bindings;
+    U32 descriptorIndex;
+    std::vector<U32> bindings;
 };
 
 struct MaterialData {
