@@ -170,8 +170,6 @@ void DescriptorBuffer::bindDescriptorViaOffset(
     VkDeviceSize offset = m_sets[descriptorSetID].offset;
     U32 descriptorBufferIndex = 0;
 
-    spdlog::info("Binding descriptor set {} with offset {} (descriptorSetID = {})", setIndex, offset, descriptorSetID);
-
     vkCmdSetDescriptorBufferOffsetsEXT(
         commandBuffer,
         pipelineBindPoint,

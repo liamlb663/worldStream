@@ -61,7 +61,6 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
 
         Size offset = 0;
         for (Size j = 0; j < set.bindings.size(); j++) {
-            spdlog::info("Binding: {}, Size: {}, Offset: {}", set.bindings[j], setInfo.bindings[j].size, offset);
             set.buffer->mapUniformBuffer(
                 set.descriptorIndex,
                 set.bindings[j],
