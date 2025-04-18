@@ -11,3 +11,9 @@ descriptor_layout:
       stages: ["vertex", "fragment"]
       size: 16
       offset: 192
+
+    - binding: 2
+      descriptor_type: "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER"
+      stages: ["vertex", "fragment"]
+      size: 0
+      offset: 0

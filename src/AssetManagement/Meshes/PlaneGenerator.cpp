@@ -54,6 +54,46 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
         .materialIndex = 0,
     }};
 
+    Image* clouds = resourceManager->loadImage("clouds.png");
+    // Quick and dirty sampler creation
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.pNext = nullptr;
+    samplerInfo.flags = 0;
+
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1.0f;
+
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+    samplerInfo.mipLodBias = 0.0f;
+
+    VkSampler sampler;
+    VkResult result = vkCreateSampler(
+        resourceManager->getVkInfo()->device,
+        &samplerInfo,
+        nullptr,
+        &sampler
+    );
+    if (result != VK_SUCCESS) {
+        spdlog::error("Failed to create sampler!");
+        return;
+    }
+
     // Map buffers
     for (Size i = 0; i < matData.descriptorSets.size(); i++) {
         DescriptorSetData set = matData.descriptorSets[i];
@@ -61,13 +101,22 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
 
         Size offset = 0;
         for (Size j = 0; j < set.bindings.size(); j++) {
-            set.buffer->mapUniformBuffer(
-                set.descriptorIndex,
-                set.bindings[j],
-                &output->materialBuffer,
-                setInfo.bindings[j].size,
-                offset
-            );
+            if (setInfo.bindings[j].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+                set.buffer->mapUniformBuffer(
+                    set.descriptorIndex,
+                    set.bindings[j],
+                    &output->materialBuffer,
+                    setInfo.bindings[j].size,
+                    offset
+                );
+            } else if (setInfo.bindings[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+                set.buffer->mapImageSampler(
+                    set.descriptorIndex,
+                    set.bindings[j],
+                    clouds,
+                    sampler
+                );
+            }
 
             offset += setInfo.bindings[j].size;
         }
