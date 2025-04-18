@@ -37,6 +37,7 @@ public:
     );
 
     void verify(U32 setID, U32 binding, const char* context) const;
+    void verify(U32 setID, U32 binding, const char* context, Size expectedOffset, Size expectedSize) const;
 
 private:
     VulkanInfo* m_vkInfo;
