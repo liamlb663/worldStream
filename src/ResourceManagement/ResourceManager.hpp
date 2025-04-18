@@ -22,6 +22,8 @@ public:
     bool initialize(VulkanInfo* vkInfo, std::shared_ptr<CommandSubmitter> submitter);
     void shutdown();
 
+    VulkanInfo* getVkInfo();
+
     // Images
     Image* loadImage(std::string path);
     void copyToImage(void* data, Size size, Image* image);

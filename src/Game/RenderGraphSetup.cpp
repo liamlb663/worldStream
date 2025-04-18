@@ -6,6 +6,7 @@
 #include "RenderEngine/Debug.hpp"
 #include "RenderEngine/FrameSubmitInfo.hpp"
 #include "imgui_impl_vulkan.h"
+#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 #include <RenderEngine/CommandSubmitter.hpp>
 
 #include <memory>
@@ -94,19 +95,13 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                     DescriptorSetData setData = material->descriptorSets[setIndex];
 
                     setData.buffer->bindDescriptorBuffer(recordInfo.commandBuffer);
-                    for (Size bindingIndex = 0; bindingIndex < setData.bindings.size(); bindingIndex++) {
-                        DescriptorBindingData bindingData = setData.bindings[bindingIndex];
-
-                        setData.buffer->bindDescriptorViaOffset(
-                            recordInfo.commandBuffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            material->pipeline->pipelineLayout,
-                            setData.set,
-                            bindingData.binding,
-                            bindingData.descriptorIndex
-                        );
-                    }
-
+                    setData.buffer->bindDescriptorViaOffset(
+                        recordInfo.commandBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        material->pipeline->pipelineLayout,
+                        setData.set,
+                        setData.descriptorIndex
+                    );
                 }
 
                 VkDeviceSize offsets[] = {0};

@@ -35,7 +35,7 @@ bool Game::initialize(int argc, char* argv[]) {
 void Game::run() {
     spdlog::info("Running Game");
 
-    plane = createPlane(&m_resources, "mesh");
+    createPlane(&m_resources, "mesh", &plane);
 
     glm::mat4 modelMatrix = glm::mat4(1.0f);
     glm::mat4 viewMatrix = glm::lookAt(
@@ -51,11 +51,19 @@ void Game::run() {
     );
     projMatrix[1][1] *= -1.0f;
 
+    glm::vec3 offset = glm::vec3(0.0f, 0.0f, 0.0f);
+
     void* mappedData = plane.materialBuffer.info.pMappedData;
-    float* dst = static_cast<float*>(mappedData);
-    memcpy(dst,               &modelMatrix, sizeof(glm::mat4));
-    memcpy(dst + 16,          &viewMatrix,  sizeof(glm::mat4));
-    memcpy(dst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+
+    float* matrixDst = static_cast<float*>(mappedData);
+    float* offsetDst = reinterpret_cast<float*>(static_cast<uint8_t*>(mappedData) + 192);
+
+    memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
+    memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
+    memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+
+    memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
+
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
     m_input->update();
@@ -84,9 +92,12 @@ void Game::run() {
             glm::vec3(0.0f, 0.0f, 1.0f)
         );
 
-        memcpy(dst,               &modelMatrix, sizeof(glm::mat4));
-        memcpy(dst + 16,          &viewMatrix,  sizeof(glm::mat4));
-        memcpy(dst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+        memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
+        memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
+        memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
+
+        offset.z = sin(time);
+        memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
 
         m_graphics.renderObjects(0, plane.draw());
         m_graphics.renderFrame();

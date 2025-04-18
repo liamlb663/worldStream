@@ -31,6 +31,5 @@ public:
 private:
     VulkanInfo* m_vkInfo;
 
-    U32 inited = 0;
 };
 

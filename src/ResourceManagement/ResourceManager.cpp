@@ -38,6 +38,10 @@ void ResourceManager::shutdown() {
     spdlog::info("ResourceManager shutdown completed");
 }
 
+VulkanInfo* ResourceManager::getVkInfo() {
+    return m_vkInfo;
+}
+
 Image* ResourceManager::loadImage(std::string path) {
     auto it = m_images.find(path);
     if (it != m_images.end()) {

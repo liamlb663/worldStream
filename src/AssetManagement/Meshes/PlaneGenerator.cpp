@@ -9,7 +9,7 @@
 
 #include <vector>
 
-assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialPath) {
+void createPlane(ResourceManager* resourceManager, std::string materialPath, assets::Mesh* output) {
     std::vector<Vertex> vertices = {
         { {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f} },
         { { 0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },
@@ -25,55 +25,55 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
     Size vertexSize = sizeof(Vertex) * vertices.size();
     Size indexSize  = sizeof(U32) * indices.size();
 
-    Buffer vertexBuffer = resourceManager->createVertexBuffer(vertexSize).value();
-    Buffer indexBuffer  = resourceManager->createIndexBuffer(indexSize).value();
+    output->vertexBuffer = resourceManager->createVertexBuffer(vertexSize).value();
+    output->indexBuffer = resourceManager->createIndexBuffer(indexSize).value();
 
     Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize).value();
     Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize).value();
 
     std::memcpy(vertexStaging.info.pMappedData, vertices.data(), vertexSize);
     std::memcpy(indexStaging.info.pMappedData, indices.data(), indexSize);
-    resourceManager->copyToBuffer(vertexStaging, vertexBuffer, vertexSize);
-    resourceManager->copyToBuffer(indexStaging, indexBuffer, indexSize);
+    resourceManager->copyToBuffer(vertexStaging, output->vertexBuffer, vertexSize);
+    resourceManager->copyToBuffer(indexStaging, output->indexBuffer, indexSize);
 
     vertexStaging.shutdown();
     indexStaging.shutdown();
 
     // HACK: Standardize please!
-    Buffer materialBuffer = resourceManager->createUniformBuffer(256).value();
-    DescriptorBuffer descriptor = resourceManager->createDescriptorBuffer(1).value();
+    output->materialBuffer = resourceManager->createUniformBuffer(256*2).value();
 
-    assets::Surface surface = {
+    output->descriptor.init(resourceManager->getVkInfo(), 4000);
+    MaterialData matData = resourceManager->getMaterialManager()
+        ->getData(materialPath, &output->descriptor);
+
+    output->materials = {matData};
+
+    output->surfaces = {{
         .indexStart = 0,
         .indexCount = static_cast<U32>(indices.size()),
         .materialIndex = 0,
-    };
-
-    assets::Mesh output = {
-        .surfaces = {surface},
-        .materials = {},
-        .indexBuffer = indexBuffer,
-        .vertexBuffer = vertexBuffer,
-        .descriptor = descriptor,
-        .materialBuffer = materialBuffer,
-    };
-
-    MaterialData matData = resourceManager->getMaterialManager()->getData(materialPath, &output.descriptor);
-    output.materials = {matData};
+    }};
 
     // Map buffers
     for (Size i = 0; i < matData.descriptorSets.size(); i++) {
         DescriptorSetData set = matData.descriptorSets[i];
+        DescriptorSetInfo setInfo = matData.pipeline->descriptorSets[i];
+
+        Size offset = 0;
         for (Size j = 0; j < set.bindings.size(); j++) {
-            DescriptorBindingData binding = set.bindings[j];
+            spdlog::info("Binding: {}, Size: {}, Offset: {}", set.bindings[j], setInfo.bindings[j].size, offset);
             set.buffer->mapUniformBuffer(
-                binding.descriptorIndex,
-                &materialBuffer,
-                matData.pipeline->descriptorLayouts[i].bindings[j].size
+                set.descriptorIndex,
+                set.bindings[j],
+                &output->materialBuffer,
+                setInfo.bindings[j].size,
+                offset
             );
+
+            offset += setInfo.bindings[j].size;
         }
     }
 
-    return output;
+    return;
 }
 
