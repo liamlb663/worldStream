@@ -145,6 +145,7 @@ MaterialData MaterialManager::getData(std::string path, DescriptorBuffer* descri
         std::vector<U32> bindingDatas;
 
         // TODO: Fix descriptor buffer
+        spdlog::info("MaterialManager::getData(): requesting descriptor allocation for set {}", i);
         U32 index = descriptor->allocateSlot(&materialInfo->descriptorSets[i]);
 
         for (DescriptorBindingInfo info : materialInfo->descriptorSets[i].bindings) {
@@ -153,7 +154,7 @@ MaterialData MaterialManager::getData(std::string path, DescriptorBuffer* descri
 
         DescriptorSetData info = {
             .buffer = descriptor,
-            .set = materialInfo->descriptorSets[i].set,
+            .set = static_cast<U32>(i),
             .descriptorIndex = index,
             .bindings = bindingDatas,
         };

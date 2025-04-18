@@ -40,9 +40,10 @@ Result<DescriptorSetInfo, std::string> yamlToLayout(YAML::Node& yaml, VkDevice d
         }
 
         U32 size = node["size"].as<U32>();
+        U32 offset = node["offset"].as<U32>();
 
         // Add binding to builder
-        builder.addBinding(binding, descriptorType, stageFlags, size);
+        builder.addBinding(binding, descriptorType, stageFlags, size, offset);
     }
 
     return builder.build(device).value();
@@ -140,7 +141,6 @@ Result<MaterialInfo, std::string> yamlToInfo(MaterialManager* materialManager, Y
         DescriptorSetInfo setLayout = materialManager->getLayout(
                 fmt::format("{}/{}", folder, set["layout"].as<std::string>())
         );
-        setLayout.set = set["set"].as<U32>();
 
         builder.addDescriptorLayout(setLayout);
         layouts.push_back(setLayout);

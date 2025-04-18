@@ -8,7 +8,8 @@ DescriptorSetBuilder* DescriptorSetBuilder::addBinding(
         U32 bindingNumber,
         VkDescriptorType type,
         VkShaderStageFlags stages,
-        U32 size
+        U32 size,
+        U32 offset
 ) {
     VkDescriptorSetLayoutBinding binding = {
         .binding = bindingNumber,
@@ -22,7 +23,8 @@ DescriptorSetBuilder* DescriptorSetBuilder::addBinding(
         .binding = bindingNumber,
         .descriptorType = type,
         .stages = stages,
-        .size = size
+        .size = size,
+        .offset = offset,
     };
 
     m_bindings.push_back(binding);
@@ -54,7 +56,7 @@ Option<DescriptorSetInfo> DescriptorSetBuilder::build(VkDevice device) {
 
     DescriptorSetInfo output = {
         .layout = layout,
-        .bindings = m_bindingInfos
+        .bindings = m_bindingInfos,
     };
 
     return output;

@@ -31,13 +31,11 @@ struct DescriptorBindingInfo {
 
 struct DescriptorSetInfo {
     VkDescriptorSetLayout layout;
-    U32 set;
     std::vector<DescriptorBindingInfo> bindings;
 
     bool operator==(const DescriptorSetInfo &b) const {
         return layout == b.layout &&
-            bindings == b.bindings &&
-            set == b.set;
+            bindings == b.bindings;
     }
 };
 

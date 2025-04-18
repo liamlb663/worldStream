@@ -101,6 +101,8 @@ void Game::run() {
         m_graphics.renderObjects(0, plane.draw());
         m_graphics.renderFrame();
 
+        break;
+
         if (m_input->isPressed("Quit"))
             m_input->close();
     }

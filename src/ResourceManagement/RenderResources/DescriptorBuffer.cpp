@@ -17,6 +17,8 @@ PFN_vkCmdSetDescriptorBufferOffsetsEXT DescriptorBuffer::vkCmdSetDescriptorBuffe
 PFN_vkGetDescriptorEXT DescriptorBuffer::vkGetDescriptorEXT = nullptr;
 
 bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
+    spdlog::info("init() on DescriptorBuffer: {}", static_cast<const void*>(this));
+
     m_vkInfo = vkInfo;
 
     // Set function pointers
@@ -65,12 +67,17 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
 };
 
 void DescriptorBuffer::shutdown() {
+    spdlog::info("shutdown() on DescriptorBuffer: {}", static_cast<const void*>(this));
+
     m_buffer.shutdown();
     m_sets.clear();
     m_currentOffset = 0;
 }
 
 U32 DescriptorBuffer::allocateSlot(DescriptorSetInfo* info) {
+    spdlog::info("allocateSlot() on DescriptorBuffer: {}", static_cast<const void*>(this));
+    spdlog::info("Allocating descriptor slot for layout with {} bindings", info->bindings.size());
+
     VkDeviceSize baseOffset = (m_currentOffset + m_alignment - 1) & ~(m_alignment - 1);
     VkDeviceSize setSize = 0;
 
@@ -95,9 +102,21 @@ U32 DescriptorBuffer::allocateSlot(DescriptorSetInfo* info) {
         setSize += bindingSize;
     }
 
+    slot.offset = baseOffset;
     slot.size = setSize;
     m_currentOffset = baseOffset + setSize;
+
+    spdlog::info("Set size to allocate: {}", setSize);
+    if (setSize == 0) {
+        spdlog::error("Descriptor set has zero size! Descriptor types might be unsupported.");
+        for (const auto& binding : info->bindings) {
+            spdlog::error("  Binding {} has type {}", binding.binding, string_VkDescriptorType(binding.descriptorType));
+            spdlog::error("  Calculated size: {}", calculateDescriptorSize(binding.descriptorType));
+        }
+    }
+
     m_sets.push_back(slot);
+    spdlog::info("Set slot pushed. Total sets now: {}", m_sets.size());
 
     return static_cast<U32>(m_sets.size() - 1);
 };
@@ -173,7 +192,18 @@ void DescriptorBuffer::bindDescriptorViaOffset(
     U32 setIndex,
     U32 descriptorSetID
 ) {
+    spdlog::info("bindDescriptorViaOffset() on DescriptorBuffer: {}", static_cast<const void*>(this));
+    spdlog::info("bindDescriptorViaOffset() m_sets.size(): {}", m_sets.size());
+    if (descriptorSetID >= m_sets.size()) {
+        spdlog::error("Invalid descriptorSetID {}. Only {} descriptor sets allocated.", descriptorSetID, m_sets.size());
+        return;
+    }
+
     VkDeviceSize offset = m_sets[descriptorSetID].offset;
+
+    spdlog::info("Binding setIndex={}, descriptorSetID={}, resolvedOffset={}",
+                 setIndex, descriptorSetID, offset);
+
     vkCmdSetDescriptorBufferOffsetsEXT(commandBuffer, pipelineBindPoint, pipelineLayout,
                                        setIndex, 1, &setIndex, &offset);
 }
@@ -201,7 +231,8 @@ VkDeviceSize DescriptorBuffer::calculateDescriptorSize(VkDescriptorType type) co
         case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: return props.combinedImageSamplerDescriptorSize;
         case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: return props.storageBufferDescriptorSize;
         default:
-            spdlog::error("Unsupported descriptor type in descriptorSize()");
+            spdlog::error("Unsupported descriptor type in descriptorSize(): {}", 
+                          string_VkDescriptorType(type));
             return 0;
     }
 }
