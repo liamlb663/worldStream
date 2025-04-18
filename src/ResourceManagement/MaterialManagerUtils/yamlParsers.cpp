@@ -6,7 +6,7 @@
 #include "RenderEngine/Config.hpp"
 #include "RenderEngine/RenderObjects/PipelineBuilder.hpp"
 #include "ResourceManagement/MaterialManager.hpp"
-#include "RenderEngine/RenderObjects/DescriptorLayoutBuilder.hpp"
+#include "RenderEngine/RenderObjects/DescriptorSetBuilder.hpp"
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ShaderLoading.hpp"
 
@@ -18,8 +18,8 @@
 
 namespace MaterialManagerUtils {
 
-Result<DescriptorLayoutInfo, std::string> yamlToLayout(YAML::Node& yaml, VkDevice device) {
-    DescriptorLayoutBuilder builder;
+Result<DescriptorSetInfo, std::string> yamlToLayout(YAML::Node& yaml, VkDevice device) {
+    DescriptorSetBuilder builder;
 
     YAML::Node bindings = yaml["descriptor_layout"]["bindings"];
 
@@ -135,11 +135,13 @@ Result<MaterialInfo, std::string> yamlToInfo(MaterialManager* materialManager, Y
 
     // Descriptors
     YAML::Node descriptors = pipeline["descriptor_layouts"];
-    std::vector<DescriptorLayoutInfo> layouts;
+    std::vector<DescriptorSetInfo> layouts;
     for (const YAML::Node& set : descriptors) {
-        DescriptorLayoutInfo setLayout = materialManager->getLayout(
-                fmt::format("{}/{}", folder, set.as<std::string>())
+        DescriptorSetInfo setLayout = materialManager->getLayout(
+                fmt::format("{}/{}", folder, set["layout"].as<std::string>())
         );
+        setLayout.set = set["set"].as<U32>();
+
         builder.addDescriptorLayout(setLayout);
         layouts.push_back(setLayout);
     }
@@ -192,7 +194,7 @@ Result<MaterialInfo, std::string> yamlToInfo(MaterialManager* materialManager, Y
     MaterialInfo output = {
         .pipeline = piplineInfo.pipeline,
         .pipelineLayout = piplineInfo.layout,
-        .descriptorLayouts = layouts,
+        .descriptorSets = layouts,
         .type = MaterialType::Opaque,   // TODO: materialtypes
     };
 

@@ -4,6 +4,7 @@
 
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/MaterialManagerUtils/yamlParsers.hpp"
+#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -25,7 +26,7 @@ void MaterialManager::shutdown() {
     m_materialInfos.clear();
 }
 
-DescriptorLayoutInfo MaterialManager::getLayout(std::string path) {
+DescriptorSetInfo MaterialManager::getLayout(std::string path) {
     auto it = m_descriptorLayouts.find(path);
     if (it != m_descriptorLayouts.end()) {
         it->second.references++;
@@ -40,9 +41,9 @@ DescriptorLayoutInfo MaterialManager::getLayout(std::string path) {
 
     // Get Material Info
     YAML::Node yaml = YAML::LoadFile(fullPath);
-    DescriptorLayoutInfo layout = MaterialManagerUtils::yamlToLayout(yaml, m_vkInfo->device).value(); // HACK: unwrap
+    DescriptorSetInfo layout = MaterialManagerUtils::yamlToLayout(yaml, m_vkInfo->device).value();
 
-    m_descriptorLayouts[path] = RefCount<DescriptorLayoutInfo>{
+    m_descriptorLayouts[path] = RefCount<DescriptorSetInfo>{
         .value = layout,
         .references = 1,
     };
@@ -66,7 +67,7 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
 
     // Get Material Info
     YAML::Node yaml = YAML::LoadFile(fullPath);
-    MaterialInfo matInfo = MaterialManagerUtils::yamlToInfo(this, yaml, resourceBasePath, path, m_vkInfo->device).value();  // HACK: unwrap
+    MaterialInfo matInfo = MaterialManagerUtils::yamlToInfo(this, yaml, resourceBasePath, path, m_vkInfo->device).value();
 
     m_materialInfos[path] = RefCount<MaterialInfo>{
         .value = matInfo,
@@ -80,8 +81,8 @@ void MaterialManager::destroyMaterialInfo(MaterialInfo* info) {
     vkDestroyPipeline(m_vkInfo->device, info->pipeline, nullptr);
     vkDestroyPipelineLayout(m_vkInfo->device, info->pipelineLayout, nullptr);
 
-    for (DescriptorLayoutInfo layout : info->descriptorLayouts) {
-        this->dropLayout(&layout);
+    for (DescriptorSetInfo set : info->descriptorSets) {
+        this->dropLayout(&set);
     }
 }
 
@@ -89,7 +90,7 @@ bool compareMaterialInfo(MaterialInfo a, MaterialInfo b) {
    return a.pipeline == b.pipeline &&
           a.pipelineLayout == b.pipelineLayout &&
           a.type == b.type &&
-          a.descriptorLayouts == b.descriptorLayouts;
+          a.descriptorSets == b.descriptorSets;
 }
 
 void MaterialManager::dropMaterialInfo(MaterialInfo* info) {
@@ -111,12 +112,12 @@ void MaterialManager::dropMaterialInfo(MaterialInfo* info) {
     spdlog::error("MaterialInfo not found for dropping!");
 }
 
-void MaterialManager::destroyDescriptorLayoutInfo(DescriptorLayoutInfo* info) {
+void MaterialManager::destroyDescriptorLayoutInfo(DescriptorSetInfo* info) {
     vkDestroyDescriptorSetLayout(m_vkInfo->device, info->layout, nullptr);
     info->bindings.clear();
 }
 
-void MaterialManager::dropLayout(DescriptorLayoutInfo* layout) {
+void MaterialManager::dropLayout(DescriptorSetInfo* layout) {
     for (auto it = m_descriptorLayouts.begin(); it != m_descriptorLayouts.end(); ++it) {
         auto sharedResource = it->second.value;
         if (sharedResource == *layout) {
@@ -140,18 +141,19 @@ MaterialData MaterialManager::getData(std::string path, DescriptorBuffer* descri
 
     std::vector<DescriptorSetData> descriptorSets = {};
 
-    for (Size i = 0; i < materialInfo->descriptorLayouts.size(); i++) {
+    for (Size i = 0; i < materialInfo->descriptorSets.size(); i++) {
         std::vector<U32> bindingDatas;
 
-        U32 index = descriptor->allocateSlot();
+        // TODO: Fix descriptor buffer
+        U32 index = descriptor->allocateSlot(&materialInfo->descriptorSets[i]);
 
-        for (DescriptorBindingInfo info : materialInfo->descriptorLayouts[i].bindings) {
+        for (DescriptorBindingInfo info : materialInfo->descriptorSets[i].bindings) {
             bindingDatas.push_back(info.binding);
         }
 
         DescriptorSetData info = {
             .buffer = descriptor,
-            .set = static_cast<U32>(i),
+            .set = materialInfo->descriptorSets[i].set,
             .descriptorIndex = index,
             .bindings = bindingDatas,
         };

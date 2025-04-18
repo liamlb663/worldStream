@@ -64,12 +64,13 @@ assets::Mesh createPlane(ResourceManager* resourceManager, std::string materialP
     // Map buffers
     for (Size i = 0; i < matData.descriptorSets.size(); i++) {
         DescriptorSetData set = matData.descriptorSets[i];
-        DescriptorLayoutInfo setInfo = matData.pipeline->descriptorLayouts[i];
+        DescriptorSetInfo setInfo = matData.pipeline->descriptorSets[i];
 
         Size offset = 0;
         for (Size j = 0; j < set.bindings.size(); j++) {
             set.buffer->mapUniformBuffer(
                 set.descriptorIndex,
+                set.bindings[j],
                 &materialBuffer,
                 setInfo.bindings[j].size,
                 offset

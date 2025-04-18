@@ -264,7 +264,7 @@ PipelineBuilder* PipelineBuilder::setDepthInfo(bool depthTest, bool writeDepth, 
     return this;
 }
 
-PipelineBuilder* PipelineBuilder::addDescriptorLayout(DescriptorLayoutInfo layout) {
+PipelineBuilder* PipelineBuilder::addDescriptorLayout(DescriptorSetInfo layout) {
     m_descriptors.push_back(layout.layout);
 
     return this;

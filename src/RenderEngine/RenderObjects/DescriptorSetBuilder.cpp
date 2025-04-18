@@ -1,10 +1,10 @@
-// src/RenderEngine/RenderObjects/PipelineBuilder.cpp
+// src/RenderEngine/RenderObjects/DescriptorSetBuilder.cpp
 
-#include "DescriptorLayoutBuilder.hpp"
+#include "DescriptorSetBuilder.hpp"
 
 #include "RenderEngine/VkUtils.hpp"
 
-DescriptorLayoutBuilder* DescriptorLayoutBuilder::addBinding(
+DescriptorSetBuilder* DescriptorSetBuilder::addBinding(
         U32 bindingNumber,
         VkDescriptorType type,
         VkShaderStageFlags stages,
@@ -31,7 +31,7 @@ DescriptorLayoutBuilder* DescriptorLayoutBuilder::addBinding(
     return this;
 }
 
-Option<DescriptorLayoutInfo> DescriptorLayoutBuilder::build(VkDevice device) {
+Option<DescriptorSetInfo> DescriptorSetBuilder::build(VkDevice device) {
     VkDescriptorSetLayoutCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
@@ -52,7 +52,7 @@ Option<DescriptorLayoutInfo> DescriptorLayoutBuilder::build(VkDevice device) {
         return std::nullopt;
     }
 
-    DescriptorLayoutInfo output = {
+    DescriptorSetInfo output = {
         .layout = layout,
         .bindings = m_bindingInfos
     };
@@ -60,6 +60,6 @@ Option<DescriptorLayoutInfo> DescriptorLayoutBuilder::build(VkDevice device) {
     return output;
 }
 
-void DescriptorLayoutBuilder::clear() { 
+void DescriptorSetBuilder::clear() { 
     m_bindings.clear(); 
 };

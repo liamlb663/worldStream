@@ -4,6 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "RenderEngine/RenderObjects/Materials.hpp"
+
 #include <cstring>
 #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
@@ -25,35 +27,27 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
     vkGetDescriptorEXT = reinterpret_cast<PFN_vkGetDescriptorEXT>(
         vkGetDeviceProcAddr(vkInfo->device, "vkGetDescriptorEXT"));
 
-    if (!vkCmdBindDescriptorBuffersEXT || !vkCmdSetDescriptorBufferOffsetsEXT) {
+    if (!vkCmdBindDescriptorBuffersEXT || !vkCmdSetDescriptorBufferOffsetsEXT || !vkGetDescriptorEXT) {
         spdlog::error("Failed to load VK_EXT_descriptor_buffer functions");
         return false;
     }
 
-    // Get physical device properties that apply to descriptor buffers HACK: this is a little hacky
-    m_descriptorBufferProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT;
-    m_descriptorBufferProps.pNext = nullptr;
-
+    // Get physical device properties that apply to descriptor buffers
+    props = {};
+    props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT;
+    props.pNext = nullptr;
     VkPhysicalDeviceProperties2 props2 = {};
     props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-    props2.pNext = &m_descriptorBufferProps;
-
+    props2.pNext = &props;
     vkGetPhysicalDeviceProperties2(vkInfo->physicalDevice, &props2);
 
-    // TODO: Use enum and props to determine descriptor size
-    m_descriptorSize = m_descriptorBufferProps.uniformBufferDescriptorSize;
-
-    VkDeviceSize alignment = m_descriptorBufferProps.descriptorBufferOffsetAlignment;
-    if (m_descriptorSize % alignment != 0) {
-        m_descriptorSize = ((m_descriptorSize + alignment - 1) / alignment) * alignment;
-    }
+    m_alignment = props.descriptorBufferOffsetAlignment;
 
     // Create buffer
     VkBufferUsageFlags bufferUsage =
         VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT |
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO;
 
@@ -61,50 +55,56 @@ bool DescriptorBuffer::init(VulkanInfo* vkInfo, Size size) {
         VMA_ALLOCATION_CREATE_MAPPED_BIT |
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
-
-    Size bufferSize = size * m_descriptorSize;
-
-    bool bufferReturn = m_buffer.init(
+    return m_buffer.init(
             vkInfo,
-            bufferSize,
+            size,
             bufferUsage,
             memoryUsage,
             allocFlags
     );
-
-    if (!bufferReturn) {
-        return false;
-    }
-
-    m_currentOffset = 0;
-    return true;
 };
 
 void DescriptorBuffer::shutdown() {
     m_buffer.shutdown();
+    m_sets.clear();
+    m_currentOffset = 0;
 }
 
-U32 DescriptorBuffer::allocateSlot() {
-    if (m_currentOffset + m_descriptorSize > m_buffer.info.size) {
-        spdlog::error("Descriptor buffer overflow: tried to allocate beyond size");
-        return -1;
+U32 DescriptorBuffer::allocateSlot(DescriptorSetInfo* info) {
+    VkDeviceSize baseOffset = (m_currentOffset + m_alignment - 1) & ~(m_alignment - 1);
+    VkDeviceSize setSize = 0;
+
+    SetSlot slot = {
+        .info = info,
+        .size = 0,
+        .offset = 0,
+        .bindingTypes = {},
+        .bindingOffsets = {},
+    };
+
+    for (const auto& binding : info->bindings) {
+        VkDeviceSize align = m_alignment;
+        VkDeviceSize bindingSize = calculateDescriptorSize(binding.descriptorType);
+
+        // Align each binding individually if required
+        setSize = (setSize + align - 1) & ~(align - 1);
+
+        slot.bindingOffsets[binding.binding] = setSize;
+        slot.bindingTypes[binding.binding] = binding.descriptorType;
+
+        setSize += bindingSize;
     }
 
-    if (!m_buffer.info.pMappedData) {
-        spdlog::error("Descriptor buffer is not mapped!");
-        return -1;
-    }
+    slot.size = setSize;
+    m_currentOffset = baseOffset + setSize;
+    m_sets.push_back(slot);
 
-    U32 descriptorIndex = static_cast<uint32_t>(m_currentOffset / m_descriptorSize);
-    m_currentOffset += m_descriptorSize;
-
-    return descriptorIndex;
+    return static_cast<U32>(m_sets.size() - 1);
 };
 
-void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range, Size offset) {
-    spdlog::info("Mapping");
-    spdlog::info("\tSize {}", range);
-    spdlog::info("\tOffset {}", offset);
+void DescriptorBuffer::mapUniformBuffer(U32 setID, U32 binding, Buffer* buffer, Size range, Size offset) {
+    SetSlot& set = m_sets[setID];
+
     VkDescriptorAddressInfoEXT addressInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
         .pNext = nullptr,
@@ -127,11 +127,32 @@ void DescriptorBuffer::mapUniformBuffer(U32 index, Buffer* buffer, Size range, S
         return;
     }
 
-    void* base = m_buffer.info.pMappedData;
-    VkDeviceSize bindingOffset = (index * m_descriptorSize * NUM_BINDINGS) + (bindingIndex * m_descriptorSize);
+    void* data = static_cast<char*>(m_buffer.info.pMappedData) + set.offset + set.bindingOffsets.at(binding);
+    VkDeviceSize size = calculateDescriptorSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    vkGetDescriptorEXT(m_vkInfo->device, &getInfo, size, data);
+}
 
-    //void* data = static_cast<char*>(m_buffer.info.pMappedData) + indexToOffset(index);
-    //vkGetDescriptorEXT(m_vkInfo->device, &getInfo, m_descriptorBufferProps.uniformBufferDescriptorSize, data);
+void DescriptorBuffer::mapImageSampler(U32 setID, U32 binding, Image* image, VkSampler sampler) {
+    const auto& set = m_sets[setID];
+
+    VkDescriptorImageInfo imageInfo = {
+        .sampler = sampler,
+        .imageView = image->view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkDescriptorGetInfoEXT getInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        .pNext = nullptr,
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .data = {
+            .pCombinedImageSampler = &imageInfo
+        }
+    };
+
+    void* dst = static_cast<char*>(m_buffer.info.pMappedData) + set.offset + set.bindingOffsets.at(binding);
+    VkDeviceSize size = calculateDescriptorSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    vkGetDescriptorEXT(m_vkInfo->device, &getInfo, size, dst);
 }
 
 void DescriptorBuffer::bindDescriptorBuffer(VkCommandBuffer commandBuffer) {
@@ -146,61 +167,43 @@ void DescriptorBuffer::bindDescriptorBuffer(VkCommandBuffer commandBuffer) {
 }
 
 void DescriptorBuffer::bindDescriptorViaOffset(
-        VkCommandBuffer commandBuffer,
-        VkPipelineBindPoint pipelineBindPoint,
-        VkPipelineLayout pipelineLayout,
-        uint32_t setIndex,
-        uint32_t bufferIndex,
-        uint32_t descriptorIndex
+    VkCommandBuffer commandBuffer,
+    VkPipelineBindPoint pipelineBindPoint,
+    VkPipelineLayout pipelineLayout,
+    U32 setIndex,
+    U32 descriptorSetID
 ) {
-    VkDeviceSize descriptorOffset = descriptorIndex * m_descriptorSize;
-
-    vkCmdSetDescriptorBufferOffsetsEXT(
-        commandBuffer,
-        pipelineBindPoint,
-        pipelineLayout,
-        setIndex,
-        1,                  // Number of bindings
-        &bufferIndex,       // Buffer index of the set
-        &descriptorOffset   // Offset of the descriptor in the buffer
-    );
+    VkDeviceSize offset = m_sets[descriptorSetID].offset;
+    vkCmdSetDescriptorBufferOffsetsEXT(commandBuffer, pipelineBindPoint, pipelineLayout,
+                                       setIndex, 1, &setIndex, &offset);
 }
 
-void DescriptorBuffer::verify(U32 descriptorIndex, U32 bindingIndex, const char* context) const {
-    if (!m_buffer.info.pMappedData) {
-        spdlog::error("[{}] DescriptorBuffer is not mapped!", context);
-        return;
+void DescriptorBuffer::verify(U32 setID, U32 binding, const char* context) const {
+    const auto& set = m_sets[setID];
+    VkDeviceSize descriptorOffset = set.offset + set.bindingOffsets.at(binding);
+    VkDeviceSize descriptorSize = calculateDescriptorSize(set.bindingTypes.at(binding));
+
+    if (descriptorOffset % m_alignment != 0) {
+        spdlog::warn("[{}] Descriptor offset {} not aligned to {}", context, descriptorOffset, m_alignment);
     }
 
-    if (m_descriptorSize == 0) {
-        spdlog::error("[{}] Descriptor size is zero!", context);
-        return;
+    if (descriptorOffset + descriptorSize > m_buffer.info.size) {
+        spdlog::error("[{}] Descriptor offset {} + size {} exceeds buffer size {}", context, descriptorOffset, descriptorSize, m_buffer.info.size);
+    } else {
+        spdlog::info("[{}] Descriptor verified at offset {} (size = {})", context, descriptorOffset, descriptorSize);
     }
-
-    VkDeviceSize descriptorOffset = descriptorIndex * m_descriptorSize;
-
-    // Check if offset is aligned
-    VkDeviceSize alignment = m_descriptorBufferProps.descriptorBufferOffsetAlignment;
-    if (descriptorOffset % alignment != 0) {
-        spdlog::warn("[{}] Descriptor offset {} is not aligned to {}", context, descriptorOffset, alignment);
-    }
-
-    // Check if offset + size would overflow buffer
-    if (descriptorOffset + m_descriptorSize > m_buffer.info.size) {
-        spdlog::error("[{}] Descriptor offset {} + size {} exceeds buffer size {}!",
-                      context, descriptorOffset, m_descriptorSize, m_buffer.info.size);
-    }
-
-    // Optional: log detailed info for cross-checking
-    spdlog::info("[{}] Verifying descriptor binding:", context);
-    spdlog::info("\tdescriptorIndex: {}", descriptorIndex);
-    spdlog::info("\tdescriptorOffset: {}", descriptorOffset);
-    spdlog::info("\tdescriptorSize: {}", m_descriptorSize);
-    spdlog::info("\tbufferSize: {}", m_buffer.info.size);
-    spdlog::info("\tbindingIndex: {}", bindingIndex);
-    spdlog::info("\toffset alignment requirement: {}", alignment);
 }
 
-U32 DescriptorBuffer::indexToOffset(U32 index) {
-    return index * m_descriptorSize;
+VkDeviceSize DescriptorBuffer::calculateDescriptorSize(VkDescriptorType type) const {
+    switch (type) {
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: return props.uniformBufferDescriptorSize;
+        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: return props.sampledImageDescriptorSize;
+        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: return props.combinedImageSamplerDescriptorSize;
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: return props.storageBufferDescriptorSize;
+        default:
+            spdlog::error("Unsupported descriptor type in descriptorSize()");
+            return 0;
+    }
 }
+
+

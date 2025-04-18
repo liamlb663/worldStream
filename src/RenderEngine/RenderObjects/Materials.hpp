@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
+#include "Core/Types.hpp"
 #include <vulkan/vulkan.h>
+class DescriptorBuffer;
 
 #include <vector>
 
@@ -17,29 +18,33 @@ struct DescriptorBindingInfo {
     VkDescriptorType descriptorType;
     VkShaderStageFlags stages;
     U32 size;
+    U32 offset;
 
     bool operator==(const DescriptorBindingInfo &b) const {
         return binding == b.binding &&
             descriptorType == b.descriptorType &&
             stages == b.stages &&
-            size == b.size;
+            size == b.size &&
+            offset == b.offset;
     }
 };
 
-struct DescriptorLayoutInfo {
+struct DescriptorSetInfo {
     VkDescriptorSetLayout layout;
+    U32 set;
     std::vector<DescriptorBindingInfo> bindings;
 
-    bool operator==(const DescriptorLayoutInfo &b) const {
+    bool operator==(const DescriptorSetInfo &b) const {
         return layout == b.layout &&
-            bindings == b.bindings;
+            bindings == b.bindings &&
+            set == b.set;
     }
 };
 
 struct MaterialInfo {
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
-    std::vector<DescriptorLayoutInfo> descriptorLayouts;
+    std::vector<DescriptorSetInfo> descriptorSets;
     MaterialType type;
 };
 

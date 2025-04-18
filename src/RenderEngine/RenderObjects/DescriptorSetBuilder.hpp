@@ -1,4 +1,4 @@
-// src/RenderEngine/RenderObjects/PipelineBuilder.hpp
+// src/RenderEngine/RenderObjects/DescriptorSetBuilder.hpp
 
 #pragma once
 
@@ -8,16 +8,16 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-class DescriptorLayoutBuilder {
+class DescriptorSetBuilder {
 public:
-    DescriptorLayoutBuilder* addBinding(
+    DescriptorSetBuilder* addBinding(
             U32 binding,
             VkDescriptorType type,
             VkShaderStageFlags stages,
             U32 size
     );
 
-    Option<DescriptorLayoutInfo> build(VkDevice device);
+    Option<DescriptorSetInfo> build(VkDevice device);
 
     void clear();
 

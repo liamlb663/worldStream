@@ -42,7 +42,7 @@ public:
 
     PipelineBuilder* setDepthInfo(bool depthTest, bool writeDepth, VkCompareOp op);
 
-    PipelineBuilder* addDescriptorLayout(DescriptorLayoutInfo layout);
+    PipelineBuilder* addDescriptorLayout(DescriptorSetInfo layout);
     PipelineBuilder* addPushConstant(VkShaderStageFlags stageFlags, U32 size, U32 offset);
 
     PipelineBuilder* setNoVertexInputState();

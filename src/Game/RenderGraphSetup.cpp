@@ -6,6 +6,7 @@
 #include "RenderEngine/Debug.hpp"
 #include "RenderEngine/FrameSubmitInfo.hpp"
 #include "imgui_impl_vulkan.h"
+#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 #include <RenderEngine/CommandSubmitter.hpp>
 
 #include <memory>
@@ -99,7 +100,6 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
                         material->pipeline->pipelineLayout,
                         setData.set,
-                        0,
                         setData.descriptorIndex
                     );
                 }

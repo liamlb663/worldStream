@@ -55,7 +55,8 @@ pipeline:
 
   # Descriptor Layouts
   descriptor_layouts:
-    - "descriptors.yaml"
+    - layout: "descriptors.yaml"
+      set: 0
 
   # Push Constants
   push_constants:

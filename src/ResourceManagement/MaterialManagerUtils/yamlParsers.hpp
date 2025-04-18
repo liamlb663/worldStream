@@ -9,7 +9,7 @@
 
 namespace MaterialManagerUtils {
 
-Result<DescriptorLayoutInfo, std::string> yamlToLayout(
+Result<DescriptorSetInfo, std::string> yamlToLayout(
     YAML::Node& yaml,
     VkDevice device
 );

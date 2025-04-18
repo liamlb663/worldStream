@@ -18,7 +18,7 @@ set(RENDERENGINE_SOURCES
 
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderGraph/RenderGraph.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderObjects/PipelineBuilder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RenderObjects/DescriptorLayoutBuilder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderObjects/DescriptorSetBuilder.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/RenderObjects)
