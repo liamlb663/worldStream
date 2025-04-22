@@ -100,7 +100,7 @@ bool PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkPhysicalDev
     return false;
 }
 
-bool CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+bool CreateLogicalDevice(VkPhysicalDevice physicalDevice,
                          VkDevice* device, VkQueue* graphicsQueue, VkQueue* transferQueue,
                          U32 graphicsFamily, U32 transferFamily,
                          VkPhysicalDeviceFeatures& features10,
@@ -135,6 +135,8 @@ bool CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
 
     VkDeviceQueueCreateInfo graphicsQueueCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
         .queueFamilyIndex = graphicsFamily,
         .queueCount = 1,
         .pQueuePriorities = &queuePriority,
@@ -144,6 +146,8 @@ bool CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
     if (transferFamily != graphicsFamily) {
         VkDeviceQueueCreateInfo transferQueueCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
             .queueFamilyIndex = transferFamily,
             .queueCount = 1,
             .pQueuePriorities = &queuePriority,
@@ -154,17 +158,15 @@ bool CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
     VkDeviceCreateInfo deviceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = &features12,
+        .flags = 0,
         .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
         .pQueueCreateInfos = queueCreateInfos.data(),
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = nullptr,
         .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
         .pEnabledFeatures = &features10,
     };
-
-    spdlog::info("Requesting device extensions:");
-    for (uint32_t i = 0; i < deviceCreateInfo.enabledExtensionCount; ++i) {
-        spdlog::info("\t{}", deviceCreateInfo.ppEnabledExtensionNames[i]);
-    }
 
     VkResult res = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, device);
     if (!VkUtils::checkVkResult(res, "Failed to create device"))

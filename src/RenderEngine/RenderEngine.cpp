@@ -58,7 +58,6 @@ bool RenderEngine::initVulkan() {
 
     if (!CreateLogicalDevice(
             m_vkInfo.physicalDevice,
-            surface,
             &m_vkInfo.device,
             &m_vkInfo.graphicsQueue,
             &m_vkInfo.transferQueue,

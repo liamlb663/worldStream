@@ -18,7 +18,7 @@ bool PickPhysicalDevice(
 );
 
 bool CreateLogicalDevice(
-    VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+    VkPhysicalDevice physicalDevice,
     VkDevice* device, VkQueue* graphicsQueue, VkQueue* transferQueue,
     U32 graphicsFamily, U32 transferFamily,
     VkPhysicalDeviceFeatures& features10,
