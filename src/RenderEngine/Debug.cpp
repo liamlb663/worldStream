@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <unordered_set>
-#include <vulkan/vulkan_core.h>
 
 // Loaded Commands for Vulkan Debug Utils
 static PFN_vkSetDebugUtilsObjectNameEXT my_vkSetDebugUtilsObjectNameEXT = nullptr;
