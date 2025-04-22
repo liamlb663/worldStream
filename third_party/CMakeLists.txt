@@ -40,9 +40,6 @@ FetchContent_MakeAvailable(stb)
 # Add tinygltf
 add_subdirectory(tinygltf)
 
-# Add vk-bootstrap
-add_subdirectory(vk-bootstrap)
-
 # Add VulkanMemoryAllocator
 add_subdirectory(VulkanMemoryAllocator)
 
@@ -73,7 +70,6 @@ target_link_libraries(third_party INTERFACE
     spdlog
     ImGui
     glfw
-    vk-bootstrap
     Vulkan::Vulkan
     yaml-cpp::yaml-cpp
     glslang

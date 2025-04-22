@@ -6,6 +6,7 @@ set(RENDERENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Debug.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/VkUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CommandSubmitter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/VulkanInitHelpers.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/FrameManagement/Window.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FrameManagement/FrameData.cpp

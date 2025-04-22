@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <unordered_set>
+#include <vulkan/vulkan_core.h>
 
 // Loaded Commands for Vulkan Debug Utils
 static PFN_vkSetDebugUtilsObjectNameEXT my_vkSetDebugUtilsObjectNameEXT = nullptr;
@@ -104,10 +105,6 @@ VkBool32 Debug::CustomDebugCallback(
     vulkan_logger->set_pattern("[%Y-%m-%d %T.%e] [%^%l%$: %n] [%v");
     vulkan_logger->set_level(spdlog::level::trace);
 
-    auto type = vkb::to_string_message_type(messageType);
-
-    constexpr const char* format = "{}]\n{}";
-
     static const std::unordered_set<U32> suppressed_message_ids = {
         0xfd92477a,  // vkAllocateMemory small allocation warning
         0x10b59d4b,  // vkBindBufferMemory small allocation warning
@@ -118,8 +115,20 @@ VkBool32 Debug::CustomDebugCallback(
     };
 
     if (suppressed_message_ids.find(pCallbackData->messageIdNumber) != suppressed_message_ids.end()) {
-        return VK_FALSE;  // Ignore this warning
+        return VK_FALSE;    // Ignore
     }
+
+    // Suppress general/verbose messages unless validation/performance
+    if ((messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) &&
+        (messageSeverity <= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)) {
+        return VK_FALSE;    // Ignore
+    }
+
+    const char* type = "GENERAL";
+    if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) type = "VALIDATION";
+    else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) type = "PERFORMANCE";
+
+    constexpr const char* format = "{}]\n{}";
 
     // Set logging level based on message severity
     if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
@@ -132,6 +141,6 @@ VkBool32 Debug::CustomDebugCallback(
         vulkan_logger->debug(format, type, pCallbackData->pMessage);
     }
 
-    return VK_FALSE;  // You can return VK_TRUE if you want to stop the Vulkan call after logging
+    return VK_FALSE;    // You can return VK_TRUE if you want to stop the Vulkan call after logging
 }
 

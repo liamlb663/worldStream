@@ -4,6 +4,7 @@
 
 #include "../Debug.hpp"
 #include "../VkUtils.hpp"
+#include "Core/Types.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -15,7 +16,7 @@ VkResult CommandPool::initialize(
 ) {
     m_vkInfo = vkInfo;
 
-    uint32_t queueFamilyIndex = 0;
+    U32 queueFamilyIndex = 0;
     switch (type) {
         case CommandPoolType::Graphics:
             queueFamilyIndex = vkInfo->graphicsQueueFamily;
@@ -36,8 +37,8 @@ VkResult CommandPool::initialize(
         .queueFamilyIndex = queueFamilyIndex,
     };
 
-    VkResult res;
-    if ((res = vkCreateCommandPool(vkInfo->device, &poolInfo, nullptr, &m_pool)) != VK_SUCCESS) {
+    VkResult res = vkCreateCommandPool(vkInfo->device, &poolInfo, nullptr, &m_pool);
+    if (!VkUtils::checkVkResult(res, "Failed to vkCreateCommandPool")) {
         return res;
     }
     Debug::SetObjectName(vkInfo->device, (U64)m_pool,
@@ -51,7 +52,7 @@ VkResult CommandPool::initialize(
 void CommandPool::resizeBuffers(Size size) {
     // Free existing command buffers
     if (!m_buffers.empty()) {
-        vkFreeCommandBuffers(m_vkInfo->device, m_pool, static_cast<uint32_t>(m_buffers.size()), m_buffers.data());
+        vkFreeCommandBuffers(m_vkInfo->device, m_pool, static_cast<U32>(m_buffers.size()), m_buffers.data());
         m_buffers.clear();
     }
 
@@ -63,7 +64,7 @@ void CommandPool::resizeBuffers(Size size) {
             .pNext = nullptr,
             .commandPool = m_pool,
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = static_cast<uint32_t>(size),
+            .commandBufferCount = static_cast<U32>(size),
         };
 
         VkResult result = vkAllocateCommandBuffers(m_vkInfo->device, &allocInfo, m_buffers.data());
@@ -103,7 +104,7 @@ std::vector<VkCommandBuffer>& CommandPool::getBuffers() {
 
 void CommandPool::shutdown() {
     if (!m_buffers.empty()) {
-        vkFreeCommandBuffers(m_vkInfo->device, m_pool, static_cast<uint32_t>(m_buffers.size()), m_buffers.data());
+        vkFreeCommandBuffers(m_vkInfo->device, m_pool, static_cast<U32>(m_buffers.size()), m_buffers.data());
         m_buffers.clear();
     }
 

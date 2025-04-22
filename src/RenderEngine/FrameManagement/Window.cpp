@@ -20,11 +20,6 @@ Window::Window(Vector<uint32_t, 2> size, const std::string& title) :
 }
 
 bool Window::init(VkInstance instance) {
-    if (!glfwInit()) {
-        spdlog::error("Failed to initialize GLFW");
-        return false;
-    }
-
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 

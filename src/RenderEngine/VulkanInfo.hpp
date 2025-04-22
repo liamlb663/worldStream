@@ -1,4 +1,4 @@
-// src/RenderEngine/RenderEngine.hpp
+// src/RenderEngine/VulkanInfo.hpp
 
 #pragma once
 

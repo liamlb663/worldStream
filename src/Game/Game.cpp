@@ -21,8 +21,9 @@ bool Game::initialize(int argc, char* argv[]) {
 
     spdlog::info("Initializing Game");
 
-    m_graphics.initialize();
-    m_resources.initialize(m_graphics.getInfo(), m_graphics.getSubmitter());
+    if (!m_graphics.initialize()) return false;
+    if (!m_resources.initialize(m_graphics.getInfo(), m_graphics.getSubmitter())) return false;
+
     m_input = Input::create(m_graphics.getGLFWwindow());
 
     m_renderGraph = setupRenderGraph();
