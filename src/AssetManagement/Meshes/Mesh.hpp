@@ -6,6 +6,7 @@
 #include "RenderEngine/RenderObjects/RenderObject.hpp"
 #include "ResourceManagement/RenderResources/Buffer.hpp"
 #include "ResourceManagement/RenderResources/DescriptorPool.hpp"
+#include "ResourceManagement/RenderResources/Sampler.hpp"
 
 #include <vector>
 
@@ -25,6 +26,7 @@ struct Mesh {
 
     DescriptorPool descriptor;
     Buffer materialBuffer;
+    std::vector<Sampler> samplers;
 
     void destroyMesh();
     std::vector<RenderObject> draw();

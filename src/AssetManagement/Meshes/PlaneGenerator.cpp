@@ -54,7 +54,7 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
 
     Image* clouds = resourceManager->loadImage("clouds.png");
 
-    Sampler sampler = resourceManager->getSamplerBuilder()
+    output->samplers = {resourceManager->getSamplerBuilder()
         .setFilter(VK_FILTER_LINEAR, VK_FILTER_LINEAR)
         .setAddressMode(
             VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -66,7 +66,7 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
         .setCompareOp(VK_COMPARE_OP_ALWAYS)
         .setLod(0.0f, VK_LOD_CLAMP_NONE)
         .build()
-        .value();
+        .value()};
 
     // Map buffers
     for (Size i = 0; i < matData.descriptorSets.size(); i++) {
@@ -86,7 +86,7 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
                 set.set.writeImageSampler(
                     set.bindings[j],
                     clouds,
-                    sampler
+                    output->samplers[0]
                 );
             }
 
