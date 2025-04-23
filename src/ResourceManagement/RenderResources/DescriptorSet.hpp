@@ -6,6 +6,7 @@
 #include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 #include "ResourceManagement/RenderResources/Buffer.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
+#include "ResourceManagement/RenderResources/Sampler.hpp"
 struct DescriptorSetInfo;
 
 #include <vulkan/vulkan.h>
@@ -16,7 +17,7 @@ public:
     bool init(VulkanInfo* vkInfo, VkDescriptorSet set);
 
     void writeUniformBuffer(U32 binding, Buffer* buffer, VkDeviceSize size, VkDeviceSize offset = 0);
-    void writeImageSampler(U32 binding, Image* image, VkSampler sampler);
+    void writeImageSampler(U32 binding, Image* image, Sampler sampler);
     void update();
 
     VkDescriptorSet get() const { return m_descriptorSet; }

@@ -1,12 +1,6 @@
 // src/AssetManagement/Meshes/PlaneGenerator.cpp
 
 #include "PlaneGenerator.hpp"
-#include "RenderEngine/RenderObjects/Materials.hpp"
-#include "RenderEngine/RenderObjects/RenderObject.hpp"
-
-#include <glm/fwd.hpp>
-
-#include <vector>
 
 void createPlane(ResourceManager* resourceManager, std::string materialPath, assets::Mesh* output) {
     std::vector<Vertex> vertices = {
@@ -60,44 +54,19 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
 
     Image* clouds = resourceManager->loadImage("clouds.png");
 
-    // Quick and dirty sampler creation
-    VkSamplerCreateInfo samplerInfo{};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.pNext = nullptr;
-    samplerInfo.flags = 0;
-
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-    samplerInfo.anisotropyEnable = VK_FALSE;
-    samplerInfo.maxAnisotropy = 1.0f;
-
-    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    samplerInfo.unnormalizedCoordinates = VK_FALSE;
-
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
-    samplerInfo.mipLodBias = 0.0f;
-
-    VkSampler sampler;
-    VkResult result = vkCreateSampler(
-        resourceManager->getVkInfo()->device,
-        &samplerInfo,
-        nullptr,
-        &sampler
-    );
-    if (result != VK_SUCCESS) {
-        spdlog::error("Failed to create sampler!");
-        return;
-    }
+    Sampler sampler = resourceManager->getSamplerBuilder()
+        .setFilter(VK_FILTER_LINEAR, VK_FILTER_LINEAR)
+        .setAddressMode(
+            VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            VK_SAMPLER_ADDRESS_MODE_REPEAT)
+        .disableAnisotropy()
+        .setBorderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK)
+        .setUnnormalizedCoords(false)
+        .setCompareOp(VK_COMPARE_OP_ALWAYS)
+        .setLod(0.0f, VK_LOD_CLAMP_NONE)
+        .build()
+        .value();
 
     // Map buffers
     for (Size i = 0; i < matData.descriptorSets.size(); i++) {

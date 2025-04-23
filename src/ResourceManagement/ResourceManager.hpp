@@ -9,6 +9,7 @@
 #include "RenderResources/Image.hpp"
 #include "ResourceManagement/MaterialManager.hpp"
 #include "ResourceManagement/RenderResources/DescriptorPool.hpp"
+#include "ResourceManagement/RenderResources/Sampler.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -50,6 +51,7 @@ public:
     );
 
     MaterialManager* getMaterialManager() { return &m_materialManager; };
+    SamplerBuilder getSamplerBuilder() { return SamplerBuilder(m_vkInfo); };
 
 private:
     template <typename ResourceType>

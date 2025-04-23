@@ -2,7 +2,6 @@
 
 #include "DescriptorSet.hpp"
 
-#include "RenderEngine/RenderObjects/Materials.hpp"
 #include <spdlog/spdlog.h>
 
 bool DescriptorSet::init(VulkanInfo* vkInfo, VkDescriptorSet set) {
@@ -37,9 +36,9 @@ void DescriptorSet::writeUniformBuffer(U32 binding, Buffer* buffer, VkDeviceSize
     m_writes.push_back(write);
 }
 
-void DescriptorSet::writeImageSampler(U32 binding, Image* image, VkSampler sampler) {
+void DescriptorSet::writeImageSampler(U32 binding, Image* image, Sampler sampler) {
     VkDescriptorImageInfo imageInfo = {
-        .sampler = sampler,
+        .sampler = sampler.get(),
         .imageView = image->view,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
