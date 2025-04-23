@@ -4,6 +4,7 @@
 
 #include "RenderEngine/VulkanInfo.hpp"
 #include "RenderEngine/RenderObjects/Materials.hpp"
+#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -23,7 +24,7 @@ public:
     MaterialInfo* getInfo(std::string path);
     void dropMaterialInfo(MaterialInfo* info);
 
-    MaterialData getData(std::string path, DescriptorBuffer* descriptor);
+    MaterialData getData(std::string path, DescriptorPool* descriptor);
     void dropMaterialData(MaterialData* data);
 
 private:

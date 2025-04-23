@@ -5,6 +5,7 @@
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/MaterialManagerUtils/yamlParsers.hpp"
 #include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
+#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -136,7 +137,7 @@ void MaterialManager::dropLayout(DescriptorSetInfo* layout) {
     spdlog::error("Layout not found for dropping!");
 }
 
-MaterialData MaterialManager::getData(std::string path, DescriptorBuffer* descriptor) {
+MaterialData MaterialManager::getData(std::string path, DescriptorPool* descriptor) {
     MaterialInfo* materialInfo = getInfo(path);
 
     std::vector<DescriptorSetData> descriptorSets = {};
