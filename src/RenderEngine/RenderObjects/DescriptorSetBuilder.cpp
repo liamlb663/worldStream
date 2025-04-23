@@ -37,7 +37,7 @@ Option<DescriptorSetInfo> DescriptorSetBuilder::build(VkDevice device) {
     VkDescriptorSetLayoutCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .flags = 0,
         .bindingCount = static_cast<U32>(m_bindings.size()),
         .pBindings = m_bindings.data()
 

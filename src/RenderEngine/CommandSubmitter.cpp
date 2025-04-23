@@ -163,7 +163,7 @@ struct StageAccessMasks {
     VkAccessFlags2 accessMask;
 };
 
-StageAccessMasks getStageAccessMasks(VkImageLayout layout) {
+StageAccessMasks getStageAccessMasks(VkImageLayout layout, bool isTransferQueue) {
     StageAccessMasks masks = {};
 
     switch (layout) {
@@ -178,8 +178,11 @@ StageAccessMasks getStageAccessMasks(VkImageLayout layout) {
             break;
 
         case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-            masks.stageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT; // Or COMPUTE/GRAPHICS as needed
-            masks.accessMask = VK_ACCESS_2_SHADER_READ_BIT;
+            if (isTransferQueue) {
+                masks.stageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            } else {
+                masks.stageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+            }
             break;
 
         case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
@@ -229,7 +232,13 @@ StageAccessMasks getStageAccessMasks(VkImageLayout layout) {
     return masks;
 }
 
-void CommandSubmitter::transitionVulkanImage(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
+void CommandSubmitter::transitionVulkanImage(
+    VkCommandBuffer cmd,
+    VkImage image,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout,
+    bool isTransferQueue
+) {
     if (newLayout == VK_IMAGE_LAYOUT_UNDEFINED) {
         spdlog::error("Invalid layout transition: newLayout cannot be VK_IMAGE_LAYOUT_UNDEFINED.");
         return;
@@ -240,8 +249,8 @@ void CommandSubmitter::transitionVulkanImage(VkCommandBuffer cmd, VkImage image,
         return;
     }
 
-    StageAccessMasks srcMasks = getStageAccessMasks(oldLayout);
-    StageAccessMasks dstMasks = getStageAccessMasks(newLayout);
+    StageAccessMasks srcMasks = getStageAccessMasks(oldLayout, isTransferQueue);
+    StageAccessMasks dstMasks = getStageAccessMasks(newLayout, isTransferQueue);
 
     VkImageAspectFlags aspectMask =
             (newLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL)
@@ -280,11 +289,17 @@ void CommandSubmitter::transitionVulkanImage(VkCommandBuffer cmd, VkImage image,
     vkCmdPipelineBarrier2(cmd, &depInfo);
 }
 
-void CommandSubmitter::transitionImage(VkCommandBuffer cmd, Image* image, VkImageLayout newLayout) {
+void CommandSubmitter::transitionImage(
+    VkCommandBuffer cmd,
+    Image* image,
+    VkImageLayout newLayout,
+    bool isTransferQueue
+) {
     transitionVulkanImage(
             cmd,
             image->image, image->layout,
-            newLayout
+            newLayout,
+            isTransferQueue
     );
 
     image->layout = newLayout;

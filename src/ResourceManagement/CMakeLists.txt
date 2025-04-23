@@ -8,7 +8,8 @@ set(RESOURCE_MANAGEMENT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/Image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/SparseBuffer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/DescriptorBuffer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/DescriptorSet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenderResources/DescriptorPool.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/MaterialManagerUtils/yamlParsers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MaterialManagerUtils/stringParsers.cpp

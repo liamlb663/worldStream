@@ -4,7 +4,6 @@
 
 #include "RenderResources/Buffer.hpp"
 #include "RenderResources/Image.hpp"
-#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 #include "spdlog/spdlog.h"
 
 #include <cassert>
@@ -109,6 +108,8 @@ void ResourceManager::copyToImage(void* data, Size size, Image* image) {
         };
 
         vkCmdCopyBufferToImage(cmd, staging.buffer, image->image, image->layout, 1, &region);
+
+        m_submitter->transitionImage(cmd, image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
     });
 
     staging.shutdown();
@@ -206,13 +207,12 @@ void ResourceManager::copyToBuffer(const Buffer& src, const Buffer& dst, Size si
     });
 }
 
-std::expected<DescriptorBuffer, U32> ResourceManager::createDescriptorBuffer(Size size) {
-    DescriptorBuffer descriptor;
+std::expected<DescriptorPool, U32> ResourceManager::createDescriptorPool(
+        U32 setCount, std::span<DescriptorPool::PoolSizeRatio> poolRatios
+) {
+    DescriptorPool descriptor;
 
-    //assert(sizeof(VkDescriptorBufferInfo) == sizeof(VkDescriptorImageInfo));
-    Size buffSize = size * sizeof(VkDescriptorBufferInfo);
-
-    if (!descriptor.init(m_vkInfo, buffSize)) {
+    if (!descriptor.init(m_vkInfo, setCount, poolRatios)) {
         spdlog::error("Failed to Create DescriptorBuffer from ResourceManager");
         return std::unexpected(1);
     }

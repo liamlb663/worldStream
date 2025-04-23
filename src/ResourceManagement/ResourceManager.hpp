@@ -8,7 +8,7 @@
 #include "RenderResources/Buffer.hpp"
 #include "RenderResources/Image.hpp"
 #include "ResourceManagement/MaterialManager.hpp"
-#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
+#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -45,8 +45,8 @@ public:
 
     void copyToBuffer(const Buffer& src, const Buffer& dst, Size size);
 
-    std::expected<DescriptorBuffer, U32> createDescriptorBuffer(
-            Size size
+    std::expected<DescriptorPool, U32> createDescriptorPool(
+            U32 setCount, std::span<DescriptorPool::PoolSizeRatio> poolRatios
     );
 
     MaterialManager* getMaterialManager() { return &m_materialManager; };

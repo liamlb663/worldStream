@@ -4,7 +4,8 @@
 
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/MaterialManagerUtils/yamlParsers.hpp"
-#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
+#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
+#include "ResourceManagement/RenderResources/DescriptorSet.hpp"
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -136,7 +137,7 @@ void MaterialManager::dropLayout(DescriptorSetInfo* layout) {
     spdlog::error("Layout not found for dropping!");
 }
 
-MaterialData MaterialManager::getData(std::string path, DescriptorBuffer* descriptor) {
+MaterialData MaterialManager::getData(std::string path, DescriptorPool* descriptor) {
     MaterialInfo* materialInfo = getInfo(path);
 
     std::vector<DescriptorSetData> descriptorSets = {};
@@ -144,16 +145,16 @@ MaterialData MaterialManager::getData(std::string path, DescriptorBuffer* descri
     for (Size i = 0; i < materialInfo->descriptorSets.size(); i++) {
         std::vector<U32> bindingDatas;
 
-        U32 index = descriptor->allocateSlot(&materialInfo->descriptorSets[i]);
+        // TODO: New set interface
+        DescriptorSet set = descriptor->allocate(materialInfo->descriptorSets[i].layout);
 
         for (DescriptorBindingInfo info : materialInfo->descriptorSets[i].bindings) {
             bindingDatas.push_back(info.binding);
         }
 
         DescriptorSetData info = {
-            .buffer = descriptor,
-            .set = static_cast<U32>(i),
-            .descriptorIndex = index,
+            .set = set,
+            .setIndex = static_cast<U32>(i),
             .bindings = bindingDatas,
         };
 

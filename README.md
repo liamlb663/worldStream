@@ -1,13 +1,14 @@
 # WorldStream
 
-WorldStream is a Vulkan-based rendering engine built from the ground up to explore modern GPU programming techniques. Planned features are utilizing Vulkan's descriptor buffers, bindless descriptors, sparse resources and explicit memory control to create a highly efficient and flexible renderer using a custom render graph using a sytem of nodes in a directed acyclic graph.
+WorldStream is a Vulkan-based rendering engine built from the ground up to explore modern GPU programming techniques. Planned features are utilizing Vulkan's bindless descriptors, sparse resources and explicit memory control to create a highly efficient and flexible renderer using a custom render graph using a sytem of nodes in a directed acyclic graph.
 
 I also plan on implementing world streaming features to demo an open world structure and see how these massive games function while loading and unloading resources to keep up with the player navigating an environment.
+
+I had actually implemented Descriptor Buffers via VK_EXT_discriptor_binding, which was removed in favor or traditional buffers due to incompatibilities with RenderDoc.
 
 ## Features
 
 - Low-level Vulkan backend
-- Descriptor buffer support (VK_EXT_descriptor_buffer)
 - ImGui integration
 - Resource Management for meshes, images, and materials
 - Modular render graph pipeline
@@ -20,9 +21,9 @@ I also plan on implementing world streaming features to demo an open world struc
 
 Make sure you have the following installed:
 
-- CMake ≥ 3.16
+- CMake ≥ 3.10
 - Vulkan SDK (with headers and loader)
-- A C++17 compatible compiler (e.g., GCC, Clang, MSVC)
+- A C++23 compatible compiler (e.g., GCC, Clang, MSVC)
 
 ### Build Steps
 
