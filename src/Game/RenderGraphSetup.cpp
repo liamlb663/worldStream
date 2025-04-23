@@ -33,6 +33,8 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
     Size geometryPass = renderGraph->createNode(
         "Geometry",
         [finalImg, geometry](RecordInfo recordInfo) {
+            Debug::SetCmdLabel(recordInfo.commandBuffer, {0.7f, 0.2f, 0.2f}, "Geometry Pass");
+
             Image* outputImg = &recordInfo.renderContext->images[finalImg];
 
             recordInfo.commandSubmitter->transitionImage(
@@ -137,6 +139,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             }
 
             vkCmdEndRendering(recordInfo.commandBuffer);
+            Debug::RemoveCmdLabel(recordInfo.commandBuffer);
         },
         {}
     );
@@ -147,6 +150,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
     Size postFxPass = renderGraph->createNode(
         "Post Fx",
         [finalImg](RecordInfo recordInfo) {
+            Debug::SetCmdLabel(recordInfo.commandBuffer, {0.2f, 0.7f, 0.2f}, "Post FX Pass");
             Image* outputImg = &recordInfo.renderContext->images[finalImg];
 
             recordInfo.commandSubmitter->transitionImage(
@@ -244,6 +248,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
             );
+            Debug::RemoveCmdLabel(recordInfo.commandBuffer);
         },
         {geometryPass}
     );
