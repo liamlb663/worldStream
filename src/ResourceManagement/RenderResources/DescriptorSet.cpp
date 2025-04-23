@@ -1,18 +1,13 @@
 // src/ResourceManagement/RenderResources/DescriptorSet.cpp
 
 #include "DescriptorSet.hpp"
+
+#include "RenderEngine/RenderObjects/Materials.hpp"
 #include <spdlog/spdlog.h>
 
-bool DescriptorSet::init(VulkanInfo* vkInfo, DescriptorPool* pool, const DescriptorSetInfo& setInfo) {
+bool DescriptorSet::init(VulkanInfo* vkInfo, VkDescriptorSet set) {
     m_vkInfo = vkInfo;
-    m_pool = pool;
-    m_setInfo = setInfo;
-
-    m_descriptorSet = m_pool->allocate(setInfo.layout);
-    if (m_descriptorSet == VK_NULL_HANDLE) {
-        spdlog::error("Failed to allocate descriptor set.");
-        return false;
-    }
+    m_descriptorSet = set;
 
     return true;
 }

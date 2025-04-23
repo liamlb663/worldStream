@@ -3,8 +3,8 @@
 #pragma once
 
 #include "Core/Types.hpp"
+#include "ResourceManagement/RenderResources/DescriptorSet.hpp"
 #include <vulkan/vulkan.h>
-class DescriptorBuffer;
 
 #include <vector>
 
@@ -47,9 +47,8 @@ struct MaterialInfo {
 };
 
 struct DescriptorSetData {
-    DescriptorBuffer* buffer;
-    U32 set;
-    U32 descriptorIndex;
+    DescriptorSet set;
+    U32 setIndex;
     std::vector<U32> bindings;
 };
 

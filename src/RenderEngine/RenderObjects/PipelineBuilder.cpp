@@ -97,7 +97,6 @@ PipelineInfo PipelineBuilder::build(VkDevice device) {
     };
 
     VkPipelineCreateFlags pipelineFlags = 0;
-    pipelineFlags |= VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
 
     VkGraphicsPipelineCreateInfo pipelineInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,

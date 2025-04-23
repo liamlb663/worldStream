@@ -3,7 +3,6 @@
 #include "PlaneGenerator.hpp"
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "RenderEngine/RenderObjects/RenderObject.hpp"
-#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
 
 #include <glm/fwd.hpp>
 
@@ -42,7 +41,12 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
     // HACK: Standardize please!
     output->materialBuffer = resourceManager->createUniformBuffer(256*2).value();
 
-    output->descriptor.init(resourceManager->getVkInfo(), 4000);
+    std::array<DescriptorPool::PoolSizeRatio, 2> poolRatios = {{
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2.0f },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f }
+    }};
+
+    output->descriptor = resourceManager->createDescriptorPool(3, poolRatios).value();
     MaterialData matData = resourceManager->getMaterialManager()
         ->getData(materialPath, &output->descriptor);
 
@@ -55,6 +59,7 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
     }};
 
     Image* clouds = resourceManager->loadImage("clouds.png");
+
     // Quick and dirty sampler creation
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -102,21 +107,21 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
         Size offset = 0;
         for (Size j = 0; j < set.bindings.size(); j++) {
             if (setInfo.bindings[j].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
-                set.buffer->mapUniformBuffer(
-                    set.descriptorIndex,
+                set.set.writeUniformBuffer(
                     set.bindings[j],
                     &output->materialBuffer,
                     setInfo.bindings[j].size,
                     offset
                 );
             } else if (setInfo.bindings[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-                set.buffer->mapImageSampler(
-                    set.descriptorIndex,
+                set.set.writeImageSampler(
                     set.bindings[j],
                     clouds,
                     sampler
                 );
             }
+
+            set.set.update();
 
             offset += setInfo.bindings[j].size;
         }

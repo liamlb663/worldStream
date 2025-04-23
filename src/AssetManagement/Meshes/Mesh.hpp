@@ -5,7 +5,7 @@
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "RenderEngine/RenderObjects/RenderObject.hpp"
 #include "ResourceManagement/RenderResources/Buffer.hpp"
-#include "ResourceManagement/RenderResources/DescriptorBuffer.hpp"
+#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 
 #include <vector>
 
@@ -23,7 +23,7 @@ struct Mesh {
     Buffer indexBuffer;
     Buffer vertexBuffer;
 
-    DescriptorBuffer descriptor;
+    DescriptorPool descriptor;
     Buffer materialBuffer;
 
     void destroyMesh();

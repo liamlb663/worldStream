@@ -17,7 +17,7 @@ public:
         F32 ratio;
     };
 
-    void init(VulkanInfo* vkInfo, U32 initialSetsPerPool, std::span<PoolSizeRatio> poolRatios);
+    bool init(VulkanInfo* vkInfo, U32 initialSetsPerPool, std::span<PoolSizeRatio> poolRatios);
     void clearPools();
     void destroyPools();
 

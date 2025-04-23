@@ -12,7 +12,7 @@ void Mesh::destroyMesh() {
     indexBuffer.shutdown();
     vertexBuffer.shutdown();
 
-    descriptor.shutdown();
+    descriptor.destroyPools();
     materialBuffer.shutdown();
 }
 

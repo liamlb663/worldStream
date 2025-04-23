@@ -5,7 +5,7 @@
 #include "spdlog/spdlog.h"
 #include "DescriptorSet.hpp"
 
-void DescriptorPool::init(VulkanInfo* vkInfo, uint32_t initialSetsPerPool, std::span<PoolSizeRatio> poolRatios) {
+bool DescriptorPool::init(VulkanInfo* vkInfo, uint32_t initialSetsPerPool, std::span<PoolSizeRatio> poolRatios) {
     m_vkInfo = vkInfo;
 
     ratios.clear();
@@ -19,6 +19,8 @@ void DescriptorPool::init(VulkanInfo* vkInfo, uint32_t initialSetsPerPool, std::
     setsPerPool = initialSetsPerPool * 1.5;
 
     readyPools.push_back(newPool);
+
+    return true;
 }
 
 void DescriptorPool::clearPools() {
@@ -56,8 +58,8 @@ DescriptorSet DescriptorPool::allocate(VkDescriptorSetLayout layout) {
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &layout;
 
-    VkDescriptorSet output;
-    auto res = vkAllocateDescriptorSets(m_vkInfo->device, &allocInfo, &output);
+    VkDescriptorSet descriptorSet;
+    auto res = vkAllocateDescriptorSets(m_vkInfo->device, &allocInfo, &descriptorSet);
 
     if (res == VK_ERROR_OUT_OF_POOL_MEMORY || res == VK_ERROR_FRAGMENTED_POOL) {
         fullPools.push_back(pool);
@@ -65,14 +67,17 @@ DescriptorSet DescriptorPool::allocate(VkDescriptorSetLayout layout) {
         pool = getPool();
         allocInfo.descriptorPool = pool;
 
-        res = vkAllocateDescriptorSets(m_vkInfo->device, &allocInfo, &output);
+        res = vkAllocateDescriptorSets(m_vkInfo->device, &allocInfo, &descriptorSet);
         if (!VkUtils::checkVkResult(res, "Could not allocate Descriptor Set")) {
             spdlog::error("This error has not been accounted for!");
         }
     }
 
     readyPools.push_back(pool);
-    return output;
+
+    DescriptorSet outputSet = {};
+    outputSet.init(m_vkInfo, descriptorSet);
+    return outputSet;
 }
 
 VkDescriptorPool DescriptorPool::getPool() {
