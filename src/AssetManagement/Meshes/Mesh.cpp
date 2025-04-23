@@ -11,14 +11,6 @@ void Mesh::destroyMesh() {
 
     indexBuffer.shutdown();
     vertexBuffer.shutdown();
-
-    descriptor.destroyPools();
-    materialBuffer.shutdown();
-
-    for (Size i = 0; i < samplers.size(); i++) {
-        samplers[i].shutdown();
-    }
-    samplers.clear();
 }
 
 std::vector<RenderObject> Mesh::draw() {

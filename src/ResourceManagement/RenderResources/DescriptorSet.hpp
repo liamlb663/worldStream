@@ -16,7 +16,7 @@ class DescriptorSet {
 public:
     bool init(VulkanInfo* vkInfo, VkDescriptorSet set);
 
-    void writeUniformBuffer(U32 binding, Buffer* buffer, VkDeviceSize size, VkDeviceSize offset = 0);
+    void writeUniformBuffer(U32 binding, Buffer* buffer, VkDeviceSize size, VkDeviceSize offset);
     void writeImageSampler(U32 binding, Image* image, Sampler sampler);
     void update();
 

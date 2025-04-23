@@ -1,8 +1,18 @@
 // src/AssetManagement/Meshes/PlaneGenerator.cpp
 
 #include "PlaneGenerator.hpp"
+#include "AssetManagement/Meshes/Mesh.hpp"
 
-void createPlane(ResourceManager* resourceManager, std::string materialPath, assets::Mesh* output) {
+void createPlane(
+    ResourceManager* resourceManager,
+    std::string materialPath,
+    assets::Mesh* output,
+    DescriptorPool* pool
+) {
+    *output = {};
+    output->descriptor = pool;
+
+    // Create Vertex Data
     std::vector<Vertex> vertices = {
         { {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f} },
         { { 0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },
@@ -32,70 +42,19 @@ void createPlane(ResourceManager* resourceManager, std::string materialPath, ass
     vertexStaging.shutdown();
     indexStaging.shutdown();
 
-    // HACK: Standardize please!
-    output->materialBuffer = resourceManager->createUniformBuffer(256*2).value();
-
-    std::array<DescriptorPool::PoolSizeRatio, 2> poolRatios = {{
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2.0f },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f }
-    }};
-
-    output->descriptor = resourceManager->createDescriptorPool(3, poolRatios).value();
-    MaterialData matData = resourceManager->getMaterialManager()
-        ->getData(materialPath, &output->descriptor);
-
-    output->materials = {matData};
-
+    // Use Surface Data
     output->surfaces = {{
         .indexStart = 0,
         .indexCount = static_cast<U32>(indices.size()),
         .materialIndex = 0,
     }};
 
-    Image* clouds = resourceManager->loadImage("clouds.png");
+    // Create Material Data
+    MaterialData matData = resourceManager->getMaterialManager()->getData(
+        materialPath, 
+        output->descriptor
+    );
 
-    output->samplers = {resourceManager->getSamplerBuilder()
-        .setFilter(VK_FILTER_LINEAR, VK_FILTER_LINEAR)
-        .setAddressMode(
-            VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            VK_SAMPLER_ADDRESS_MODE_REPEAT)
-        .disableAnisotropy()
-        .setBorderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK)
-        .setUnnormalizedCoords(false)
-        .setCompareOp(VK_COMPARE_OP_ALWAYS)
-        .setLod(0.0f, VK_LOD_CLAMP_NONE)
-        .build()
-        .value()};
-
-    // Map buffers
-    for (Size i = 0; i < matData.descriptorSets.size(); i++) {
-        DescriptorSetData set = matData.descriptorSets[i];
-        DescriptorSetInfo setInfo = matData.pipeline->descriptorSets[i];
-
-        Size offset = 0;
-        for (Size j = 0; j < set.bindings.size(); j++) {
-            if (setInfo.bindings[j].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
-                set.set.writeUniformBuffer(
-                    set.bindings[j],
-                    &output->materialBuffer,
-                    setInfo.bindings[j].size,
-                    offset
-                );
-            } else if (setInfo.bindings[j].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-                set.set.writeImageSampler(
-                    set.bindings[j],
-                    clouds,
-                    output->samplers[0]
-                );
-            }
-
-            set.set.update();
-
-            offset += setInfo.bindings[j].size;
-        }
-    }
-
-    return;
+    output->materials = {matData};
 }
 

@@ -4,10 +4,13 @@
 #include "AssetManagement/Meshes/Mesh.hpp"
 #include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "Game/RenderGraphSetup.hpp"
+#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 #include "imgui.h"
 
+#include <array>
 #include <cmath>
 #include <spdlog/spdlog.h>
+#include <vector>
 #include <vulkan/vulkan.h>
 
 #include <unistd.h>
@@ -36,7 +39,30 @@ bool Game::initialize(int argc, char* argv[]) {
 void Game::run() {
     spdlog::info("Running Game");
 
-    createPlane(&m_resources, "mesh", &plane);
+    // Create Plane
+    std::array<DescriptorPool::PoolSizeRatio, 2> poolRatios = {{
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2.0f},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f}
+    }};
+    DescriptorPool pool = m_resources.createDescriptorPool(1, poolRatios).value();
+
+    createPlane(&m_resources, "mesh", &plane, &pool);
+
+    Buffer matBuffer = m_resources.createUniformBuffer(256*2).value();
+    Image* texture = m_resources.loadImage("clouds.png");
+    Sampler sampler = m_resources.getSamplerBuilder().build().value();
+
+    // Attach Bindings
+    plane.materials[0].descriptorSets[0].set.writeUniformBuffer(0, &matBuffer, 192, 0);
+    plane.materials[0].descriptorSets[0].set.update();
+    plane.materials[0].descriptorSets[0].set.writeUniformBuffer(1, &matBuffer, 16, 192);
+    plane.materials[0].descriptorSets[0].set.update();
+    plane.materials[0].descriptorSets[0].set.writeImageSampler(2, texture, sampler);
+    plane.materials[0].descriptorSets[0].set.update();
+
+    // Attach Push Constants
+    glm::vec3 offsetPC = glm::vec3(0.0f, 0.0f, 0.0f);
+    plane.materials[0].pushConstantData = reinterpret_cast<void*>(&offsetPC);
 
     glm::mat4 modelMatrix = glm::mat4(1.0f);
     glm::mat4 viewMatrix = glm::lookAt(
@@ -54,7 +80,7 @@ void Game::run() {
 
     glm::vec3 offset = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    void* mappedData = plane.materialBuffer.info.pMappedData;
+    void* mappedData = matBuffer.info.pMappedData;
 
     float* matrixDst = static_cast<float*>(mappedData);
     float* offsetDst = reinterpret_cast<float*>(static_cast<uint8_t*>(mappedData) + 192);
@@ -64,9 +90,6 @@ void Game::run() {
     memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
 
     memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
-
-    glm::vec3 offsetPC = glm::vec3(0.0f, 0.0f, 0.0f);
-    plane.materials[0].pushConstantData = reinterpret_cast<void*>(&offsetPC);
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
     m_input->update();
@@ -79,7 +102,7 @@ void Game::run() {
         m_graphics.StartImGui();
         ImGui::NewFrame();
 
-        ImGui::Begin("Cum balls dick!");
+        ImGui::Begin("Very Professional Debug thingy");
         ImGui::Text("DT: %f", m_input->deltaTime().asSeconds());
         ImGui::Text("FPS: %f", 1.0/m_input->deltaTime().asSeconds());
         ImGui::Text("Time: %f", time);
@@ -110,6 +133,14 @@ void Game::run() {
         if (m_input->isPressed("Quit"))
             m_input->close();
     }
+
+    m_graphics.waitOnGpu();
+
+    // Cleanup plane stuff
+    pool.destroyPools();
+    matBuffer.shutdown();
+    sampler.shutdown();
+    m_resources.dropImage(texture);
 }
 
 void Game::shutdown() {
