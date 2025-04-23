@@ -101,6 +101,17 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                     );
                 }
 
+                if (material->pipeline->pushConstants.enabled) {
+                    vkCmdPushConstants(
+                        recordInfo.commandBuffer,
+                        material->pipeline->pipelineLayout,
+                        material->pipeline->pushConstants.stages,
+                        material->pipeline->pushConstants.offset,
+                        material->pipeline->pushConstants.size,
+                        material->pushConstantData
+                    );
+                }
+
                 VkDeviceSize offsets[] = {0};
                 vkCmdBindVertexBuffers(
                     recordInfo.commandBuffer,

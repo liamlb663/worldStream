@@ -65,6 +65,8 @@ void Game::run() {
 
     memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
 
+    glm::vec3 offsetPC = glm::vec3(0.0f, 0.0f, 0.0f);
+    plane.materials[0].pushConstantData = reinterpret_cast<void*>(&offsetPC);
 
     m_input->bindAction("Quit", GLFW_KEY_Q);
     m_input->update();
@@ -99,6 +101,8 @@ void Game::run() {
 
         offset.z = sin(time);
         memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
+
+        offsetPC.x = sin(time);
 
         m_graphics.renderObjects(0, plane.draw());
         m_graphics.renderFrame();

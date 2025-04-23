@@ -39,9 +39,17 @@ struct DescriptorSetInfo {
     }
 };
 
+struct PushConstantsInfo {
+    bool enabled;
+    VkShaderStageFlags stages;
+    Size size;
+    Size offset;
+};
+
 struct MaterialInfo {
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
+    PushConstantsInfo pushConstants;
     std::vector<DescriptorSetInfo> descriptorSets;
     MaterialType type;
 };
@@ -55,5 +63,6 @@ struct DescriptorSetData {
 struct MaterialData {
     MaterialInfo* pipeline;
     std::vector<DescriptorSetData> descriptorSets;
+    void* pushConstantData;
 };
 

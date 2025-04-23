@@ -1,6 +1,7 @@
 // src/ResourceManagement/MaterialManagerUtils/yamlParsers.cpp
 
 #include "yamlParsers.hpp"
+#include "spdlog/spdlog.h"
 #include "stringParsers.hpp"
 
 #include "RenderEngine/Config.hpp"
@@ -178,13 +179,23 @@ Result<MaterialInfo, std::string> yamlToInfo(MaterialManager* materialManager, Y
             getCompareOp(depthInfo["compare_op"].as<std::string>())
     );
 
-    std::vector<VkPushConstantRange> pushConstants = parsePushConstants(yaml);
+    std::vector<VkPushConstantRange> pushConstants = parsePushConstants(pipeline);
+    PushConstantsInfo pushConstantsInfo = {};
+    pushConstantsInfo.enabled = false;
+
     for (Size i = 0; i < pushConstants.size(); i++) {
         builder.addPushConstant(
                 pushConstants[i].stageFlags,
                 pushConstants[i].size,
                 pushConstants[i].offset
         );
+
+        pushConstantsInfo = {
+            .enabled = true,
+            .stages = pushConstants[i].stageFlags,
+            .size = pushConstants[i].size,
+            .offset = pushConstants[i].offset,
+        };
     }
 
     auto [bindings, attributes] = parseVertexInput(pipeline);
@@ -194,6 +205,7 @@ Result<MaterialInfo, std::string> yamlToInfo(MaterialManager* materialManager, Y
     MaterialInfo output = {
         .pipeline = piplineInfo.pipeline,
         .pipelineLayout = piplineInfo.layout,
+        .pushConstants = pushConstantsInfo,
         .descriptorSets = layouts,
         .type = MaterialType::Opaque,   // TODO: materialtypes
     };

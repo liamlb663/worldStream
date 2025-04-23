@@ -19,20 +19,13 @@ layout(set = 0, binding = 1) uniform OffsetUBO {
 } offsetUBO;
 
 layout(push_constant) uniform PushConstants {
-    vec4 data0;  // you can repurpose this 128-byte space as needed
-    vec4 data1;
-    vec4 data2;
-    vec4 data3;
-    vec4 data4;
-    vec4 data5;
-    vec4 data6;
-    vec4 data7;
+    vec3 offset;
 } pc;
 
 void main() {
     fragNormal = mat3(transpose(inverse(ubo.model))) * inNormal;
     fragUV = inUV;
 
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition + offsetUBO.positionOffset, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition + offsetUBO.positionOffset + pc.offset, 1.0);
 }
 
