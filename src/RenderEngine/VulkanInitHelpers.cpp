@@ -126,8 +126,7 @@ bool CreateLogicalDevice(VkPhysicalDevice physicalDevice,
     features10.sparseResidencyBuffer = VK_TRUE;
 
     std::vector<const char*> extensions = {
-        "VK_EXT_descriptor_buffer",
-        "VK_KHR_swapchain"
+        "VK_KHR_swapchain",
     };
 
     float queuePriority = 1.0f;
