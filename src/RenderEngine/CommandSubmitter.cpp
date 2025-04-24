@@ -14,11 +14,9 @@ bool CommandSubmitter::initialize(VulkanInfo* vkInfo) {
     return true;
 }
 
-void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>& function) {
-    // Get Buffer
+VkCommandBuffer CommandSubmitter::transferSubmitStart() {
     VkCommandBuffer commandBuffer = m_vkInfo->transferPool->getBuffer(0);
 
-    // Begin Command Buffer
     VkCommandBufferBeginInfo beginInfo{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
@@ -26,17 +24,16 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
         .pInheritanceInfo = nullptr,
     };
 
-    VkResult res;
-    res = vkBeginCommandBuffer(commandBuffer, &beginInfo);
-    if (!VkUtils::checkVkResult(res, "Failed to begin recording transfer command buffer.")) {
-        return;
+    VkResult res = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    if (!VkUtils::checkVkResult(res, "Failed to begin transfer command buffer.")) {
+        return VK_NULL_HANDLE;
     }
 
-    // Execute the lambda to record commands
-    function(commandBuffer);
+    return commandBuffer;
+}
 
-    // End recording
-    res = vkEndCommandBuffer(commandBuffer);
+void CommandSubmitter::transferSubmitEnd(VkCommandBuffer cmd) {
+    VkResult res = vkEndCommandBuffer(cmd);
     if (!VkUtils::checkVkResult(res, "Failed to record transfer command buffer.")) {
         return;
     }
@@ -51,7 +48,7 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
         .pWaitDstStageMask = nullptr,
 
         .commandBufferCount = 1,
-        .pCommandBuffers = &commandBuffer,
+        .pCommandBuffers = &cmd,
 
         .signalSemaphoreCount = 0,
         .pSignalSemaphores = nullptr,
@@ -62,8 +59,13 @@ void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>
         return;
     }
 
-    // Block on transfer completion
     vkQueueWaitIdle(m_vkInfo->transferQueue);
+}
+
+void CommandSubmitter::transferSubmit(const std::function<void(VkCommandBuffer)>& function) {
+    VkCommandBuffer commandBuffer = transferSubmitStart();
+    function(commandBuffer);
+    transferSubmitEnd(commandBuffer);
 }
 
 void CommandSubmitter::frameSubmit(FrameSubmitInfo info) {

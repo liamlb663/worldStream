@@ -13,6 +13,9 @@ class CommandSubmitter {
 public:
     bool initialize(VulkanInfo* vkInfo);
 
+    VkCommandBuffer transferSubmitStart();
+    void transferSubmitEnd(VkCommandBuffer cmd);
+
     void transferSubmit(const std::function<void(VkCommandBuffer)>& function);
     void frameSubmit(FrameSubmitInfo info);
 

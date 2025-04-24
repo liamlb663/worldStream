@@ -52,10 +52,11 @@ Image* ResourceManager::loadImage(std::string path) {
 
     if (!fs::exists(fullPath)) {
         spdlog::error("Resource not found: {}", fullPath.string());
+        return nullptr;
     }
 
     int width, height, channels;
-    U8* data = stbi_load(fullPath.c_str(), &width, &height, &channels, 0);
+    U8* data = stbi_load(fullPath.c_str(), &width, &height, &channels, 4);
     if (!data) {
         spdlog::error("Failed to load image: {}", stbi_failure_reason());
         return nullptr;
@@ -65,7 +66,10 @@ Image* ResourceManager::loadImage(std::string path) {
     VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     Image img;
-    img.init(m_vkInfo, Vector<U32, 2>(width, height), format, usage, path);
+    if (!img.init(m_vkInfo, Vector<U32, 2>(width, height), format, usage, path)) {
+        spdlog::error("Image failed to init!");
+        return nullptr;
+    }
 
     copyToImage(data, width * height * 4, &img);
     stbi_image_free(data);
@@ -89,28 +93,30 @@ void ResourceManager::copyToImage(void* data, Size size, Image* image) {
 
     memcpy(staging.info.pMappedData, data, size);
 
-    m_submitter->transferSubmit([this, staging, image](VkCommandBuffer cmd){
-        m_submitter->transitionImage(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    VkCommandBuffer cmd = m_submitter->transferSubmitStart();
 
-        VkBufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
-        region.imageSubresource.layerCount = 1;
-        region.imageOffset = {0, 0, 0};
-        region.imageExtent = {
-           static_cast<U32>(image->size.value.x),
-           static_cast<U32>(image->size.value.y),
-           (U32)1
-        };
+    m_submitter->transitionImage(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-        vkCmdCopyBufferToImage(cmd, staging.buffer, image->image, image->layout, 1, &region);
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset = {0, 0, 0};
+    region.imageExtent = {
+        static_cast<U32>(image->size.value.x),
+        static_cast<U32>(image->size.value.y),
+        (U32)1
+    };
 
-        m_submitter->transitionImage(cmd, image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
-    });
+    vkCmdCopyBufferToImage(cmd, staging.buffer, image->image, image->layout, 1, &region);
+
+    m_submitter->transitionImage(cmd, image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
+
+    m_submitter->transferSubmitEnd(cmd);
 
     staging.shutdown();
 }
