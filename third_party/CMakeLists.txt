@@ -8,10 +8,20 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/glfw/glfw.git
     GIT_TAG 3.3.8
 )
+
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Don't build the GLFW examples")
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "Don't build the GLFW tests")
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "Don't build GLFW documentation")
+set(GLFW_INSTALL OFF CACHE BOOL "Don't install GLFW targets")
+
 FetchContent_MakeAvailable(glfw)
 
 # Add spdlog and use its bundled fmt
 set(SPDLOG_FMT_EXTERNAL OFF)  # Use bundled fmt to avoid conflicts
+set(SPDLOG_BUILD_EXAMPLES OFF)
+set(SPDLOG_BUILD_TESTS OFF)
+set(SPDLOG_BUILD_BENCH OFF)
+
 add_subdirectory(spdlog)
 
 # ImGui
@@ -49,6 +59,10 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
     GIT_TAG master
 )
+
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Don't build yaml-cpp tests")
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "Don't build yaml-cpp tools/examples")
+
 FetchContent_MakeAvailable(yaml-cpp)
 
 # Add gslang for shader compilation

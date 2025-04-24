@@ -7,20 +7,20 @@
 bool DescriptorSet::init(VulkanInfo* vkInfo, VkDescriptorSet set) {
     m_vkInfo = vkInfo;
     m_descriptorSet = set;
-
     return true;
 }
 
 void DescriptorSet::writeUniformBuffer(U32 binding, Buffer* buffer, VkDeviceSize size, VkDeviceSize offset) {
-    VkDescriptorBufferInfo bufferInfo = {
+    m_writeEntries.emplace_back();
+    WriteEntry& entry = m_writeEntries.back();
+
+    entry.bufferInfo = {
         .buffer = buffer->buffer,
         .offset = offset,
         .range = size,
     };
 
-    m_bufferInfos.push_back(bufferInfo);
-
-    VkWriteDescriptorSet write = {
+    entry.write = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = m_descriptorSet,
@@ -29,23 +29,22 @@ void DescriptorSet::writeUniformBuffer(U32 binding, Buffer* buffer, VkDeviceSize
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .pImageInfo = nullptr,
-        .pBufferInfo = &m_bufferInfos.back(),
+        .pBufferInfo = &entry.bufferInfo,
         .pTexelBufferView = nullptr,
     };
-
-    m_writes.push_back(write);
 }
 
 void DescriptorSet::writeImageSampler(U32 binding, Image* image, Sampler sampler) {
-    VkDescriptorImageInfo imageInfo = {
+    m_writeEntries.emplace_back();
+    WriteEntry& entry = m_writeEntries.back();
+
+    entry.imageInfo = {
         .sampler = sampler.get(),
         .imageView = image->view,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
 
-    m_imageInfos.push_back(imageInfo);
-
-    VkWriteDescriptorSet write = {
+    entry.write = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = m_descriptorSet,
@@ -53,28 +52,30 @@ void DescriptorSet::writeImageSampler(U32 binding, Image* image, Sampler sampler
         .dstArrayElement = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = &m_imageInfos.back(),
+        .pImageInfo = &entry.imageInfo,
         .pBufferInfo = nullptr,
         .pTexelBufferView = nullptr,
     };
-
-    m_writes.push_back(write);
 }
 
 void DescriptorSet::update() {
-    if (m_writes.empty())
+    if (m_writeEntries.empty())
         return;
+
+    std::vector<VkWriteDescriptorSet> writes;
+    writes.reserve(m_writeEntries.size());
+
+    for (WriteEntry& entry : m_writeEntries)
+        writes.push_back(entry.write);
 
     vkUpdateDescriptorSets(
         m_vkInfo->device,
-        static_cast<U32>(m_writes.size()),
-        m_writes.data(),
+        static_cast<U32>(writes.size()),
+        writes.data(),
         0,
         nullptr
     );
 
-    m_writes.clear();
-    m_bufferInfos.clear();
-    m_imageInfos.clear();
+    m_writeEntries.clear();
 }
 

@@ -12,6 +12,12 @@ struct DescriptorSetInfo;
 #include <vulkan/vulkan.h>
 #include <vector>
 
+struct WriteEntry {
+    VkWriteDescriptorSet write;
+    VkDescriptorBufferInfo bufferInfo;
+    VkDescriptorImageInfo imageInfo;
+};
+
 class DescriptorSet {
 public:
     bool init(VulkanInfo* vkInfo, VkDescriptorSet set);
@@ -46,7 +52,5 @@ private:
     VkDescriptorSet m_descriptorSet = VK_NULL_HANDLE;
 
     // Cached descriptor infos
-    std::vector<VkWriteDescriptorSet> m_writes;
-    std::vector<VkDescriptorBufferInfo> m_bufferInfos;
-    std::vector<VkDescriptorImageInfo> m_imageInfos;
+    std::vector<WriteEntry> m_writeEntries;
 };

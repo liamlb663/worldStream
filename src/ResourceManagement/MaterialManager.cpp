@@ -164,6 +164,7 @@ MaterialData MaterialManager::getData(std::string path, DescriptorPool* descript
     MaterialData data = {
         .pipeline = materialInfo,
         .descriptorSets = descriptorSets,
+        .pushConstantData = nullptr,
     };
 
     return data;

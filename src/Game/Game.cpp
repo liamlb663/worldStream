@@ -54,9 +54,7 @@ void Game::run() {
 
     // Attach Bindings
     plane.materials[0].descriptorSets[0].set.writeUniformBuffer(0, &matBuffer, 192, 0);
-    plane.materials[0].descriptorSets[0].set.update();
     plane.materials[0].descriptorSets[0].set.writeUniformBuffer(1, &matBuffer, 16, 192);
-    plane.materials[0].descriptorSets[0].set.update();
     plane.materials[0].descriptorSets[0].set.writeImageSampler(2, texture, sampler);
     plane.materials[0].descriptorSets[0].set.update();
 
