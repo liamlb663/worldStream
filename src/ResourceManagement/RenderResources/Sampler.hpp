@@ -11,7 +11,6 @@
 
 class Sampler {
 public:
-
     Sampler(VulkanInfo* vkInfo, VkSampler sampler)
         : m_vkInfo(vkInfo), m_sampler(sampler) {}
 

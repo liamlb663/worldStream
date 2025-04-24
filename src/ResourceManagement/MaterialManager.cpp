@@ -145,7 +145,6 @@ MaterialData MaterialManager::getData(std::string path, DescriptorPool* descript
     for (Size i = 0; i < materialInfo->descriptorSets.size(); i++) {
         std::vector<U32> bindingDatas;
 
-        // TODO: New set interface
         DescriptorSet set = descriptor->allocate(materialInfo->descriptorSets[i].layout);
 
         for (DescriptorBindingInfo info : materialInfo->descriptorSets[i].bindings) {

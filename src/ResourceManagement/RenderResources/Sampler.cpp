@@ -4,10 +4,6 @@
 
 // --- Sampler ---
 
-static Sampler create(VulkanInfo* vkInfo, VkSampler sampler) {
-    return Sampler(vkInfo, sampler);
-}
-
 VkSampler Sampler::get() const {
     return m_sampler;
 }
