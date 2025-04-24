@@ -2,15 +2,13 @@
 
 #include "Game.hpp"
 #include "AssetManagement/Meshes/Mesh.hpp"
-#include "AssetManagement/Meshes/PlaneGenerator.hpp"
+#include "Game/Input/Duration.hpp"
 #include "Game/RenderGraphSetup.hpp"
-#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
+#include "Game/Scene/Scene.hpp"
 #include "imgui.h"
 
-#include <array>
 #include <cmath>
 #include <spdlog/spdlog.h>
-#include <vector>
 #include <vulkan/vulkan.h>
 
 #include <unistd.h>
@@ -37,66 +35,25 @@ bool Game::initialize(int argc, char* argv[]) {
 }
 
 void Game::run() {
-    spdlog::info("Running Game");
+    spdlog::info("Running Game Engine");
 
-    // Create Plane
-    std::array<DescriptorPool::PoolSizeRatio, 2> poolRatios = {{
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2.0f},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f}
-    }};
-    DescriptorPool pool = m_resources.createDescriptorPool(1, poolRatios).value();
-
-    createPlane(&m_resources, "mesh", &plane, &pool);
-
-    Buffer matBuffer = m_resources.createUniformBuffer(256*2).value();
-    Image* texture = m_resources.loadImage("clouds.png");
-    Sampler sampler = m_resources.getSamplerBuilder().build().value();
-
-    // Attach Bindings
-    plane.materials[0].descriptorSets[0].set.writeUniformBuffer(0, &matBuffer, 192, 0);
-    plane.materials[0].descriptorSets[0].set.writeUniformBuffer(1, &matBuffer, 16, 192);
-    plane.materials[0].descriptorSets[0].set.writeImageSampler(2, texture, sampler);
-    plane.materials[0].descriptorSets[0].set.update();
-
-    // Attach Push Constants
-    glm::vec3 offsetPC = glm::vec3(0.0f, 0.0f, 0.0f);
-    plane.materials[0].pushConstantData = reinterpret_cast<void*>(&offsetPC);
-
-    glm::mat4 modelMatrix = glm::mat4(1.0f);
-    glm::mat4 viewMatrix = glm::lookAt(
-        glm::vec3(2.0f, 2.0f, 2.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
-    glm::mat4 projMatrix = glm::perspective(
-        glm::radians(45.0f),
-        1.0f,
-        0.1f,
-        10.0f
-    );
-    projMatrix[1][1] *= -1.0f;
-
-    glm::vec3 offset = glm::vec3(0.0f, 0.0f, 0.0f);
-
-    void* mappedData = matBuffer.info.pMappedData;
-
-    float* matrixDst = static_cast<float*>(mappedData);
-    float* offsetDst = reinterpret_cast<float*>(static_cast<uint8_t*>(mappedData) + 192);
-
-    memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
-    memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
-    memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
-
-    memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
-
+    // Bind Actions
     m_input->bindAction("Quit", GLFW_KEY_Q);
     m_input->update();
 
-    double time = 0;
+    Scene scene;
+    scene.Setup(&m_resources, m_input);
 
+    Duration::TimePoint start = Duration::now();
     while (!m_input->shouldClose()) {
         m_input->update();
+        float time = Duration::since(start).asSeconds();
 
+        // Quiter!
+        if (m_input->isPressed("Quit"))
+            m_input->close();
+
+        // ImGui
         m_graphics.StartImGui();
         ImGui::NewFrame();
 
@@ -106,39 +63,16 @@ void Game::run() {
         ImGui::Text("Time: %f", time);
         ImGui::End();
 
+        scene.Run(m_input);
+        scene.Draw(&m_graphics);
+
         ImGui::Render();
-
-        time += m_input->deltaTime().asSeconds();
-
-        viewMatrix = glm::lookAt(
-            glm::vec3(2.0f * sin(time), 2.0f * cos(time), 2.0f),
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 0.0f, 1.0f)
-        );
-
-        memcpy(matrixDst,               &modelMatrix, sizeof(glm::mat4));
-        memcpy(matrixDst + 16,          &viewMatrix,  sizeof(glm::mat4));
-        memcpy(matrixDst + 16 + 16,     &projMatrix,  sizeof(glm::mat4));
-
-        offset.z = sin(time);
-        memcpy(offsetDst,               &offset,  sizeof(glm::vec3));
-
-        offsetPC.x = sin(time);
-
-        m_graphics.renderObjects(0, plane.draw());
         m_graphics.renderFrame();
-
-        if (m_input->isPressed("Quit"))
-            m_input->close();
     }
 
     m_graphics.waitOnGpu();
 
-    // Cleanup plane stuff
-    pool.destroyPools();
-    matBuffer.shutdown();
-    sampler.shutdown();
-    m_resources.dropImage(texture);
+    scene.Cleanup();
 }
 
 void Game::shutdown() {
@@ -147,8 +81,6 @@ void Game::shutdown() {
     delete m_input;
 
     m_graphics.waitOnGpu();
-
-    plane.destroyMesh();
 
     m_resources.shutdown();
     m_graphics.shutdown();

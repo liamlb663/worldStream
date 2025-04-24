@@ -4,13 +4,14 @@
 
 #include "RenderEngine/VulkanInfo.hpp"
 #include <vulkan/vulkan.h>
-#include <memory>
 #include <expected>
 
 // --- Sampler ---
 
 class Sampler {
 public:
+    Sampler() : m_vkInfo(nullptr), m_sampler(nullptr) {}
+
     Sampler(VulkanInfo* vkInfo, VkSampler sampler)
         : m_vkInfo(vkInfo), m_sampler(sampler) {}
 
