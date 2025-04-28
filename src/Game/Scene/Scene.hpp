@@ -8,6 +8,7 @@
 #include "RenderEngine/RenderEngine.hpp"
 #include "ResourceManagement/BufferRegistry.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
+#include "imgui.h"
 
 class Scene {
 public:
@@ -26,8 +27,8 @@ public:
 
         // Camera
         camera = FreeCam(1080.0f / 720.0f, 90.0f, 0.1f, 1000.0f);
-        camera.setPosition(glm::vec3(0.0f, 2.0f, 5.0f));
-        camera.setRotation(glm::vec3(90.0f, 0.0f, 180.0f));
+        camera.setPosition(glm::vec3(0.0f, 1.0f, 1.0f));
+        camera.setRotation(glm::radians(glm::vec3(45.0f, 0.0f, 180.0f)));
 
         input->bindAction("MoveForward", GLFW_KEY_W);
         input->bindAction("MoveBackward", GLFW_KEY_S);
@@ -47,6 +48,17 @@ public:
 
     void Run(Input* input) {
         float time = Duration::since(start).asSeconds();
+
+        ImGui::Begin("Scene Debug");
+
+        glm::vec3 rotation = glm::degrees(glm::eulerAngles(camera.getRotation()));
+        glm::vec3 position = camera.getPosition();
+        ImGui::Text("Rot: X: %.2f, Y: %.2f, Z: %.2f",
+                    rotation.x, rotation.y, rotation.z);
+        ImGui::Text("Pos: X: %.2f, Y: %.2f, Z: %.2f",
+                    position.x, position.y, position.z);
+
+        ImGui::End();
 
         // Input Controls
         if (input->isPressed("ToggleMouseCapture") && input->isChanged("ToggleMouseCapture"))
