@@ -5,6 +5,8 @@
 #include "AssetManagement/Meshes/Mesh.hpp"
 #include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "GameObject.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "imgui.h"
 
 class Plane : public GameObject {
 public:
@@ -19,6 +21,7 @@ public:
     Image* rough;
 
     Sampler sampler;
+    glm::vec3 offset = glm::vec3(0.0f);
 
     struct PushData {
         glm::vec4 highlightColor;
@@ -79,6 +82,20 @@ public:
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::vec4 tint = glm::vec4(1.0f);
+
+        float move = 0.0f;
+        if (input->isPressed("PLANE UP"))   move++;
+        if (input->isPressed("PLANE DOWN")) move--;
+
+        offset.z += move * input->deltaTime().asSeconds();
+        model = glm::translate(model, offset);
+
+        ImGui::Begin("Plane Debug");
+
+        ImGui::Text("Off: X: %.2f, Y: %.2f, Z: %.2f", offset.x, offset.y, offset.z);
+        ImGui::Text("move: %.2f", move);
+
+        ImGui::End();
 
         memcpy(objectPtr, &model, sizeof(glm::mat4));
         memcpy(objectPtr + sizeof(glm::mat4), &tint, sizeof(glm::vec4));

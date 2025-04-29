@@ -5,6 +5,7 @@
 #include "Game/Input/Duration.hpp"
 #include "Game/RenderGraphSetup.hpp"
 #include "Game/Scene/Scene.hpp"
+#include "Game/Scene/TestScene.hpp"
 #include "imgui.h"
 
 #include <cmath>
@@ -41,7 +42,7 @@ void Game::run() {
     m_input->bindAction("Quit", GLFW_KEY_Q);
     m_input->update();
 
-    Scene scene;
+    TestScene scene;
     scene.Setup(&m_resources, m_input);
 
     Duration::TimePoint start = Duration::now();
