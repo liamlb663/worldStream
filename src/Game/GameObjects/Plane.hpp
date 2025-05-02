@@ -5,8 +5,11 @@
 #include "AssetManagement/Meshes/Mesh.hpp"
 #include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "GameObject.hpp"
+#include "ResourceManagement/RenderResources/Image.hpp"
+#include "ResourceManagement/ResourceManager.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "imgui.h"
+#include "spdlog/spdlog.h"
 
 class Plane : public GameObject {
 public:
@@ -46,9 +49,15 @@ public:
         objectBuffer = resources->createUniformBuffer(80).value();  // model + tint
 
         // Textures
-        diffuse = resources->loadImage("diffuse.png");
-        normal = resources->loadImage("normal.png");
-        rough = resources->loadImage("rough.png");
+        LoadImageConfig imageConfig = {
+            .type = ImageType::Texture2D,
+            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+        };
+
+        diffuse = resources->loadImage("diffuse.png", imageConfig);
+        normal = resources->loadImage("normal.png", imageConfig);
+        rough = resources->loadImage("rough.png", imageConfig);
 
         sampler = resources->getSamplerBuilder().build().value();
 
@@ -72,6 +81,12 @@ public:
         pushData.highlightColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.25f); // red tint, 25% blend
         pushData.outlineWidth = 0.01f;
         plane.materials[0].pushConstantData = &pushData;
+    }
+
+    void SetImage(Image* newAlbedo) {
+        spdlog::info("Setting Image!");
+        plane.materials[0].descriptorSets[1].set.writeImageSampler(0, newAlbedo, sampler); // albedo
+        plane.materials[0].descriptorSets[1].set.update();
     }
 
     void Run(Input* input) {

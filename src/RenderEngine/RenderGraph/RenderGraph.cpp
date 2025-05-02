@@ -15,6 +15,7 @@ RenderInfo RenderInfo::create(
     RenderInfo info = {
         .images = std::vector<Image>(renderGraph->images.size()),
         .geometries = std::vector<std::vector<RenderObject>>(renderGraph->geometries.size()),
+        .textureTargets = {},
         .semaphores = std::vector<Semaphore>(renderGraph->nodes.size()),
     };
 
@@ -40,6 +41,9 @@ RenderInfo RenderInfo::create(
                 imageSize,
                 imgInfo.format,
                 imgInfo.usage,
+                1,
+                0,
+                VK_IMAGE_VIEW_TYPE_2D,
                 imgInfo.name
         );
     }

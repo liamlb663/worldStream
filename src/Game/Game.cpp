@@ -1,21 +1,16 @@
 // src/Game/Game.cpp
 
 #include "Game.hpp"
-#include "AssetManagement/Meshes/Mesh.hpp"
 #include "Game/Input/Duration.hpp"
-#include "Game/RenderGraphSetup.hpp"
-#include "Game/Scene/Scene.hpp"
 #include "Game/Scene/TestScene.hpp"
 #include "imgui.h"
 
-#include <cmath>
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.h>
 
 #include <unistd.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <cstring>
 
 bool Game::initialize(int argc, char* argv[]) {
     (void) argc;
@@ -28,10 +23,6 @@ bool Game::initialize(int argc, char* argv[]) {
 
     m_input = Input::create(m_graphics.getGLFWwindow());
 
-    m_renderGraph = setupRenderGraph();
-
-    m_graphics.setRenderGraph(m_renderGraph);
-
     return true;
 }
 
@@ -43,7 +34,7 @@ void Game::run() {
     m_input->update();
 
     TestScene scene;
-    scene.Setup(&m_resources, m_input);
+    scene.Setup(&m_resources, m_input, &m_graphics);
 
     Duration::TimePoint start = Duration::now();
     while (!m_input->shouldClose()) {

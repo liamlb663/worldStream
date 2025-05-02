@@ -13,6 +13,7 @@
 #include "../InternalResources/Semaphore.hpp"
 #include "../RenderGraph/RenderGraph.hpp"
 #include "../RenderObjects/RenderObject.hpp"
+#include "RenderEngine/RenderObjects/TextureRenderObject.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -27,6 +28,9 @@ public:
     void addRenderObjects(Size geoId, std::vector<RenderObject> objects);
     void clearRenderObjects(Size geoId);
     void clearAllRenderObjects();
+
+    void addTextureTargets(std::vector<TextureRenderObject> targets);
+    void clearTextureTargets();
 
     CommandPool commandPool;
     VkCommandBuffer transferBuffer;

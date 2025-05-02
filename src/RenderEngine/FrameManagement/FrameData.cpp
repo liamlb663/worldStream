@@ -3,6 +3,7 @@
 #include "FrameData.hpp"
 
 #include "../VkUtils.hpp"
+#include "RenderEngine/RenderObjects/TextureRenderObject.hpp"
 
 #include <fmt/core.h>
 
@@ -86,3 +87,13 @@ void FrameData::clearAllRenderObjects() {
         clearRenderObjects(i);
     }
 }
+
+void FrameData::addTextureTargets(std::vector<TextureRenderObject> targets) {
+    renderContext.textureTargets.insert(
+            renderContext.textureTargets.end(), targets.begin(), targets.end());
+}
+
+void FrameData::clearTextureTargets() {
+    renderContext.textureTargets.clear();
+}
+

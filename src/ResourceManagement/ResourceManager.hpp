@@ -18,6 +18,17 @@
 
 namespace fs = std::filesystem;
 
+enum class ImageType {
+    Texture2D,
+    CubeMap,
+};
+
+struct LoadImageConfig {
+    ImageType type = ImageType::Texture2D;
+    VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+    VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+};
+
 class ResourceManager {
 public:
     bool initialize(VulkanInfo* vkInfo, std::shared_ptr<CommandSubmitter> submitter);
@@ -26,7 +37,14 @@ public:
     VulkanInfo* getVkInfo();
 
     // Images
-    Image* loadImage(std::string path);
+    std::expected<Image, std::string> createImage(
+            Vector<U32, 2> size,
+            VkFormat format,
+            VkImageUsageFlags usage,
+            ImageType type,
+            std::string name
+    );
+    Image* loadImage(std::string path, const LoadImageConfig& config);
     void copyToImage(void* data, Size size, Image* image);
     void dropImage(Image* image);
 

@@ -14,24 +14,37 @@ bool Image::init(
         const Vector<U32, 2>& imageSize,
         VkFormat imageFormat,
         VkImageUsageFlags usage,
+        U32 layers,
+        VkImageCreateFlags flags,
+        VkImageViewType viewType,
         std::string name
 ) {
     m_vkInfo = vkInfo;
     size = imageSize;
     Vector<U32, 3> size3D = {size.value.x, size.value.y, 1};
     format = imageFormat;
+    U32 mipLevels = 1;
 
     std::vector families = {vkInfo->graphicsQueueFamily, vkInfo->transferQueueFamily};
+
+    if (viewType == VK_IMAGE_VIEW_TYPE_CUBE && size.value.x != size.value.y) {
+        spdlog::warn("Cube maps should be square (got {}x{})", size.value.x, size.value.y);
+    }
+
+    if ((viewType == VK_IMAGE_VIEW_TYPE_CUBE || viewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY) &&
+        !(flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT)) {
+        spdlog::warn("Cube map view type requires VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT to be set in flags.");
+    }
 
     VkImageCreateInfo imageInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .pNext = nullptr,
-        .flags = 0,
+        .flags = flags,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = format,
         .extent = size3D,
-        .mipLevels = 1,
-        .arrayLayers = 1,
+        .mipLevels = mipLevels,
+        .arrayLayers = layers,
         .samples = VK_SAMPLE_COUNT_1_BIT,   // TODO: Anti-Aliasing
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = usage,
@@ -67,19 +80,21 @@ bool Image::init(
 
     Debug::SetObjectName(vkInfo->device, (U64)image, VK_OBJECT_TYPE_IMAGE, fmt::format("{}'s image", name).c_str());
 
-	// if the format is a depth format, we will need to
+    // if the format is a depth format, we will need to
     // have it use the correct aspect flag
-	VkImageAspectFlags aspectFlag = VK_IMAGE_ASPECT_COLOR_BIT;
-	if (format == VK_FORMAT_D32_SFLOAT) {
-		aspectFlag = VK_IMAGE_ASPECT_DEPTH_BIT;
-	}
+    VkImageAspectFlags aspectFlag = VK_IMAGE_ASPECT_COLOR_BIT;
+    if (format == VK_FORMAT_D32_SFLOAT || format == VK_FORMAT_D16_UNORM) {
+        aspectFlag = VK_IMAGE_ASPECT_DEPTH_BIT;
+    } else if (format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT) {
+        aspectFlag = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
 
-	VkImageViewCreateInfo viewInfo = {
+    VkImageViewCreateInfo viewInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
         .image = image,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = viewType,
         .format = format,
 
         .components = {
@@ -92,13 +107,19 @@ bool Image::init(
         .subresourceRange = {
             .aspectMask = aspectFlag,
             .baseMipLevel = 0,
-            .levelCount = 1,
+            .levelCount = mipLevels,
             .baseArrayLayer = 0,
-            .layerCount = imageInfo.mipLevels,
+            .layerCount = layers,
         },
     };
 
-	result = vkCreateImageView(vkInfo->device, &viewInfo, nullptr, &view);
+    if ((viewType == VK_IMAGE_VIEW_TYPE_CUBE || viewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY) &&
+        (layers % 6 != 0)) {
+        spdlog::error("Cubemaps require layers to be a multiple of 6 (got {}).", layers);
+        return false;
+    }
+
+    result = vkCreateImageView(vkInfo->device, &viewInfo, nullptr, &view);
     if (!VkUtils::checkVkResult(result, "Could not create the image view")) {
         return false;
     }

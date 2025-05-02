@@ -144,6 +144,8 @@ void FrameManager::presentFrame(FrameSubmitInfo info) {
 
     m_frameData[m_frameNumber % Config::framesInFlight]
         .clearAllRenderObjects();
+    m_frameData[m_frameNumber % Config::framesInFlight]
+        .clearTextureTargets();
 
     m_frameNumber++;
 }
@@ -166,4 +168,9 @@ void FrameManager::waitOnFrames() {
 void FrameManager::addRenderObjects(Size geoId, std::vector<RenderObject> objects) {
     m_frameData[m_frameNumber % Config::framesInFlight]
         .addRenderObjects(geoId, objects);
+}
+
+void FrameManager::addTextureRenderObjects(std::vector<TextureRenderObject> objects) {
+    m_frameData[m_frameNumber % Config::framesInFlight]
+        .addTextureTargets(objects);
 }

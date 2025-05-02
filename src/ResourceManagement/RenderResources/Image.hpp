@@ -23,6 +23,9 @@ public:
             const Vector<U32, 2>& imageSize,
             VkFormat imageFormat,
             VkImageUsageFlags usage,
+            U32 layers,
+            VkImageCreateFlags flags,
+            VkImageViewType viewType,
             std::string name
     );
 

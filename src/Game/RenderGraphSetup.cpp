@@ -2,14 +2,17 @@
 
 #include "RenderGraphSetup.hpp"
 
+#include "Core/Types.hpp"
 #include "RenderEngine/Config.hpp"
 #include "RenderEngine/Debug.hpp"
 #include "RenderEngine/FrameSubmitInfo.hpp"
+#include "RenderEngine/RenderObjects/TextureRenderObject.hpp"
 #include "imgui_impl_vulkan.h"
 #include <RenderEngine/CommandSubmitter.hpp>
 
 #include <memory>
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 std::shared_ptr<RenderGraph> setupRenderGraph() {
     auto renderGraph = std::make_shared<RenderGraph>();
@@ -28,6 +31,99 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | commonFlags,
         "Final Draw"
     );
+
+    Size textureTargetsPass = renderGraph->createNode("Texture Targets", [](RecordInfo recordInfo) {
+        std::vector<TextureRenderObject>& textureTargets = recordInfo.renderContext->textureTargets;
+
+        for (Size i = 0; i < textureTargets.size(); i++) {
+            TextureRenderObject* textureTarget = &textureTargets[i];
+            Image* targetImage = textureTarget->texture;
+
+            recordInfo.commandSubmitter->transitionImage(
+                recordInfo.commandBuffer,
+                targetImage,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            );
+
+            VkRenderingAttachmentInfo colorAttachment = {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = targetImage->view,
+                .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = nullptr,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                .clearValue = {.color = {{0.0f, 0.0f, 0.0f, 0.0f}}},
+            };
+
+            VkRenderingInfo renderingInfo = {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .renderArea = {.offset = {0, 0}, .extent = targetImage->size},
+                .layerCount = 1,
+                .viewMask = 0,
+                .colorAttachmentCount = 1,
+                .pColorAttachments = &colorAttachment,
+                .pDepthAttachment = nullptr,
+                .pStencilAttachment = nullptr,
+            };
+
+            Debug::SetCmdLabel(recordInfo.commandBuffer, {0.7f, 0.2f, 0.7f}, "Texture Target Pass");
+            vkCmdBeginRendering(recordInfo.commandBuffer, &renderingInfo);
+
+            VkViewport viewport = {
+                .x = 0.0f, .y = 0.0f,
+                .width = static_cast<float>(targetImage->size.value.x),
+                .height = static_cast<float>(targetImage->size.value.y),
+                .minDepth = 0.0f, .maxDepth = 1.0f
+            };
+            vkCmdSetViewport(recordInfo.commandBuffer, 0, 1, &viewport);
+
+            VkRect2D scissor = {.offset = {0, 0}, .extent = targetImage->size};
+            vkCmdSetScissor(recordInfo.commandBuffer, 0, 1, &scissor);
+
+            vkCmdBindPipeline(
+                recordInfo.commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                textureTarget->material->pipeline->pipeline
+            );
+
+            for (Size setIndex = 0; setIndex < textureTarget->material->descriptorSets.size(); setIndex++) {
+                DescriptorSetData setData = textureTarget->material->descriptorSets[setIndex];
+
+                setData.set.bindBuffer(
+                    recordInfo.commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    textureTarget->material->pipeline->pipelineLayout,
+                    setData.setIndex
+                );
+            }
+
+            if (textureTarget->material->pipeline->pushConstants.enabled) {
+                vkCmdPushConstants(
+                    recordInfo.commandBuffer,
+                    textureTarget->material->pipeline->pipelineLayout,
+                    textureTarget->material->pipeline->pushConstants.stages,
+                    textureTarget->material->pipeline->pushConstants.offset,
+                    textureTarget->material->pipeline->pushConstants.size,
+                    textureTarget->material->pushConstantData
+                );
+            }
+            vkCmdDraw(recordInfo.commandBuffer, 3, 1, 0, 0);
+
+            vkCmdEndRendering(recordInfo.commandBuffer);
+            Debug::RemoveCmdLabel(recordInfo.commandBuffer);
+
+            recordInfo.commandSubmitter->transitionImage(
+                recordInfo.commandBuffer,
+                targetImage,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            );
+        }
+    }, {});
 
     Size geometry = renderGraph->addGeometry("Main Geometry");
     Size geometryPass = renderGraph->createNode(
@@ -141,7 +237,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             vkCmdEndRendering(recordInfo.commandBuffer);
             Debug::RemoveCmdLabel(recordInfo.commandBuffer);
         },
-        {}
+        {textureTargetsPass}
     );
 
     renderGraph->addGeometryInput(geometryPass, {geometry});

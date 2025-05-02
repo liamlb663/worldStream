@@ -7,21 +7,23 @@
 
 #include "GraphContext.hpp"
 #include "RenderEngine/InternalResources/Semaphore.hpp"
+#include "RenderEngine/RenderObjects/TextureRenderObject.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
 #include "../RenderObjects/RenderObject.hpp"
 
 struct RecordInfo;
+class RenderGraph;
 
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
-class RenderGraph;
 struct RenderInfo {
     std::vector<Image> images;
     std::vector<std::vector<RenderObject>> geometries;
+    std::vector<TextureRenderObject> textureTargets;
     std::vector<Semaphore> semaphores;
 
     static RenderInfo create(

@@ -2,12 +2,16 @@
 
 #include "TestScene.hpp"
 #include "Game/GameObjects/Plane.hpp"
+#include "Game/RenderGraphSetup.hpp"
+#include "RenderEngine/Config.hpp"
 #include "imgui.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void TestScene::Setup(ResourceManager* resources, Input* input) {
+void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* graphics) {
     this->resources = resources;
+
+    // Create camera
     camera = FreeCam(1080.0f / 720.0f, 90.0f, 0.1f, 1000.0f);
     camera.setPosition(glm::vec3(0.0f, 1.0f, 1.0f));
     camera.setRotation(glm::radians(glm::vec3(45.0f, 0.0f, 180.0f)));
@@ -22,6 +26,7 @@ void TestScene::Setup(ResourceManager* resources, Input* input) {
     input->bindAction("PLANE UP", GLFW_KEY_T);
     input->bindAction("PLANE DOWN", GLFW_KEY_G);
 
+    // Create and register scene buffer
     globalBuffer = resources->createUniformBuffer(512).value();
     buffers.registerBuffer(&globalBuffer, "Global Buffer");
 
@@ -30,6 +35,32 @@ void TestScene::Setup(ResourceManager* resources, Input* input) {
 
     gameObjects.push_back(plane);
     start = Duration::now();
+
+    // Set up render graph
+    std::shared_ptr<RenderGraph> renderGraph = setupRenderGraph();
+    graphics->setRenderGraph(renderGraph);
+
+    // Set
+    image = resources->createImage(
+        {100,100},
+        Config::drawFormat,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        ImageType::Texture2D,
+        "Texture RenderObject"
+    ).value();
+    textureMatBuffer = resources->createUniformBuffer(1000).value();
+    matData = resources->getMaterialManager()->getData("skyTest", &pool);
+    matData.pushConstantData = &pushConstants;
+
+    object = {
+        .texture = &image,
+        .material = &matData,
+    };
+
+    //plane->SetImage(&image);
 }
 
 void TestScene::Run(Input* input) {
@@ -113,12 +144,17 @@ void TestScene::Run(Input* input) {
 
     memcpy(globalPtr + 192, &lights, sizeof(lights)); // Write lights data at offset 192
 
+    pushConstants.layer = 0;
+    pushConstants.time = time;
+
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Run(input);
     }
 }
 
 void TestScene::Draw(RenderEngine* graphics) {
+    graphics->renderTextureObjects({object});
+
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Draw(graphics);
     }

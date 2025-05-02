@@ -41,7 +41,38 @@ VulkanInfo* ResourceManager::getVkInfo() {
     return m_vkInfo;
 }
 
-Image* ResourceManager::loadImage(std::string path) {
+std::expected<Image, std::string> ResourceManager::createImage(
+        Vector<U32, 2> size,
+        VkFormat format,
+        VkImageUsageFlags usage,
+        ImageType type,
+        std::string name
+) {
+    Image image;
+
+    VkImageCreateFlags createFlags = 0;
+    VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
+    U32 layers = 1;
+
+    switch (type) {
+        case ImageType::Texture2D:
+            viewType = VK_IMAGE_VIEW_TYPE_2D;
+            break;
+        case ImageType::CubeMap:
+            viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+            createFlags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+            layers = 6;
+            break;
+    }
+
+    if (!image.init(m_vkInfo, size, format, usage, layers, createFlags, viewType, name)) {
+        return std::unexpected("Failed to initialize image");
+    }
+
+    return image;
+}
+
+Image* ResourceManager::loadImage(std::string path, const LoadImageConfig& config) {
     auto it = m_images.find(path);
     if (it != m_images.end()) {
         it->second.references++;
@@ -49,7 +80,6 @@ Image* ResourceManager::loadImage(std::string path) {
     }
 
     fs::path fullPath = resourceBasePath / path;
-
     if (!fs::exists(fullPath)) {
         spdlog::error("Resource not found: {}", fullPath.string());
         return nullptr;
@@ -62,15 +92,21 @@ Image* ResourceManager::loadImage(std::string path) {
         return nullptr;
     }
 
-    VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-    VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    auto result = createImage(
+        {static_cast<U32>(width), static_cast<U32>(height)},
+        config.format,
+        config.usage,
+        config.type,
+        path
+    );
 
-    Image img;
-    if (!img.init(m_vkInfo, Vector<U32, 2>(width, height), format, usage, path)) {
-        spdlog::error("Image failed to init!");
+    if (!result.has_value()) {
+        spdlog::error("Image creation failed: {}", result.error());
+        stbi_image_free(data);
         return nullptr;
     }
 
+    Image img = result.value();
     copyToImage(data, width * height * 4, &img);
     stbi_image_free(data);
 

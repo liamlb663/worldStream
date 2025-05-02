@@ -8,7 +8,6 @@
 struct RecordInfo;
 #include <vulkan/vulkan.h>
 
-#include <cmath>
 #include <string>
 #include <functional>
 

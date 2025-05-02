@@ -5,6 +5,7 @@
 #include "Core/DeletionQueue.hpp"
 #include "FrameManagement/FrameManager.hpp"
 #include "CommandSubmitter.hpp"
+#include "RenderEngine/RenderObjects/TextureRenderObject.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 #include "RenderObjects/RenderObject.hpp"
 #include "VulkanInfo.hpp"
@@ -23,6 +24,7 @@ public:
 
     void StartImGui();
     void renderObjects(Size geoId, std::vector<RenderObject> objects);
+    void renderTextureObjects(std::vector<TextureRenderObject> objects);
     void setRenderGraph(std::shared_ptr<RenderGraph> graph);
     void renderFrame();
 

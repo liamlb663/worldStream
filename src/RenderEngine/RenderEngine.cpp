@@ -232,7 +232,10 @@ void RenderEngine::StartImGui() {
 
 void RenderEngine::renderObjects(Size geoId, std::vector<RenderObject> objects) {
     m_frameManager->addRenderObjects(geoId, objects);
+}
 
+void RenderEngine::renderTextureObjects(std::vector<TextureRenderObject> objects) {
+    m_frameManager->addTextureRenderObjects(objects);
 }
 
 void RenderEngine::setRenderGraph(std::shared_ptr<RenderGraph> graph) {

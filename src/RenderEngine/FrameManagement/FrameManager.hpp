@@ -3,6 +3,7 @@
 #pragma once
 
 #include "FrameData.hpp"
+#include "RenderEngine/RenderObjects/TextureRenderObject.hpp"
 #include "SwapchainManager.hpp"
 #include "Window.hpp"
 
@@ -27,6 +28,7 @@ public:
     void presentFrame(FrameSubmitInfo info);
 
     void addRenderObjects(Size geoId, std::vector<RenderObject> objects);
+    void addTextureRenderObjects(std::vector<TextureRenderObject> objects);
 
     GLFWwindow* getGLFWwindow() const { return m_window->getGLFWwindow(); };
     void setRenderGraph(std::shared_ptr<RenderGraph> renderGraph);

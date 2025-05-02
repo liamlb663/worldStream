@@ -7,20 +7,36 @@
 #include "Game/GameObjects/GameObject.hpp"
 #include "Game/Input/Input.hpp"
 #include "RenderEngine/RenderEngine.hpp"
+#include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/BufferRegistry.hpp"
+#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
 #include <vector>
 
 class TestScene : public Scene {
 public:
     ResourceManager* resources;
-    BufferRegistry buffers;
-    FreeCam camera;
     Duration::TimePoint start;
+
+    FreeCam camera;
+
+    BufferRegistry buffers;
     Buffer globalBuffer;
+
     std::vector<GameObject*> gameObjects;
 
-    virtual void Setup(ResourceManager* resources, Input* input) override;
+    Image image;
+    DescriptorPool pool;
+    MaterialData matData;
+    Buffer textureMatBuffer;
+    TextureRenderObject object;
+
+    struct PushConstants {
+        F32 time;
+        U32 layer;
+    } pushConstants;
+
+    virtual void Setup(ResourceManager* resources, Input* input, RenderEngine* graphics) override;
     virtual void Run(Input* input) override;
     virtual void Draw(RenderEngine* graphics) override;
     virtual void Cleanup() override;

@@ -10,7 +10,7 @@ class Scene {
 public:
     virtual ~Scene() = default;
 
-    virtual void Setup(ResourceManager* resources, Input* input) = 0;
+    virtual void Setup(ResourceManager* resources, Input* input, RenderEngine* graphics) = 0;
     virtual void Run(Input* input) = 0;
     virtual void Draw(RenderEngine* graphics) = 0;
     virtual void Cleanup() = 0;
