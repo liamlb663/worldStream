@@ -25,6 +25,7 @@ public:
 
     Sampler sampler;
     glm::vec3 offset = glm::vec3(0.0f);
+    glm::vec3 scale = glm::vec3(1.0f);
 
     struct PushData {
         glm::vec4 highlightColor;
@@ -81,6 +82,11 @@ public:
         pushData.highlightColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.25f); // red tint, 25% blend
         pushData.outlineWidth = 0.01f;
         plane.materials[0].pushConstantData = &pushData;
+
+        input->bindAction("PLANE UP", GLFW_KEY_T);
+        input->bindAction("PLANE DOWN", GLFW_KEY_G);
+        input->bindAction("PLANE SCALE UP", GLFW_KEY_Y);
+        input->bindAction("PLANE SCALE DOWN", GLFW_KEY_H);
     }
 
     void SetImage(Image* newAlbedo) {
@@ -96,9 +102,16 @@ public:
         uint8_t* objectPtr = reinterpret_cast<uint8_t*>(objectBuffer.info.pMappedData);
 
         glm::mat4 model = glm::mat4(1.0f);
-        glm::vec4 tint = glm::vec4(1.0f);
 
         float move = 0.0f;
+        if (input->isPressed("PLANE SCALE UP"))   move++;
+        if (input->isPressed("PLANE SCALE DOWN")) move--;
+        scale += move * input->deltaTime().asSeconds();
+
+        model = glm::scale(model, scale);
+        glm::vec4 tint = glm::vec4(1.0f);
+
+        move = 0.0f;
         if (input->isPressed("PLANE UP"))   move++;
         if (input->isPressed("PLANE DOWN")) move--;
 

@@ -7,6 +7,7 @@
 
 struct TextureRenderObject {
     Image* texture;
+    VkImageView view;
     MaterialData* material;
 };
 

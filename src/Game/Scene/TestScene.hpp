@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Game/GameObjects/SkyBox.hpp"
 #include "Game/Scene/Scene.hpp"
 #include "Game/Camera/FreeCam.hpp"
 #include "Game/GameObjects/GameObject.hpp"
@@ -29,7 +30,9 @@ public:
     DescriptorPool pool;
     MaterialData matData;
     Buffer textureMatBuffer;
-    TextureRenderObject object;
+    std::vector<TextureRenderObject> object;
+
+    Skybox skybox;
 
     struct PushConstants {
         F32 time;

@@ -48,7 +48,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             VkRenderingAttachmentInfo colorAttachment = {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                 .pNext = nullptr,
-                .imageView = targetImage->view,
+                .imageView = textureTarget->view,
                 .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
                 .resolveMode = VK_RESOLVE_MODE_NONE,
                 .resolveImageView = nullptr,
@@ -103,6 +103,8 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             }
 
             if (textureTarget->material->pipeline->pushConstants.enabled) {
+                *(((U32*)textureTarget->material->pushConstantData)+1) = i; // HACK: Oh god this is bad
+
                 vkCmdPushConstants(
                     recordInfo.commandBuffer,
                     textureTarget->material->pipeline->pipelineLayout,

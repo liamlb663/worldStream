@@ -131,7 +131,6 @@ bool Image::init(
 }
 
 VkImageView Image::createLayerView(
-    VulkanInfo* vkInfo,
     U32 layerIndex,
     const std::string& debugName
 ) const {
@@ -170,14 +169,14 @@ VkImageView Image::createLayerView(
     };
 
     VkImageView view;
-    VkResult result = vkCreateImageView(vkInfo->device, &viewInfo, nullptr, &view);
+    VkResult result = vkCreateImageView(m_vkInfo->device, &viewInfo, nullptr, &view);
     if (!VkUtils::checkVkResult(result,
             fmt::format("Failed to create layer view at layer {}", layerIndex))) {
         return VK_NULL_HANDLE;
     }
 
     if (!debugName.empty()) {
-        Debug::SetObjectName(vkInfo->device, (uint64_t)view, VK_OBJECT_TYPE_IMAGE_VIEW, debugName.c_str());
+        Debug::SetObjectName(m_vkInfo->device, (uint64_t)view, VK_OBJECT_TYPE_IMAGE_VIEW, debugName.c_str());
     }
 
     return view;

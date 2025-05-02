@@ -23,8 +23,6 @@ void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* gr
     input->bindAction("MoveRight", GLFW_KEY_D);
     input->bindAction("Sprint", GLFW_KEY_LEFT_SHIFT);
     input->bindAction("ToggleMouseCapture", GLFW_KEY_E);
-    input->bindAction("PLANE UP", GLFW_KEY_T);
-    input->bindAction("PLANE DOWN", GLFW_KEY_G);
 
     // Create and register scene buffer
     globalBuffer = resources->createUniformBuffer(512).value();
@@ -48,19 +46,25 @@ void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* gr
             VK_IMAGE_USAGE_SAMPLED_BIT |
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
             VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        ImageType::Texture2D,
+        ImageType::CubeMap,
         "Texture RenderObject"
     ).value();
     textureMatBuffer = resources->createUniformBuffer(1000).value();
     matData = resources->getMaterialManager()->getData("skyTest", &pool);
     matData.pushConstantData = &pushConstants;
 
-    object = {
-        .texture = &image,
-        .material = &matData,
-    };
+    for (Size i = 0; i < 6; i++) {
+        object.push_back({
+            .texture = &image,
+            .view = image.createLayerView(i, "Skybox View"),
+            .material = &matData,
+        });
+    }
 
-    //plane->SetImage(&image);
+
+    skybox.Setup(resources, &buffers, input);
+    skybox.SetImage(&image);
+
 }
 
 void TestScene::Run(Input* input) {
@@ -150,11 +154,19 @@ void TestScene::Run(Input* input) {
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Run(input);
     }
+
+    glm::mat4 view = camera.getViewMatrix();
+    glm::mat4 viewNoTranslation = view;
+    viewNoTranslation[3] = glm::vec4(0, 0, 0, 1); // Remove translation row
+    glm::mat4 viewProj = camera.getProjectionMatrix() * viewNoTranslation;
+    skybox.SetViewProj(viewProj);
+    skybox.Run(input);
 }
 
 void TestScene::Draw(RenderEngine* graphics) {
-    graphics->renderTextureObjects({object});
+    graphics->renderTextureObjects(object);
 
+    skybox.Draw(graphics);
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Draw(graphics);
     }

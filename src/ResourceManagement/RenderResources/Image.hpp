@@ -31,7 +31,6 @@ public:
     );
 
     VkImageView createLayerView(
-        VulkanInfo* vkInfo,
         U32 layerIndex,
         const std::string& name
     ) const;

@@ -1,0 +1,9 @@
+descriptor_layout:
+  set: 0
+  bindings:
+    - binding: 0
+      descriptor_type: "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER"
+      stages: ["fragment"]
+      size: 0
+      offset: 0
+

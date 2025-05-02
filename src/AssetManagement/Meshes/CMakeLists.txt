@@ -4,6 +4,7 @@
 set(MESH_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Mesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PlaneGenerator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CubeGenerator.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
