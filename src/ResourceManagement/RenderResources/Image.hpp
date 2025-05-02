@@ -17,6 +17,7 @@ public:
     Vector<U32, 2> size = {0,0};
     VkFormat format = VK_FORMAT_UNDEFINED;
     VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    U32 layers = 0;
 
     bool init(
             VulkanInfo* vkInfo,
@@ -28,6 +29,12 @@ public:
             VkImageViewType viewType,
             std::string name
     );
+
+    VkImageView createLayerView(
+        VulkanInfo* vkInfo,
+        U32 layerIndex,
+        const std::string& name
+    ) const;
 
     void shutdown();
 

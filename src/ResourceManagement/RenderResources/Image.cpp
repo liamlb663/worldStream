@@ -23,6 +23,7 @@ bool Image::init(
     size = imageSize;
     Vector<U32, 3> size3D = {size.value.x, size.value.y, 1};
     format = imageFormat;
+    this->layers = layers;
     U32 mipLevels = 1;
 
     std::vector families = {vkInfo->graphicsQueueFamily, vkInfo->transferQueueFamily};
@@ -129,6 +130,59 @@ bool Image::init(
     return true;
 }
 
+VkImageView Image::createLayerView(
+    VulkanInfo* vkInfo,
+    U32 layerIndex,
+    const std::string& debugName
+) const {
+    if (image == VK_NULL_HANDLE) {
+        spdlog::error("Attempted to create layer view on uninitialized image.");
+        return VK_NULL_HANDLE;
+    }
+
+    if (layerIndex >= this->layers) {
+        spdlog::error("Layer index {} out of bounds (max {}).", layerIndex, this->layers - 1);
+        return VK_NULL_HANDLE;
+    }
+
+    VkImageViewCreateInfo viewInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+
+        .components = {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+        },
+
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = layerIndex,
+            .layerCount = 1,
+        }
+    };
+
+    VkImageView view;
+    VkResult result = vkCreateImageView(vkInfo->device, &viewInfo, nullptr, &view);
+    if (!VkUtils::checkVkResult(result,
+            fmt::format("Failed to create layer view at layer {}", layerIndex))) {
+        return VK_NULL_HANDLE;
+    }
+
+    if (!debugName.empty()) {
+        Debug::SetObjectName(vkInfo->device, (uint64_t)view, VK_OBJECT_TYPE_IMAGE_VIEW, debugName.c_str());
+    }
+
+    return view;
+}
+
 void Image::shutdown() {
     if (image == VK_NULL_HANDLE) {
         spdlog::warn("Attempted to destroy image a second time!");
@@ -144,5 +198,6 @@ void Image::shutdown() {
     size = {0,0};
     format = VK_FORMAT_UNDEFINED;
     layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    layers = 0;
 }
 
