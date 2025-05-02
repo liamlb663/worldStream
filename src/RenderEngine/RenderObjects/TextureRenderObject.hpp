@@ -9,5 +9,6 @@ struct TextureRenderObject {
     Image* texture;
     VkImageView view;
     MaterialData* material;
+    U32 layer;
 };
 

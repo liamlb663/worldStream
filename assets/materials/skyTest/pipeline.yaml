@@ -35,6 +35,6 @@ pipeline:
   # Push Constants
   push_constants:
     - stages: ["fragment"]
-      size: 32
+      size: 40
       offset: 0
 

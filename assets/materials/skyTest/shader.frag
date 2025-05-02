@@ -4,13 +4,22 @@ layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
 
 layout(push_constant) uniform Push {
-    float time;
     uint layer;
+    float _pad0;
+    vec3 sunDirection;
+    float turbidity;
+    float exposure;
+    float _pad1;
 } pushData;
 
-vec3 getDirection(uint faceIndex, vec2 uv) {
-    uv = uv * 2.0 - 1.0; // Remap from [0,1] to [-1,1]
+// Remap Y-up direction to Z-up by rotating -90° around X
+vec3 toZUp(vec3 dir) {
+    return vec3(dir.x, -dir.z, dir.y);
+}
 
+// View direction: remap from UV + layer to a cubemap direction
+vec3 getDirection(uint faceIndex, vec2 uv) {
+    uv = uv * 2.0 - 1.0;
     switch (faceIndex) {
         case 0: return normalize(vec3( 1.0,  -uv.x,   -uv.y));  // +X
         case 1: return normalize(vec3(-1.0,   uv.x,   -uv.y));  // -X
@@ -22,23 +31,34 @@ vec3 getDirection(uint faceIndex, vec2 uv) {
     }
 }
 
+vec3 computePreethamSkyColor(vec3 viewDir, vec3 sunDir, float turbidity) {
+    // Zenith angle (view direction elevation)
+    float theta = acos(clamp(viewDir.z, -1.0, 1.0)); // angle from up
+    float gamma = acos(clamp(dot(viewDir, sunDir), -1.0, 1.0)); // angle between view & sun
+
+    // Empirical coefficients from Preetham model
+    float T = turbidity;
+    float A =  0.1787 * T - 1.4630;
+    float B = -0.3554 * T + 0.4275;
+    float C = -0.0227 * T + 5.3251;
+    float D =  0.1206 * T - 2.5771;
+    float E = -0.0670 * T + 0.3703;
+
+    // Perez function
+    float perezTheta = (1.0 + A * exp(B / cos(theta)));
+    float perezGamma = (1.0 + C * exp(D * gamma) + E * cos(gamma) * cos(gamma));
+    float luminance = perezTheta * perezGamma;
+
+    // Base zenith color approximation (RGB)
+    vec3 zenithColor = vec3(0.75, 0.85, 1.0); // Slightly pale blue
+    return zenithColor * luminance;
+}
+
 void main() {
-    vec3 dir = getDirection(pushData.layer, uv);
-    float y = dir.y; // Vertical component
+    vec3 viewDir = toZUp(getDirection(pushData.layer, uv));
+    vec3 skyColor = computePreethamSkyColor(viewDir, normalize(pushData.sunDirection), pushData.turbidity);
+    skyColor *= pushData.exposure;
 
-    // Clamp for blending
-    float up = clamp((y - 0.0) / 0.6, 0.0, 1.0);    // Horizon to Sky
-    float down = clamp((-y - 0.0) / 0.5, 0.0, 1.0); // Horizon to Ground
-
-    // Colors
-    vec3 skyColor = vec3(0.2, 0.5, 1.0);   // Deep sky blue
-    vec3 horizonColor = vec3(0.9, 0.9, 0.8); // Pale horizon
-    vec3 groundColor = vec3(0.8, 0.4, 0.2);  // Warm orange
-
-    // Interpolate: ground ← horizon → sky
-    vec3 color = mix(horizonColor, skyColor, up);
-    color = mix(groundColor, color, 1.0 - down);
-
-    outColor = vec4(color, 1.0);
+    outColor = vec4(skyColor, 1.0);
 }
 

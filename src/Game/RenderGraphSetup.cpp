@@ -103,7 +103,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             }
 
             if (textureTarget->material->pipeline->pushConstants.enabled) {
-                *(((U32*)textureTarget->material->pushConstantData)+1) = i; // HACK: Oh god this is bad
+                *(((U32*)textureTarget->material->pushConstantData)) = textureTarget->layer;
 
                 vkCmdPushConstants(
                     recordInfo.commandBuffer,

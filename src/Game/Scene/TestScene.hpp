@@ -35,8 +35,12 @@ public:
     Skybox skybox;
 
     struct PushConstants {
-        F32 time;
-        U32 layer;
+        uint32_t layer;
+        float _pad0;
+        alignas(16) glm::vec3 sunDirection;
+        float turbidity;
+        float exposure;
+        float _pad1;
     } pushConstants;
 
     virtual void Setup(ResourceManager* resources, Input* input, RenderEngine* graphics) override;
