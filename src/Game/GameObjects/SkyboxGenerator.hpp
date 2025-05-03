@@ -27,8 +27,8 @@ public:
 
     float sunAzimuth = 0.0f;
     float sunElevation = 45.0f;
-    float turbidity = 2.5f;
-    float exposure = 1.0f;
+    float turbidity = 6.5f;
+    float exposure = 0.6f;
 
     void Setup(ResourceManager* resources) {
         image = resources->createImage(
