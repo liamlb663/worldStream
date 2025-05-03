@@ -2,13 +2,13 @@
 
 #pragma once
 
-#include "GameObject.hpp"
 #include "RenderEngine/Config.hpp"
+#include "RenderEngine/RenderEngine.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
 #include "imgui.h"
 
-class SkyboxGenerator : public GameObject {
+class SkyboxGenerator {
 public:
     struct PushConstants {
         uint32_t layer;
@@ -30,10 +30,7 @@ public:
     float turbidity = 2.5f;
     float exposure = 1.0f;
 
-    void Setup(ResourceManager* resources, BufferRegistry* buffers, Input* input) {
-        (void)input;
-        (void)buffers;
-
+    void Setup(ResourceManager* resources) {
         image = resources->createImage(
             {100, 100},
             Config::drawFormat,
@@ -46,7 +43,7 @@ public:
         ).value();
 
         textureMatBuffer = resources->createUniformBuffer(1000).value();
-        matData = resources->getMaterialManager()->getData("skyTest", &pool);
+        matData = resources->getMaterialManager()->getData("preethamGenerator", &pool);
         matData.pushConstantData = &pushConstants;
 
         for (U32 i = 0; i < 6; i++) {
@@ -61,9 +58,7 @@ public:
 
     Image* getImage() { return &image; }
 
-    void Run(Input* input) {
-        (void)input;
-
+    void Run() {
         float azimuthRad = glm::radians(sunAzimuth);
         float elevationRad = glm::radians(sunElevation);
         pushConstants.sunDirection = glm::normalize(glm::vec3(
@@ -87,9 +82,7 @@ public:
         graphics->renderTextureObjects(object);
     }
 
-    void Cleanup(ResourceManager* resources) {
-        (void)resources;
-
+    void Cleanup() {
         for (U32 i = 0; i < 6; i++) {
             object[i].view.shutdown();
         }

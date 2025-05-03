@@ -62,9 +62,3 @@ pipeline:
     - layout: "perObject.yaml"
       set: 2
 
-  # Push Constants
-  push_constants:
-    - stages: ["vertex", "fragment"]
-      size: 32
-      offset: 0
-

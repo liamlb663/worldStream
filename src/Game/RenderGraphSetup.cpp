@@ -12,7 +12,6 @@
 
 #include <memory>
 #include <vulkan/vulkan.h>
-#include <vulkan/vulkan_core.h>
 
 std::shared_ptr<RenderGraph> setupRenderGraph() {
     auto renderGraph = std::make_shared<RenderGraph>();

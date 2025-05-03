@@ -34,8 +34,6 @@ public:
     } pushData;
 
     void Setup(ResourceManager* resources, BufferRegistry* buffers, Input* input) {
-        (void)input;
-
         // Descriptor Pool
         std::array<DescriptorPool::PoolSizeRatio, 2> poolRatios = {{
             {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3.0f},
@@ -83,6 +81,7 @@ public:
         pushData.outlineWidth = 0.01f;
         plane.materials[0].pushConstantData = &pushData;
 
+        // Demo Plane Functions
         input->bindAction("PLANE UP", GLFW_KEY_T);
         input->bindAction("PLANE DOWN", GLFW_KEY_G);
         input->bindAction("PLANE SCALE UP", GLFW_KEY_Y);
@@ -90,14 +89,11 @@ public:
     }
 
     void SetImage(Image* newAlbedo) {
-        spdlog::info("Setting Image!");
-        plane.materials[0].descriptorSets[1].set.writeImageSampler(0, newAlbedo, sampler); // albedo
+        plane.materials[0].descriptorSets[1].set.writeImageSampler(0, newAlbedo, sampler);
         plane.materials[0].descriptorSets[1].set.update();
     }
 
     void Run(Input* input) {
-        (void)input;
-
         // Update Buffer
         uint8_t* objectPtr = reinterpret_cast<uint8_t*>(objectBuffer.info.pMappedData);
 
@@ -107,6 +103,7 @@ public:
         if (input->isPressed("PLANE SCALE UP"))   move++;
         if (input->isPressed("PLANE SCALE DOWN")) move--;
         scale += move * input->deltaTime().asSeconds();
+        scale.z = 1;
 
         model = glm::scale(model, scale);
         glm::vec4 tint = glm::vec4(1.0f);
@@ -119,18 +116,12 @@ public:
         model = glm::translate(model, offset);
 
         ImGui::Begin("Plane Debug");
-
-        ImGui::Text("Off: X: %.2f, Y: %.2f, Z: %.2f", offset.x, offset.y, offset.z);
-        ImGui::Text("move: %.2f", move);
-
+        ImGui::Text("Off: (%.1f, %.1f, %.1f)", offset.x, offset.y, offset.z);
+        ImGui::Text("Scale: (%.1f, %.1f, %.1f)", scale.x, scale.y, scale.z);
         ImGui::End();
 
         memcpy(objectPtr, &model, sizeof(glm::mat4));
         memcpy(objectPtr + sizeof(glm::mat4), &tint, sizeof(glm::vec4));
-
-        // Push Constants
-        pushData.highlightColor = glm::vec4(0.0f);
-        //pushData.outlineWidth = 0.01f + 0.005f * cos(time);
     }
 
     void Draw(RenderEngine* graphics) {

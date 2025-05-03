@@ -41,12 +41,6 @@ layout(set = 2, binding = 0) uniform ObjectUBO {
     vec4 colorTint;
 };
 
-// Push constants
-layout(push_constant) uniform PushData {
-    vec4 highlightColor;
-    float outlineWidth;
-};
-
 // Converts normal from [0,1] → [-1,1]
 vec3 decodeNormal(vec3 n) {
     return normalize(n * 2.0 - 1.0);
@@ -96,8 +90,6 @@ void main() {
 
     // Final color tinting
     color *= albedo * colorTint.rgb;
-    color = mix(color, highlightColor.rgb, highlightColor.a);
-
     outColor = vec4(color, 1.0);
 }
 

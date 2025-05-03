@@ -45,25 +45,27 @@ void Game::run() {
         if (m_input->isPressed("Quit"))
             m_input->close();
 
-        // ImGui
+        // ImGui Start
         m_graphics.StartImGui();
         ImGui::NewFrame();
 
-        ImGui::Begin("Very Professional Debug thingy");
+        // ImGui Stats
+        ImGui::Begin("Engine Level");
         ImGui::Text("DT: %f", m_input->deltaTime().asSeconds());
         ImGui::Text("FPS: %f", 1.0/m_input->deltaTime().asSeconds());
         ImGui::Text("Time: %f", time);
         ImGui::End();
 
+        // Render Scene
         scene.Run(m_input);
         scene.Draw(&m_graphics);
 
+        // End Render and Submit
         ImGui::Render();
         m_graphics.renderFrame();
     }
 
     m_graphics.waitOnGpu();
-
     scene.Cleanup();
 }
 

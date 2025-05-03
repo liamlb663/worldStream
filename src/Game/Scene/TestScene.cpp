@@ -4,7 +4,6 @@
 #include "Game/GameObjects/Plane.hpp"
 #include "Game/GameObjects/SkyboxGenerator.hpp"
 #include "Game/RenderGraphSetup.hpp"
-#include "RenderEngine/Config.hpp"
 #include "imgui.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -12,7 +11,9 @@
 
 void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* graphics) {
     this->resources = resources;
+    start = Duration::now();
 
+    // Camera Inputs
     camera = FreeCam(1080.0f / 720.0f, 90.0f, 0.1f, 1000.0f);
     camera.setPosition(glm::vec3(0.0f, 1.0f, 1.0f));
     camera.setRotation(glm::radians(glm::vec3(45.0f, 0.0f, 180.0f)));
@@ -31,33 +32,31 @@ void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* gr
     plane->Setup(resources, &buffers, input);
     gameObjects.push_back(plane);
 
-    start = Duration::now();
-
+    // Set renderGraph
     std::shared_ptr<RenderGraph> renderGraph = setupRenderGraph();
     graphics->setRenderGraph(renderGraph);
 
     // Sky
-    skyGenerator.Setup(resources, &buffers, input);
+    skyGenerator.Setup(resources);
 
-    skybox.Setup(resources, &buffers, input);
+    skybox.Setup(resources);
     skybox.SetImage(skyGenerator.getImage());
 }
 
 void TestScene::Run(Input* input) {
     float time = Duration::since(start).asSeconds();
 
-    ImGui::Begin("Scene Debug");
-
+    ImGui::Begin("Camera");
     glm::vec3 rotation = glm::degrees(glm::eulerAngles(camera.getRotation()));
     glm::vec3 position = camera.getPosition();
     ImGui::Text("Rot: X: %.2f, Y: %.2f, Z: %.2f", rotation.x, rotation.y, rotation.z);
     ImGui::Text("Pos: X: %.2f, Y: %.2f, Z: %.2f", position.x, position.y, position.z);
-
     ImGui::End();
 
     if (input->isPressed("ToggleMouseCapture") && input->isChanged("ToggleMouseCapture"))
         input->setCapture(!input->isCapturing());
 
+    // Move Camera
     glm::vec2 move(0.0f);
     if (input->isPressed("MoveLeft"))       move.x--;
     if (input->isPressed("MoveRight"))      move.x++;
@@ -124,14 +123,13 @@ void TestScene::Run(Input* input) {
         gameObjects[i]->Run(input);
     }
 
-    skyGenerator.Run(input);
+    skyGenerator.Run();
 
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 viewNoTranslation = view;
     viewNoTranslation[3] = glm::vec4(0, 0, 0, 1);
     glm::mat4 viewProj = camera.getProjectionMatrix() * viewNoTranslation;
     skybox.SetViewProj(viewProj);
-    skybox.Run(input);
 }
 
 void TestScene::Draw(RenderEngine* graphics) {
@@ -144,8 +142,8 @@ void TestScene::Draw(RenderEngine* graphics) {
 }
 
 void TestScene::Cleanup() {
-    skyGenerator.Cleanup(resources);
-    skybox.Cleanup(resources);
+    skyGenerator.Cleanup();
+    skybox.Cleanup();
 
     globalBuffer.shutdown();
     for (Size i = 0; i < gameObjects.size(); i++) {

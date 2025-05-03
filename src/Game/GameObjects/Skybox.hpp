@@ -4,11 +4,11 @@
 
 #include "AssetManagement/Meshes/Mesh.hpp"
 #include "AssetManagement/Meshes/CubeGenerator.hpp"
-#include "GameObject.hpp"
+#include "RenderEngine/RenderEngine.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
 
-class Skybox : public GameObject {
+class Skybox {
 public:
 
     DescriptorPool pool;
@@ -21,9 +21,7 @@ public:
         glm::mat4 viewProj;
     } pushData;
 
-    void Setup(ResourceManager* resources, BufferRegistry* buffers, Input* input) {
-        (void)input;
-        (void)buffers;
+    void Setup(ResourceManager* resources) {
 
         // Descriptor Pool
         std::array<DescriptorPool::PoolSizeRatio, 1> poolRatios = {{
@@ -31,21 +29,16 @@ public:
         }};
         pool = resources->createDescriptorPool(1, poolRatios).value();
 
-        // Create Cube Mesh
         createCube(resources, "skyBox", &skybox, &pool);
 
-        // Load Cubemap
-        cubemap = nullptr;
         sampler = resources->getSamplerBuilder().build().value();
 
-        // Set 0: Global UBO (camera)
+        // Camera Data
         skybox.materials[0].pushConstantData = &pushData;
     }
 
     void SetImage(Image* generatedCubemap) {
         cubemap = generatedCubemap;
-
-        // Update descriptor set 0, binding 0
         skybox.materials[0].descriptorSets[0].set.writeImageSampler(0, cubemap, sampler);
         skybox.materials[0].descriptorSets[0].set.update();
     }
@@ -54,17 +47,11 @@ public:
         pushData.viewProj = viewProj;
     }
 
-    void Run(Input* input) {
-        (void)input;
-    }
-
     void Draw(RenderEngine* graphics) {
         graphics->renderObjects(0, skybox.draw());
     }
 
-    void Cleanup(ResourceManager* resources) {
-        (void)resources;
-
+    void Cleanup() {
         pool.destroyPools();
         sampler.shutdown();
         skybox.destroyMesh();
