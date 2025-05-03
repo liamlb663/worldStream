@@ -63,9 +63,10 @@ public:
     }
 
     void Cleanup(ResourceManager* resources) {
+        (void)resources;
+
         pool.destroyPools();
         sampler.shutdown();
-        resources->dropImage(cubemap);
         skybox.destroyMesh();
     }
 };

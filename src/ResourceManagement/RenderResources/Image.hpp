@@ -4,6 +4,7 @@
 
 #include "RenderEngine/VulkanInfo.hpp"
 #include "Core/Vector.hpp"
+#include "ResourceManagement/RenderResources/ImageView.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -30,7 +31,7 @@ public:
             std::string name
     );
 
-    VkImageView createLayerView(
+    ImageView createLayerView(
         U32 layerIndex,
         const std::string& name
     ) const;

@@ -48,7 +48,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             VkRenderingAttachmentInfo colorAttachment = {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                 .pNext = nullptr,
-                .imageView = textureTarget->view,
+                .imageView = textureTarget->view.get(),
                 .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
                 .resolveMode = VK_RESOLVE_MODE_NONE,
                 .resolveImageView = nullptr,

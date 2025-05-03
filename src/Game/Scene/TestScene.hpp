@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "Game/GameObjects/SkyBox.hpp"
+#include "Game/GameObjects/Skybox.hpp"
+#include "Game/GameObjects/SkyboxGenerator.hpp"
 #include "Game/Scene/Scene.hpp"
 #include "Game/Camera/FreeCam.hpp"
 #include "Game/GameObjects/GameObject.hpp"
 #include "Game/Input/Input.hpp"
 #include "RenderEngine/RenderEngine.hpp"
-#include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/BufferRegistry.hpp"
-#include "ResourceManagement/RenderResources/DescriptorPool.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
 #include <vector>
 
@@ -26,22 +25,9 @@ public:
 
     std::vector<GameObject*> gameObjects;
 
-    Image image;
-    DescriptorPool pool;
-    MaterialData matData;
-    Buffer textureMatBuffer;
-    std::vector<TextureRenderObject> object;
-
+    // Skybox
+    SkyboxGenerator skyGenerator;
     Skybox skybox;
-
-    struct PushConstants {
-        uint32_t layer;
-        float _pad0;
-        alignas(16) glm::vec3 sunDirection;
-        float turbidity;
-        float exposure;
-        float _pad1;
-    } pushConstants;
 
     virtual void Setup(ResourceManager* resources, Input* input, RenderEngine* graphics) override;
     virtual void Run(Input* input) override;

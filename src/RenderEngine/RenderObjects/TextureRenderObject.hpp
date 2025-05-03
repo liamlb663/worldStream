@@ -4,10 +4,11 @@
 
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
+#include "ResourceManagement/RenderResources/ImageView.hpp"
 
 struct TextureRenderObject {
     Image* texture;
-    VkImageView view;
+    ImageView view;
     MaterialData* material;
     U32 layer;
 };

@@ -5,6 +5,7 @@
 #include "RenderEngine/Debug.hpp"
 #include "RenderEngine/VkUtils.hpp"
 #include "RenderEngine/VulkanInfo.hpp"
+#include "ResourceManagement/RenderResources/ImageView.hpp"
 #include "spdlog/spdlog.h"
 
 #include <fmt/core.h>
@@ -130,18 +131,18 @@ bool Image::init(
     return true;
 }
 
-VkImageView Image::createLayerView(
+ImageView Image::createLayerView(
     U32 layerIndex,
     const std::string& debugName
 ) const {
     if (image == VK_NULL_HANDLE) {
         spdlog::error("Attempted to create layer view on uninitialized image.");
-        return VK_NULL_HANDLE;
+        return {};
     }
 
     if (layerIndex >= this->layers) {
         spdlog::error("Layer index {} out of bounds (max {}).", layerIndex, this->layers - 1);
-        return VK_NULL_HANDLE;
+        return {};
     }
 
     VkImageViewCreateInfo viewInfo = {
@@ -172,14 +173,16 @@ VkImageView Image::createLayerView(
     VkResult result = vkCreateImageView(m_vkInfo->device, &viewInfo, nullptr, &view);
     if (!VkUtils::checkVkResult(result,
             fmt::format("Failed to create layer view at layer {}", layerIndex))) {
-        return VK_NULL_HANDLE;
+        return {};
     }
+
+    ImageView output = ImageView::create(m_vkInfo, view);
 
     if (!debugName.empty()) {
         Debug::SetObjectName(m_vkInfo->device, (uint64_t)view, VK_OBJECT_TYPE_IMAGE_VIEW, debugName.c_str());
     }
 
-    return view;
+    return output;
 }
 
 void Image::shutdown() {

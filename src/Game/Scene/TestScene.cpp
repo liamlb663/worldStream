@@ -2,18 +2,13 @@
 
 #include "TestScene.hpp"
 #include "Game/GameObjects/Plane.hpp"
+#include "Game/GameObjects/SkyboxGenerator.hpp"
 #include "Game/RenderGraphSetup.hpp"
 #include "RenderEngine/Config.hpp"
 #include "imgui.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
-
-// Sky GUI state (static to persist across frames)
-static float sunAzimuth = 0.0f;     // Degrees
-static float sunElevation = 45.0f;  // Degrees
-static float turbidity = 2.5f;
-static float exposure = 1.0f;
 
 void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* graphics) {
     this->resources = resources;
@@ -41,32 +36,11 @@ void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* gr
     std::shared_ptr<RenderGraph> renderGraph = setupRenderGraph();
     graphics->setRenderGraph(renderGraph);
 
-    image = resources->createImage(
-        {100, 100},
-        Config::drawFormat,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-        VK_IMAGE_USAGE_SAMPLED_BIT |
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        ImageType::CubeMap,
-        "Texture RenderObject"
-    ).value();
-
-    textureMatBuffer = resources->createUniformBuffer(1000).value();
-    matData = resources->getMaterialManager()->getData("skyTest", &pool);
-    matData.pushConstantData = &pushConstants;
-
-    for (U32 i = 0; i < 6; i++) {
-        object.push_back({
-            .texture = &image,
-            .view = image.createLayerView(i, "Skybox View"),
-            .material = &matData,
-            .layer = i,
-        });
-    }
+    // Sky
+    skyGenerator.Setup(resources, &buffers, input);
 
     skybox.Setup(resources, &buffers, input);
-    skybox.SetImage(&image);
+    skybox.SetImage(skyGenerator.getImage());
 }
 
 void TestScene::Run(Input* input) {
@@ -78,12 +52,6 @@ void TestScene::Run(Input* input) {
     glm::vec3 position = camera.getPosition();
     ImGui::Text("Rot: X: %.2f, Y: %.2f, Z: %.2f", rotation.x, rotation.y, rotation.z);
     ImGui::Text("Pos: X: %.2f, Y: %.2f, Z: %.2f", position.x, position.y, position.z);
-
-    ImGui::SeparatorText("Sky Settings");
-    ImGui::SliderFloat("Sun Elevation", &sunElevation, -10.0f, 90.0f);
-    ImGui::SliderFloat("Sun Azimuth", &sunAzimuth, 0.0f, 360.0f);
-    ImGui::SliderFloat("Turbidity", &turbidity, 1.0f, 10.0f);
-    ImGui::SliderFloat("Exposure", &exposure, 0.0f, 5.0f);
 
     ImGui::End();
 
@@ -152,21 +120,11 @@ void TestScene::Run(Input* input) {
 
     memcpy(globalPtr + 192, &lights, sizeof(lights));
 
-    // Convert sun angles to direction (Z+ is up)
-    float azimuthRad = glm::radians(sunAzimuth);
-    float elevationRad = glm::radians(sunElevation);
-    pushConstants.sunDirection = glm::normalize(glm::vec3(
-        cos(elevationRad) * sin(azimuthRad),
-        cos(elevationRad) * cos(azimuthRad),
-        sin(elevationRad)
-    ));
-
-    pushConstants.turbidity = turbidity;
-    pushConstants.exposure = exposure;
-
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Run(input);
     }
+
+    skyGenerator.Run(input);
 
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 viewNoTranslation = view;
@@ -177,14 +135,18 @@ void TestScene::Run(Input* input) {
 }
 
 void TestScene::Draw(RenderEngine* graphics) {
-    graphics->renderTextureObjects(object);
+    skyGenerator.Draw(graphics);
     skybox.Draw(graphics);
+
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Draw(graphics);
     }
 }
 
 void TestScene::Cleanup() {
+    skyGenerator.Cleanup(resources);
+    skybox.Cleanup(resources);
+
     globalBuffer.shutdown();
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Cleanup(resources);
