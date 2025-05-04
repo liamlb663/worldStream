@@ -32,7 +32,7 @@ public:
 
     void Setup(ResourceManager* resources) {
         image = resources->createImage(
-            {100, 100},
+            {1000, 1000},
             Config::drawFormat,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
             VK_IMAGE_USAGE_SAMPLED_BIT |
@@ -59,14 +59,7 @@ public:
     Image* getImage() { return &image; }
 
     void Run() {
-        float azimuthRad = glm::radians(sunAzimuth);
-        float elevationRad = glm::radians(sunElevation);
-        pushConstants.sunDirection = glm::normalize(glm::vec3(
-            cos(elevationRad) * sin(azimuthRad),
-            cos(elevationRad) * cos(azimuthRad),
-            sin(elevationRad)
-        ));
-
+        pushConstants.sunDirection = getSunDirection(true);
         pushConstants.turbidity = turbidity;
         pushConstants.exposure = exposure;
 
@@ -75,7 +68,26 @@ public:
         ImGui::SliderFloat("Sun Azimuth", &sunAzimuth, 0.0f, 360.0f);
         ImGui::SliderFloat("Turbidity", &turbidity, 1.0f, 10.0f);
         ImGui::SliderFloat("Exposure", &exposure, 0.0f, 5.0f);
+
+    ImGui::Separator();
+    ImGui::Text("Sun Dir (toSun): (%.3f, %.3f, %.3f)",
+                pushConstants.sunDirection.x,
+                pushConstants.sunDirection.y,
+                pushConstants.sunDirection.z);
         ImGui::End();
+    }
+
+    glm::vec3 getSunDirection(bool toSun) {
+        float azimuthRad = glm::radians(sunAzimuth);
+        float elevationRad = glm::radians(sunElevation);
+
+        glm::vec3 dir = glm::normalize(glm::vec3(
+            cos(elevationRad) * cos(azimuthRad),
+            cos(elevationRad) * sin(azimuthRad),
+            sin(elevationRad)
+        ));
+
+        return toSun ? dir : -dir;
     }
 
     void Draw(RenderEngine* graphics) {

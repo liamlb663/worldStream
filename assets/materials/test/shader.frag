@@ -7,20 +7,11 @@ layout(location = 2) in vec2 fragUV;
 layout(location = 0) out vec4 outColor;
 
 // Lighting
-struct PointLight {
-    vec3 position;
-    float _pad1;
-    vec3 color;
-    float intensity;
-};
-
 layout(set = 0, binding = 1) uniform LightUBO {
     vec3 directionalLightDir;
     float _pad2;
     vec3 directionalLightColor;
-    float _pad3;
-    PointLight pointLights[4];
-    int numPointLights;
+    float intensity;
 };
 
 layout(set = 0, binding = 0) uniform GlobalUBO {
@@ -74,19 +65,6 @@ void main() {
     float spec = pow(max(dot(N, H), 0.0), shininess);
 
     color += directionalLightColor * (diff + specularStrength * spec);
-
-    // Point lights
-    for (int i = 0; i < numPointLights; ++i) {
-        vec3 L = normalize(pointLights[i].position - fragPos);
-        float dist = length(pointLights[i].position - fragPos);
-        vec3 H = normalize(V + L);
-
-        float diff = max(dot(N, L), 0.0);
-        float spec = pow(max(dot(N, H), 0.0), shininess);
-        float atten = pointLights[i].intensity / (dist * dist);
-
-        color += pointLights[i].color * atten * (diff + specularStrength * spec);
-    }
 
     // Final color tinting
     color *= albedo * colorTint.rgb;

@@ -12,21 +12,16 @@ layout(push_constant) uniform Push {
     float _pad1;
 } pushData;
 
-// Remap Y-up direction to Z-up by rotating -90° around X
-vec3 toZUp(vec3 dir) {
-    return vec3(dir.x, -dir.z, dir.y);
-}
-
-// View direction: remap from UV + layer to a cubemap direction
 vec3 getDirection(uint faceIndex, vec2 uv) {
     uv = uv * 2.0 - 1.0;
+
     switch (faceIndex) {
-        case 0: return normalize(vec3( 1.0,  -uv.x,   -uv.y));  // +X
-        case 1: return normalize(vec3(-1.0,   uv.x,   -uv.y));  // -X
-        case 2: return normalize(vec3( uv.x,  uv.y,    1.0));   // +Z (up)
-        case 3: return normalize(vec3( uv.x, -uv.y,   -1.0));   // -Z (down)
-        case 4: return normalize(vec3( uv.x,  1.0,   -uv.y));   // +Y
-        case 5: return normalize(vec3(-uv.x, -1.0,   -uv.y));   // -Y
+        case 0: return normalize(vec3( 1.0,  -uv.y,  -uv.x));
+        case 1: return normalize(vec3(-1.0, -uv.y, uv.x));
+        case 2: return normalize(vec3( uv.x,  1.0,    uv.y));
+        case 3: return normalize(vec3( uv.x, -1.0,   -uv.y));
+        case 4: return normalize(vec3( uv.x, -uv.y,  1.0));
+        case 5: return normalize(vec3(-uv.x, -uv.y, -1.0));
         default: return vec3(0.0);
     }
 }
@@ -69,7 +64,7 @@ vec3 computePreethamSkyColor(vec3 viewDir, vec3 sunDir, float turbidity) {
 }
 
 void main() {
-    vec3 viewDir = toZUp(getDirection(pushData.layer, uv));
+    vec3 viewDir = getDirection(pushData.layer, uv);
     vec3 sunDir = normalize(pushData.sunDirection);
     vec3 skyColor = computePreethamSkyColor(viewDir, sunDir, pushData.turbidity);
 

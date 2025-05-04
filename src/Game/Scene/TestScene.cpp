@@ -72,6 +72,7 @@ void TestScene::Run(Input* input) {
     // Update Global Buffer
     U8* globalPtr = reinterpret_cast<uint8_t*>(globalBuffer.info.pMappedData);
 
+    // Camera Data
     struct {
         glm::mat4 view;
         glm::mat4 proj;
@@ -86,44 +87,27 @@ void TestScene::Run(Input* input) {
 
     memcpy(globalPtr, &global, sizeof(global));
 
+    // Lighting Data
     struct {
         glm::vec3 dirLightDir;
         float _pad1;
         glm::vec3 dirLightColor;
-        float _pad2;
-        struct {
-            glm::vec3 pos;
-            float _pad1;
-            glm::vec3 color;
-            float intensity;
-        } pointLights[4];
-        int numPointLights;
-        int _pad3[3];
+        float intensity;
     } lights;
 
-    lights.dirLightDir = glm::normalize(glm::vec3(0.5f, -1.0f, 0.2f));
+    skyGenerator.Run();
+
+    glm::vec3 skyDir = skyGenerator.getSunDirection(false);
+
+    lights.dirLightDir = skyDir;
     lights.dirLightColor = glm::vec3(1.0f);
-    lights.pointLights[0] = {
-        glm::vec3(2, 2, 2),
-        0.0f,
-        glm::vec3(1.0f),
-        20.0f
-    };
-    lights.pointLights[1] = {
-        glm::vec3(-2, 1, -2),
-        0.0f,
-        glm::vec3(1.0f),
-        15.0f
-    };
-    lights.numPointLights = 2;
+    lights.intensity = 1.0f;
 
     memcpy(globalPtr + 192, &lights, sizeof(lights));
 
     for (Size i = 0; i < gameObjects.size(); i++) {
         gameObjects[i]->Run(input);
     }
-
-    skyGenerator.Run();
 
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 viewNoTranslation = view;
