@@ -9,8 +9,8 @@
 
 void createPlane(
     ResourceManager* resourceManager,
-    std::string materialPath,
     assets::Mesh* output,
-    DescriptorPool* pool
+    DescriptorPool* pool,
+    U32 resolution
 );
 

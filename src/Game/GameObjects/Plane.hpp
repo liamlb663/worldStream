@@ -9,7 +9,6 @@
 #include "ResourceManagement/ResourceManager.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "imgui.h"
-#include "spdlog/spdlog.h"
 
 class Plane : public GameObject {
 public:
@@ -42,10 +41,13 @@ public:
         pool = resources->createDescriptorPool(1, poolRatios).value();
 
         // Create Mesh
-        createPlane(resources, "test", &plane, &pool);
+        createPlane(resources, &plane, &pool, 128);
+        plane.materials.push_back(resources->getMaterialManager()->getData("meshDemo", &pool));
+        plane.materials.push_back(resources->getMaterialManager()->getData("wireframe", &pool));
+        plane.surfaces[0].materialIndex = 0;
 
         // Buffers
-        objectBuffer = resources->createUniformBuffer(80).value();  // model + tint
+        objectBuffer = resources->createUniformBuffer(800).value();  // model + tint
 
         // Textures
         LoadImageConfig imageConfig = {
@@ -62,24 +64,26 @@ public:
 
         // Set 0: Global UBOs
         Buffer* globalBuffer = buffers->getBuffer("Global Buffer");
-        plane.materials[0].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
-        plane.materials[0].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
-        plane.materials[0].descriptorSets[0].set.update();
+        for (Size i = 0; i < 2; i++) {
+            plane.materials[i].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
+            plane.materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
+            plane.materials[i].descriptorSets[0].set.update();
 
-        // Set 1: Material Textures
-        plane.materials[0].descriptorSets[1].set.writeImageSampler(0, diffuse, sampler); // albedo
-        plane.materials[0].descriptorSets[1].set.writeImageSampler(1, normal, sampler); // normal (placeholder)
-        plane.materials[0].descriptorSets[1].set.writeImageSampler(2, rough, sampler); // roughness (placeholder)
-        plane.materials[0].descriptorSets[1].set.update();
+            // Set 1: Material Textures
+            plane.materials[i].descriptorSets[1].set.writeImageSampler(0, diffuse, sampler); // albedo
+            plane.materials[i].descriptorSets[1].set.writeImageSampler(1, normal, sampler); // normal (placeholder)
+            plane.materials[i].descriptorSets[1].set.writeImageSampler(2, rough, sampler); // roughness (placeholder)
+            plane.materials[i].descriptorSets[1].set.update();
 
-        // Set 2: Object Data
-        plane.materials[0].descriptorSets[2].set.writeUniformBuffer(0, &objectBuffer, 80, 0);
-        plane.materials[0].descriptorSets[2].set.update();
+            // Set 2: Object Data
+            plane.materials[i].descriptorSets[2].set.writeUniformBuffer(0, &objectBuffer, 80, 0);
+            plane.materials[i].descriptorSets[2].set.update();
 
-        // Push Constants
-        pushData.highlightColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.25f); // red tint, 25% blend
-        pushData.outlineWidth = 0.01f;
-        plane.materials[0].pushConstantData = &pushData;
+            // Push Constants
+            pushData.highlightColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.25f); // red tint, 25% blend
+            pushData.outlineWidth = 0.01f;
+            plane.materials[i].pushConstantData = &pushData;
+        }
 
         // Demo Plane Functions
         input->bindAction("PLANE UP", GLFW_KEY_T);
@@ -118,6 +122,14 @@ public:
         ImGui::Begin("Plane Debug");
         ImGui::Text("Off: (%.1f, %.1f, %.1f)", offset.x, offset.y, offset.z);
         ImGui::Text("Scale: (%.1f, %.1f, %.1f)", scale.x, scale.y, scale.z);
+
+        U32 currentMaterialIndex = plane.surfaces[0].materialIndex;
+        if (ImGui::Button("Toggle Material")) {
+            currentMaterialIndex = (currentMaterialIndex + 1) % 2;
+            plane.surfaces[0].materialIndex = currentMaterialIndex;
+        }
+
+        ImGui::Text("Current Material: %d", currentMaterialIndex);
         ImGui::End();
 
         memcpy(objectPtr, &model, sizeof(glm::mat4));
