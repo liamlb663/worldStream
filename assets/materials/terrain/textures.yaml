@@ -1,0 +1,8 @@
+descriptor_layout:
+  set: 1
+  bindings:
+    - binding: 0  # Heightmap
+      descriptor_type: "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER"
+      stages: ["vertex", "fragment"]
+      size: 0
+      offset: 0

@@ -1,0 +1,14 @@
+descriptor_layout:
+  set: 0
+  bindings:
+    - binding: 0
+      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
+      stages: ["vertex", "fragment"]
+      size: 192
+      offset: 0
+
+    - binding: 1
+      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
+      stages: ["fragment"]
+      size: 32
+      offset: 192

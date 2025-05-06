@@ -4,14 +4,13 @@
 
 #include "Game/GameObjects/Skybox.hpp"
 #include "Game/GameObjects/SkyboxGenerator.hpp"
+#include "Game/GameObjects/TerrainManager.hpp"
 #include "Game/Scene/Scene.hpp"
 #include "Game/Camera/FreeCam.hpp"
-#include "Game/GameObjects/GameObject.hpp"
 #include "Game/Input/Input.hpp"
 #include "RenderEngine/RenderEngine.hpp"
 #include "ResourceManagement/BufferRegistry.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
-#include <vector>
 
 class TestScene : public Scene {
 public:
@@ -23,7 +22,7 @@ public:
     BufferRegistry buffers;
     Buffer globalBuffer;
 
-    std::vector<GameObject*> gameObjects;
+    TerrainManager terrain;
 
     // Skybox
     SkyboxGenerator skyGenerator;

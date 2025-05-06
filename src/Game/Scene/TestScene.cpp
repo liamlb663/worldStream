@@ -1,8 +1,8 @@
 // src/Game/Scene/TestScene.cpp
 
 #include "TestScene.hpp"
-#include "Game/GameObjects/Plane.hpp"
 #include "Game/GameObjects/SkyboxGenerator.hpp"
+#include "Game/GameObjects/TerrainManager.hpp"
 #include "Game/RenderGraphSetup.hpp"
 #include "imgui.h"
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,9 +28,7 @@ void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* gr
     globalBuffer = resources->createUniformBuffer(512, "Global Info Buffer").value();
     buffers.registerBuffer(&globalBuffer, "Global Buffer");
 
-    Plane* plane = new Plane();
-    plane->Setup(resources, &buffers, input);
-    gameObjects.push_back(plane);
+    terrain.Setup(resources, &buffers);
 
     // Set renderGraph
     std::shared_ptr<RenderGraph> renderGraph = setupRenderGraph();
@@ -105,9 +103,7 @@ void TestScene::Run(Input* input) {
 
     memcpy(globalPtr + 192, &lights, sizeof(lights));
 
-    for (Size i = 0; i < gameObjects.size(); i++) {
-        gameObjects[i]->Run(input);
-    }
+    terrain.Run();
 
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 viewNoTranslation = view;
@@ -120,9 +116,7 @@ void TestScene::Draw(RenderEngine* graphics) {
     skyGenerator.Draw(graphics);
     skybox.Draw(graphics);
 
-    for (Size i = 0; i < gameObjects.size(); i++) {
-        gameObjects[i]->Draw(graphics);
-    }
+    terrain.Draw(graphics);
 }
 
 void TestScene::Cleanup() {
@@ -130,9 +124,6 @@ void TestScene::Cleanup() {
     skybox.Cleanup();
 
     globalBuffer.shutdown();
-    for (Size i = 0; i < gameObjects.size(); i++) {
-        gameObjects[i]->Cleanup(resources);
-        delete gameObjects[i];
-    }
+    terrain.Cleanup(resources);
 }
 
