@@ -42,8 +42,8 @@ public:
 
         // Create Mesh
         createPlane(resources, &plane, &pool, 128);
-        plane.materials.push_back(resources->getMaterialManager()->getData("meshDemo", &pool));
-        plane.materials.push_back(resources->getMaterialManager()->getData("wireframe", &pool));
+        plane.materials.push_back(resources->getMaterialManager()->getData("meshDemo", &pool, &plane.vertexLayout));
+        plane.materials.push_back(resources->getMaterialManager()->getData("wireframe", &pool, &plane.vertexLayout));
         plane.surfaces[0].materialIndex = 0;
 
         // Buffers

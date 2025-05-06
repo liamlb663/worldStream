@@ -4,6 +4,7 @@
 
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/MaterialManager.hpp"
+#include "ResourceManagement/RenderResources/VertexAttribute.hpp"
 
 #include <yaml-cpp/yaml.h>
 
@@ -19,7 +20,8 @@ Result<MaterialInfo, std::string> yamlToInfo(
     YAML::Node& yaml,
     fs::path& basePath,
     std::string& folder,
-    VkDevice device
+    VkDevice device,
+    const ProvidedVertexLayout* providedLayout
 );
 
 }

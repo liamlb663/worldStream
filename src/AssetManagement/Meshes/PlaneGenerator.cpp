@@ -50,6 +50,15 @@ void createPlane(
         }
     }
 
+    output->vertexLayout = {
+        .semantics = {"POSITION", "NORMAL", "TEXCOORD"},
+        .formats = {
+            {"POSITION", VK_FORMAT_R32G32B32_SFLOAT},
+            {"NORMAL",   VK_FORMAT_R32G32B32_SFLOAT},
+            {"TEXCOORD", VK_FORMAT_R32G32_SFLOAT},
+        }
+    };
+
     Size vertexSize = sizeof(Vertex) * vertices.size();
     Size indexSize  = sizeof(U32) * indices.size();
 

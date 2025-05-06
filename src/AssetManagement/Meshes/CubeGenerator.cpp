@@ -66,6 +66,15 @@ void createCube(
        20,21,22,22,23,20
     };
 
+    output->vertexLayout = {
+        .semantics = {"POSITION", "NORMAL", "TEXCOORD"},
+        .formats = {
+            {"POSITION", VK_FORMAT_R32G32B32_SFLOAT},
+            {"NORMAL",   VK_FORMAT_R32G32B32_SFLOAT},
+            {"TEXCOORD", VK_FORMAT_R32G32_SFLOAT},
+        }
+    };
+
     Size vertexSize = sizeof(Vertex) * vertices.size();
     Size indexSize  = sizeof(U32) * indices.size();
 
@@ -90,8 +99,9 @@ void createCube(
     }};
 
     MaterialData matData = resourceManager->getMaterialManager()->getData(
-        materialPath, 
-        output->descriptor
+        materialPath,
+        output->descriptor,
+        &output->vertexLayout
     );
 
     output->materials = {matData};

@@ -52,7 +52,7 @@ DescriptorSetInfo MaterialManager::getLayout(std::string path) {
     return m_descriptorLayouts[path].value;
 }
 
-MaterialInfo* MaterialManager::getInfo(std::string path) {
+MaterialInfo* MaterialManager::getInfo(std::string path, const ProvidedVertexLayout* layout) {
     auto it = m_materialInfos.find(path);
     if (it != m_materialInfos.end()) {
         it->second.references++;
@@ -68,7 +68,14 @@ MaterialInfo* MaterialManager::getInfo(std::string path) {
 
     // Get Material Info
     YAML::Node yaml = YAML::LoadFile(fullPath);
-    MaterialInfo matInfo = MaterialManagerUtils::yamlToInfo(this, yaml, resourceBasePath, path, m_vkInfo->device).value();
+    MaterialInfo matInfo = MaterialManagerUtils::yamlToInfo(
+        this,
+        yaml,
+        resourceBasePath,
+        path,
+        m_vkInfo->device,
+        layout
+    ).value();
 
     m_materialInfos[path] = RefCount<MaterialInfo>{
         .value = matInfo,
@@ -137,8 +144,12 @@ void MaterialManager::dropLayout(DescriptorSetInfo* layout) {
     spdlog::error("Layout not found for dropping!");
 }
 
-MaterialData MaterialManager::getData(std::string path, DescriptorPool* descriptor) {
-    MaterialInfo* materialInfo = getInfo(path);
+MaterialData MaterialManager::getData(
+        std::string path,
+        DescriptorPool* descriptor,
+        const ProvidedVertexLayout* layout
+) {
+    MaterialInfo* materialInfo = getInfo(path, layout);
 
     std::vector<DescriptorSetData> descriptorSets = {};
 

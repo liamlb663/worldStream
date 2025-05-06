@@ -6,6 +6,7 @@
 #include "RenderEngine/RenderObjects/RenderObject.hpp"
 #include "ResourceManagement/RenderResources/Buffer.hpp"
 #include "ResourceManagement/RenderResources/DescriptorPool.hpp"
+#include "ResourceManagement/RenderResources/VertexAttribute.hpp"
 
 #include <vector>
 
@@ -18,16 +19,15 @@ struct Surface {
 };
 
 struct Mesh {
-    DescriptorPool* descriptor;              // Step 0: Assign a DescriptorPool
+    DescriptorPool* descriptor;
 
-    Buffer indexBuffer;                     // Step 1: Add Vertex Info
-    Buffer vertexBuffer;                    // Step 1: Add Vertex Info
-    std::vector<Surface> surfaces;          // Step 1: Add Vertex Info 
-                                            //     (surfaces have a material index, so this must be accounted for)
+    Buffer indexBuffer;
+    Buffer vertexBuffer;
+    std::vector<Surface> surfaces;
+    ProvidedVertexLayout vertexLayout;
 
-    std::vector<MaterialData> materials;    // Step 2: Assign materials
+    std::vector<MaterialData> materials;
 
-    // Use it
     void destroyMesh();
     std::vector<RenderObject> draw();
 };

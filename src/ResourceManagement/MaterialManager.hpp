@@ -5,6 +5,7 @@
 #include "RenderEngine/VulkanInfo.hpp"
 #include "RenderEngine/RenderObjects/Materials.hpp"
 #include "ResourceManagement/RenderResources/DescriptorPool.hpp"
+#include "ResourceManagement/RenderResources/VertexAttribute.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -21,10 +22,10 @@ public:
     DescriptorSetInfo getLayout(std::string path);
     void dropLayout(DescriptorSetInfo* layout);
 
-    MaterialInfo* getInfo(std::string path);
+    MaterialInfo* getInfo(std::string path, const ProvidedVertexLayout* layout);
     void dropMaterialInfo(MaterialInfo* info);
 
-    MaterialData getData(std::string path, DescriptorPool* descriptor);
+    MaterialData getData(std::string path, DescriptorPool* descriptor, const ProvidedVertexLayout* layout);
     void dropMaterialData(MaterialData* data);
 
 private:

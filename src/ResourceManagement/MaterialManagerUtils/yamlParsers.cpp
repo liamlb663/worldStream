@@ -84,7 +84,7 @@ std::vector<VkPushConstantRange> parsePushConstants(YAML::Node& yaml) {
 std::pair<
     std::vector<VkVertexInputBindingDescription>,
     std::vector<VkVertexInputAttributeDescription>
-> parseVertexInput(YAML::Node& yaml) {
+> parseVertexInput(YAML::Node& yaml, const ProvidedVertexLayout* providedLayout) {
     std::vector<VkVertexInputBindingDescription> bindings;
     std::vector<VkVertexInputAttributeDescription> attributes;
 
@@ -113,13 +113,27 @@ std::pair<
         }
     }
 
+
     if (input["attributes"]) {
+        if (!providedLayout) {
+            spdlog::warn("No ProvidedVertexLayout specified. Skipping vertex input setup.");
+            return {bindings, attributes};
+        }
+
+        auto semanticOffsets = providedLayout->computeOffsets();
+
         for (const auto& node : input["attributes"]) {
+            std::string semantic = node["semantic"].as<std::string>();
+
+            if (!semanticOffsets.contains(semantic)) {
+                spdlog::error("Semantic not provided in vertex buffer layout: {}", semantic);
+            }
+
             VkVertexInputAttributeDescription desc{
-                .location = node["location"].as<uint32_t>(),
-                .binding = node["binding"].as<uint32_t>(),
+                .location = node["location"].as<U32>(),
+                .binding = node["binding"].as<U32>(),
                 .format = getFormat(node["format"].as<std::string>()),
-                .offset = node["offset"].as<uint32_t>(),
+                .offset = semanticOffsets.at(semantic),
             };
 
             attributes.push_back(desc);
@@ -129,7 +143,13 @@ std::pair<
     return {bindings, attributes};
 }
 
-Result<MaterialInfo, std::string> yamlToInfo(MaterialManager* materialManager, YAML::Node& yaml, fs::path& basePath, std::string& folder, VkDevice device) {
+Result<MaterialInfo, std::string> yamlToInfo(
+        MaterialManager* materialManager,
+        YAML::Node& yaml, fs::path& basePath,
+        std::string& folder,
+        VkDevice device,
+        const ProvidedVertexLayout* providedLayout
+) {
     PipelineBuilder builder;
 
     YAML::Node pipeline = yaml["pipeline"];
@@ -198,7 +218,7 @@ Result<MaterialInfo, std::string> yamlToInfo(MaterialManager* materialManager, Y
         };
     }
 
-    auto [bindings, attributes] = parseVertexInput(pipeline);
+    auto [bindings, attributes] = parseVertexInput(pipeline, providedLayout);
     builder.setVertexInputState(bindings, attributes);
 
     PipelineInfo piplineInfo = builder.build(device);

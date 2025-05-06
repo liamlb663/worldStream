@@ -42,8 +42,8 @@ pipeline:
     attributes:
       - location: 0
         binding: 0
+        semantic: "POSITION"
         format: "VK_FORMAT_R32G32B32_SFLOAT"
-        offset: 0
 
   # Descriptor Layouts
   descriptor_layouts:

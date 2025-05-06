@@ -43,7 +43,7 @@ public:
         ).value();
 
         textureMatBuffer = resources->createUniformBuffer(1000).value();
-        matData = resources->getMaterialManager()->getData("preethamGenerator", &pool);
+        matData = resources->getMaterialManager()->getData("preethamGenerator", &pool, nullptr);
         matData.pushConstantData = &pushConstants;
 
         for (U32 i = 0; i < 6; i++) {
