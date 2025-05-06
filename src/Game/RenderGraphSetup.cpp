@@ -30,6 +30,14 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | commonFlags,
         "Final Draw"
     );
+    Size depthBuffer = renderGraph->addImage(
+        Vector<U32, 2>(0),
+        Vector<F32, 2>(1),
+        ImageSizeType::fractional,
+        Config::depthFormat,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | commonFlags,
+        "Final Draw"
+    );
 
     Size textureTargetsPass = renderGraph->createNode("Texture Targets", [](RecordInfo recordInfo) {
         std::vector<TextureRenderObject>& textureTargets = recordInfo.renderContext->textureTargets;
@@ -129,10 +137,11 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
     Size geometry = renderGraph->addGeometry("Main Geometry");
     Size geometryPass = renderGraph->createNode(
         "Geometry",
-        [finalImg, geometry](RecordInfo recordInfo) {
+        [finalImg, depthBuffer, geometry](RecordInfo recordInfo) {
             Debug::SetCmdLabel(recordInfo.commandBuffer, {0.7f, 0.2f, 0.2f}, "Geometry Pass");
 
             Image* outputImg = &recordInfo.renderContext->images[finalImg];
+            Image* depthImg = &recordInfo.renderContext->images[depthBuffer];
 
             recordInfo.commandSubmitter->transitionImage(
                 recordInfo.commandBuffer,
@@ -153,6 +162,19 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                 .clearValue = {.color = {{0.0f, 0.0f, 0.0f, 0.0f}}},
             };
 
+            VkRenderingAttachmentInfo depthAttachment = {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = depthImg->view,
+                .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = nullptr,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                .clearValue = {.depthStencil = {1.0f, 0}},
+            };
+
             VkRenderingInfo renderingInfo = {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
                 .pNext = nullptr,
@@ -162,7 +184,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                 .viewMask = 0,
                 .colorAttachmentCount = 1,
                 .pColorAttachments = &colorAttachment,
-                .pDepthAttachment = nullptr,
+                .pDepthAttachment = &depthAttachment,
                 .pStencilAttachment = nullptr,
             };
 
