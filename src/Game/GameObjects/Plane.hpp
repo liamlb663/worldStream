@@ -47,7 +47,7 @@ public:
         plane.surfaces[0].materialIndex = 0;
 
         // Buffers
-        objectBuffer = resources->createUniformBuffer(800).value();  // model + tint
+        objectBuffer = resources->createUniformBuffer(800, "Plane Uniform Buffer").value();  // model + tint
 
         // Textures
         LoadImageConfig imageConfig = {

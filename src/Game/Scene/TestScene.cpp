@@ -25,7 +25,7 @@ void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* gr
     input->bindAction("Sprint", GLFW_KEY_LEFT_SHIFT);
     input->bindAction("ToggleMouseCapture", GLFW_KEY_E);
 
-    globalBuffer = resources->createUniformBuffer(512).value();
+    globalBuffer = resources->createUniformBuffer(512, "Global Info Buffer").value();
     buffers.registerBuffer(&globalBuffer, "Global Buffer");
 
     Plane* plane = new Plane();

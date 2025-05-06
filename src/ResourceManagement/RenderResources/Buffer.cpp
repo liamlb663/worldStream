@@ -2,6 +2,7 @@
 
 #include "Buffer.hpp"
 
+#include "RenderEngine/Debug.hpp"
 #include "RenderEngine/VkUtils.hpp"
 
 #include <spdlog/spdlog.h>
@@ -13,7 +14,8 @@ bool Buffer::init(
         Size size,
         VkBufferUsageFlags bufferUsage,
         VmaMemoryUsage memoryUsage,
-        VmaAllocationCreateFlags allocFlags
+        VmaAllocationCreateFlags allocFlags,
+        std::string name
 ) {
     std::vector families = {vkInfo->graphicsQueueFamily, vkInfo->transferQueueFamily};
 
@@ -51,6 +53,8 @@ bool Buffer::init(
     if (!VkUtils::checkVkResult(res, "Failed to create buffer")) {
         return false;
     }
+
+    Debug::SetObjectName(vkInfo->device, (U64)buffer, VK_OBJECT_TYPE_BUFFER, name.c_str());
 
     m_vkInfo = vkInfo;
 

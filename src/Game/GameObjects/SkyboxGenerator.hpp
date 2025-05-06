@@ -22,7 +22,6 @@ public:
     Image image;
     DescriptorPool pool;
     MaterialData matData;
-    Buffer textureMatBuffer;
     std::vector<TextureRenderObject> object;
 
     float sunAzimuth = 0.0f;
@@ -42,7 +41,6 @@ public:
             "Texture RenderObject"
         ).value();
 
-        textureMatBuffer = resources->createUniformBuffer(1000).value();
         matData = resources->getMaterialManager()->getData("preethamGenerator", &pool, nullptr);
         matData.pushConstantData = &pushConstants;
 
@@ -101,7 +99,6 @@ public:
 
         image.shutdown();
         pool.destroyPools();
-        textureMatBuffer.shutdown();
     }
 };
 

@@ -26,7 +26,8 @@ bool SparseBuffer::init(
             VK_BUFFER_CREATE_SPARSE_BINDING_BIT |
             VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT,
         memoryUsage,
-        allocFlags
+        allocFlags,
+        "SparseBufferSHOULDN'tBeused"
     );
 };
 

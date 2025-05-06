@@ -85,11 +85,11 @@ void createCube(
     Size vertexSize = sizeof(Vertex) * vertices.size();
     Size indexSize  = sizeof(U32) * indices.size();
 
-    output->vertexBuffer = resourceManager->createVertexBuffer(vertexSize).value();
-    output->indexBuffer  = resourceManager->createIndexBuffer(indexSize).value();
+    output->vertexBuffer = resourceManager->createVertexBuffer(vertexSize, "Cube Vertex Buffer").value();
+    output->indexBuffer  = resourceManager->createIndexBuffer(indexSize, "Cube Index Buffer").value();
 
-    Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize).value();
-    Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize).value();
+    Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize, "Cube Vertex Staging Buffer").value();
+    Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize, "Cube Index Stagin Buffer").value();
 
     std::memcpy(vertexStaging.info.pMappedData, vertices.data(), vertexSize);
     std::memcpy(indexStaging.info.pMappedData, indices.data(), indexSize);

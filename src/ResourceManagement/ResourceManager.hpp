@@ -49,17 +49,18 @@ public:
     void dropImage(Image* image);
 
     // Buffers
-    std::expected<Buffer, U32> createStagingBuffer(Size size);
-    std::expected<Buffer, U32> createIndexBuffer(Size size);
-    std::expected<Buffer, U32> createVertexBuffer(Size size);
-    std::expected<Buffer, U32> createUniformBuffer(Size size);
-    std::expected<Buffer, U32> createStorageBuffer(Size size);
+    std::expected<Buffer, U32> createStagingBuffer(Size size, std::string name);
+    std::expected<Buffer, U32> createIndexBuffer  (Size size, std::string name);
+    std::expected<Buffer, U32> createVertexBuffer (Size size, std::string name);
+    std::expected<Buffer, U32> createUniformBuffer(Size size, std::string name);
+    std::expected<Buffer, U32> createStorageBuffer(Size size, std::string name);
 
     std::expected<Buffer, U32> createBuffer(
             Size size,
             VkBufferUsageFlags bufferUsage,
             VmaMemoryUsage memoryUsage,
-            VmaAllocationCreateFlags allocFlags
+            VmaAllocationCreateFlags allocFlags,
+            std::string name
     );
 
     void copyToBuffer(const Buffer& src, const Buffer& dst, Size size);

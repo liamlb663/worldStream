@@ -4,6 +4,7 @@
 
 #include "RenderEngine/VulkanInfo.hpp"
 
+#include <string>
 #include <vulkan/vulkan.h>
 
 class Buffer {
@@ -18,7 +19,8 @@ public:
             Size size,
             VkBufferUsageFlags bufferUsage,
             VmaMemoryUsage memoryUsage,
-            VmaAllocationCreateFlags allocFlags
+            VmaAllocationCreateFlags allocFlags,
+            std::string name
     );
 
     void shutdown();

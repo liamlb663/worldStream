@@ -120,7 +120,7 @@ Image* ResourceManager::loadImage(std::string path, const LoadImageConfig& confi
 
 void ResourceManager::copyToImage(void* data, Size size, Image* image) {
     // Create and fill buffer
-    std::expected<Buffer, U32> stagingReturn = createStagingBuffer(size + 1);
+    std::expected<Buffer, U32> stagingReturn = createStagingBuffer(size + 1, "CopyToImage Staging Buffer");
 
     if (!stagingReturn.has_value())
         return;
@@ -176,7 +176,7 @@ void ResourceManager::dropImage(Image* image) {
     spdlog::error("Image not found for dropping!");
 }
 
-std::expected<Buffer, U32> ResourceManager::createStagingBuffer(Size size) {
+std::expected<Buffer, U32> ResourceManager::createStagingBuffer(Size size, std::string name) {
     VkBufferUsageFlags bufferUsage =
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -186,50 +186,51 @@ std::expected<Buffer, U32> ResourceManager::createStagingBuffer(Size size) {
     VmaAllocationCreateFlags allocFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT |
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
-    return createBuffer(size, bufferUsage, memoryUsage, allocFlags);
+    return createBuffer(size, bufferUsage, memoryUsage, allocFlags, name);
 }
 
-std::expected<Buffer, U32> ResourceManager::createIndexBuffer(Size size) {
+std::expected<Buffer, U32> ResourceManager::createIndexBuffer(Size size, std::string name) {
     VkBufferUsageFlags usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                                VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    return createBuffer(size, usage, memoryUsage, 0);
+    return createBuffer(size, usage, memoryUsage, 0, name);
 }
 
-std::expected<Buffer, U32> ResourceManager::createVertexBuffer(Size size) {
+std::expected<Buffer, U32> ResourceManager::createVertexBuffer(Size size, std::string name) {
     VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    return createBuffer(size, usage, memoryUsage, 0);
+    return createBuffer(size, usage, memoryUsage, 0, name);
 }
 
-std::expected<Buffer, U32> ResourceManager::createUniformBuffer(Size size) {
+std::expected<Buffer, U32> ResourceManager::createUniformBuffer(Size size, std::string name) {
     VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
                                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     VmaAllocationCreateFlags allocFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-    return createBuffer(size, usage, memoryUsage, allocFlags);
+    return createBuffer(size, usage, memoryUsage, allocFlags, name);
 }
 
-std::expected<Buffer, U32> ResourceManager::createStorageBuffer(Size size) {
+std::expected<Buffer, U32> ResourceManager::createStorageBuffer(Size size, std::string name) {
     VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
                                VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    return createBuffer(size, usage, memoryUsage, 0);
+    return createBuffer(size, usage, memoryUsage, 0, name);
 }
 
 std::expected<Buffer, U32> ResourceManager::createBuffer(
         Size size,
         VkBufferUsageFlags usage,
         VmaMemoryUsage memoryUsage,
-        VmaAllocationCreateFlags allocFlags
+        VmaAllocationCreateFlags allocFlags,
+        std::string name
 ) {
     Buffer buff;
-    if (!buff.init(m_vkInfo, size, usage, memoryUsage, allocFlags)) {
+    if (!buff.init(m_vkInfo, size, usage, memoryUsage, allocFlags, name)) {
         return std::unexpected(2);  // TODO: Fix with expected
     }
     return buff;

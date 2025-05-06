@@ -99,11 +99,11 @@ void createPlane(
     Size vertexSize = sizeof(Vertex) * vertices.size();
     Size indexSize  = sizeof(U32) * indices.size();
 
-    output->vertexBuffer = resourceManager->createVertexBuffer(vertexSize).value();
-    output->indexBuffer  = resourceManager->createIndexBuffer(indexSize).value();
+    output->vertexBuffer = resourceManager->createVertexBuffer(vertexSize, "Plane Vertex Buffer").value();
+    output->indexBuffer  = resourceManager->createIndexBuffer(indexSize, "Plane Index Buffer").value();
 
-    Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize).value();
-    Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize).value();
+    Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize, "Plane Vertex Staging Buffer").value();
+    Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize, "Plane Index Staging Buffer").value();
 
     std::memcpy(vertexStaging.info.pMappedData, vertices.data(), vertexSize);
     std::memcpy(indexStaging.info.pMappedData, indices.data(), indexSize);
