@@ -10,12 +10,6 @@
 #include <strings.h>
 #include <vector>
 
-struct Vertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 uv;
-};
-
 struct RenderObject {
     U32 indexCount;
     U32 startIndex;

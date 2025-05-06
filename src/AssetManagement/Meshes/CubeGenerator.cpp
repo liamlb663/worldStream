@@ -1,6 +1,7 @@
 // src/AssetManagement/Meshes/CubeGenerator.cpp
 
 #include "CubeGenerator.hpp"
+#include "spdlog/spdlog.h"
 #include <cstring>
 
 void createCube(
@@ -11,6 +12,12 @@ void createCube(
 ) {
     *output = {};
     output->descriptor = pool;
+
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 uv;
+    };
 
     // Define vertices for a unit cube (centered at origin)
     std::vector<Vertex> vertices = {

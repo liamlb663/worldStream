@@ -36,7 +36,6 @@ pipeline:
   vertex_input:
     bindings:
       - binding: 0
-        stride: 32
         input_rate: "vertex"
 
     attributes:

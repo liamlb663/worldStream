@@ -95,10 +95,15 @@ std::pair<
     YAML::Node input = yaml["vertex_input"];
 
     if (input["bindings"]) {
+        if (!providedLayout) {
+            spdlog::warn("No ProvidedVertexLayout specified. Skipping vertex input setup.");
+            return {bindings, attributes};
+        }
+
         for (const auto& node : input["bindings"]) {
             VkVertexInputBindingDescription desc{};
             desc.binding = node["binding"].as<uint32_t>();
-            desc.stride = node["stride"].as<uint32_t>();
+            desc.stride = providedLayout->getStride();
 
             std::string rate = node["input_rate"].as<std::string>();
             if (rate == "vertex") {

@@ -12,6 +12,14 @@ void createPlane(
     *output = {};
     output->descriptor = pool;
 
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 uv;
+        glm::vec3 tangent;
+        glm::vec3 bitangent;
+    };
+
     std::vector<Vertex> vertices;
     std::vector<U32> indices;
 
@@ -26,6 +34,8 @@ void createPlane(
             v.position = { fx - 0.5f, fy - 0.5f, 0.0f };     // centered on origin
             v.normal   = { 0.0f, 0.0f, 1.0f };               // facing +Z
             v.uv       = { fx, fy };                        // normalized UV
+            v.tangent = glm::vec3(0.0f);
+            v.bitangent = glm::vec3(0.0f);
 
             vertices.push_back(v);
         }
@@ -50,12 +60,39 @@ void createPlane(
         }
     }
 
+    // Compute tangents and bitangents
+    for (Size i = 0; i < indices.size(); i += 3) {
+        Vertex& v0 = vertices[indices[i + 0]];
+        Vertex& v1 = vertices[indices[i + 1]];
+        Vertex& v2 = vertices[indices[i + 2]];
+
+        glm::vec3 edge1 = v1.position - v0.position;
+        glm::vec3 edge2 = v2.position - v0.position;
+        glm::vec2 deltaUV1 = v1.uv - v0.uv;
+        glm::vec2 deltaUV2 = v2.uv - v0.uv;
+
+        F32 f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec3 tangent = f * (deltaUV2.y * edge1 - deltaUV1.y * edge2);
+        glm::vec3 bitangent = f * (-deltaUV2.x * edge1 + deltaUV1.x * edge2);
+
+        v0.tangent += tangent;
+        v1.tangent += tangent;
+        v2.tangent += tangent;
+
+        v0.bitangent += bitangent;
+        v1.bitangent += bitangent;
+        v2.bitangent += bitangent;
+    }
+
     output->vertexLayout = {
-        .semantics = {"POSITION", "NORMAL", "TEXCOORD"},
+        .semantics = {"POSITION", "NORMAL", "TEXCOORD", "TANGENT", "BITANGENT"},
         .formats = {
             {"POSITION", VK_FORMAT_R32G32B32_SFLOAT},
             {"NORMAL",   VK_FORMAT_R32G32B32_SFLOAT},
             {"TEXCOORD", VK_FORMAT_R32G32_SFLOAT},
+            {"TANGENT",    VK_FORMAT_R32G32B32_SFLOAT},
+            {"BITANGENT",  VK_FORMAT_R32G32B32_SFLOAT},
         }
     };
 

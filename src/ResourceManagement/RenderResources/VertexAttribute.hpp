@@ -6,6 +6,7 @@
 #include "Core/Types.hpp"
 #include "spdlog/spdlog.h"
 #include <string>
+#include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
 
 struct VertexAttribute {
@@ -44,6 +45,26 @@ struct ProvidedVertexLayout {
             }
         }
         return offsets;
+    }
+
+    U32 getStride() const {
+        U32 stride = 0;
+        for (const auto& semantic : semantics) {
+            auto it = formats.find(semantic);
+            if (it == formats.end()) {
+                spdlog::error("Missing format for semantic '{}'", semantic);
+                return 0;
+            }
+
+            switch (it->second) {
+                case VK_FORMAT_R32G32B32_SFLOAT: stride += 12; break;
+                case VK_FORMAT_R32G32_SFLOAT:    stride += 8;  break;
+                default:
+                    spdlog::error("Unsupported format '{}' in getStride()", string_VkFormat(it->second));
+                    return 0;
+            }
+        }
+        return stride;
     }
 };
 
