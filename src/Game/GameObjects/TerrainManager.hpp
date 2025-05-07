@@ -32,7 +32,7 @@ public:
         pool = resources->createDescriptorPool(1, poolRatios).value();
 
         // Create Mesh
-        createPlane(resources, &plane, &pool, 128);
+        createPlane(resources, &plane, &pool, 256);
         plane.materials.push_back(resources->getMaterialManager()->getData("terrain", &pool, &plane.vertexLayout));
         plane.materials.push_back(resources->getMaterialManager()->getData("terrainWireframe", &pool, &plane.vertexLayout));
 
@@ -51,7 +51,7 @@ public:
 
         // Bindings
         Buffer* globalBuffer = buffers->getBuffer("Global Buffer");
-        for (Size i = 0; i < 2; i++) {
+        for (Size i = 0; i < plane.materials.size(); i++) {
             // Set 0: Global UBOs
             plane.materials[i].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
             plane.materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
@@ -72,7 +72,17 @@ public:
         uint8_t* objectPtr = reinterpret_cast<uint8_t*>(objectBuffer.info.pMappedData);
 
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(3.0f));
         memcpy(objectPtr, &model, sizeof(glm::mat4));
+
+        ImGui::Begin("Terrain");
+
+        if (ImGui::Button("Switch Material")) {
+            plane.surfaces[0].materialIndex++;
+            plane.surfaces[0].materialIndex %= 2;
+        }
+
+        ImGui::End();
     }
 
     void Draw(RenderEngine* graphics) {

@@ -27,14 +27,39 @@ layout(set = 2, binding = 0) uniform ObjectUBO {
     mat4 model;
 };
 
-void main() {
-    vec4 worldPos = model * vec4(inPosition, 1.0);
-    fragPos = worldPos.xyz;
-    fragNormal = mat3(model) * inNormal;
-    fragUV = inUV;
+// Tweakable parameters
+const float heightScale = 0.25;
+const float uvOffset = 0.001;
 
-    float offset = texture(heightMap, inUV).r;
-    worldPos.z += offset;
+void main() {
+    // Base height
+    float baseHeight = texture(heightMap, inUV).r;
+    float offset = heightScale * baseHeight;
+
+    // Displace vertex position
+    vec3 displacedPosition = inPosition + inNormal * offset;
+
+    // Estimate partial derivatives of heightmap using UV offsets
+    float height_dx = texture(heightMap, inUV + vec2(uvOffset, 0.0)).r;
+    float height_dy = texture(heightMap, inUV + vec2(0.0, uvOffset)).r;
+
+    // Approximate displaced tangents
+    vec3 dPos_dx = tangent + inNormal * heightScale * (height_dx - baseHeight) / uvOffset;
+    vec3 dPos_dy = bitangent + inNormal * heightScale * (height_dy - baseHeight) / uvOffset;
+
+    // Recalculate normal using cross product of displaced tangents
+    vec3 displacedNormal = normalize(cross(dPos_dx, dPos_dy));
+    vec3 displacedTangent = normalize(dPos_dx);
+    vec3 displacedBitangent = normalize(cross(displacedNormal, displacedTangent)); // ensure orthogonality
+
+    // Output
+    vec4 worldPos = model * vec4(displacedPosition, 1.0);
+    fragPos = worldPos.xyz;
+    fragNormal = mat3(model) * displacedNormal;
+    fragUV = inUV;
+    fragTangent = mat3(model) * displacedTangent;
+    frgaBitangent = mat3(model) * displacedBitangent;
 
     gl_Position = proj * view * worldPos;
 }
+
