@@ -27,6 +27,7 @@ struct Mesh {
     ProvidedVertexLayout vertexLayout;
 
     std::vector<MaterialData> materials;
+    std::vector<void*> pushConstantData;
 
     void destroyMesh();
     std::vector<RenderObject> draw();

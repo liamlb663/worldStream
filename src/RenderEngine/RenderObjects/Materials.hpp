@@ -63,6 +63,5 @@ struct DescriptorSetData {
 struct MaterialData {
     MaterialInfo* pipeline;
     std::vector<DescriptorSetData> descriptorSets;
-    void* pushConstantData;
 };
 

@@ -11,18 +11,20 @@
 class SkyboxGenerator {
 public:
     struct PushConstants {
-        uint32_t layer;
-        float _pad0;
+        U32 layer;
+        U32 _pad0;
         alignas(16) glm::vec3 sunDirection;
-        float turbidity;
-        float exposure;
-        float _pad1;
-    } pushConstants;
+        F32 turbidity;
+        F32 exposure;
+        U32 _pad1;
+    };
 
     Image image;
     DescriptorPool pool;
     MaterialData matData;
-    std::vector<TextureRenderObject> object;
+
+    std::vector<TextureRenderObject> objects;
+    std::vector<PushConstants> pushConstants;
 
     float sunAzimuth = 0.0f;
     float sunElevation = 45.0f;
@@ -42,14 +44,24 @@ public:
         ).value();
 
         matData = resources->getMaterialManager()->getData("preethamGenerator", &pool, nullptr);
-        matData.pushConstantData = &pushConstants;
 
         for (U32 i = 0; i < 6; i++) {
-            object.push_back({
+            pushConstants.push_back({
+                .layer = i,
+                ._pad0=0,
+                .sunDirection = getSunDirection(true),
+                .turbidity = turbidity,
+                .exposure = exposure,
+                ._pad1=0,
+            });
+        }
+
+        for (U32 i = 0; i < 6; i++) {
+            objects.push_back({
                 .texture = &image,
                 .view = image.createLayerView(i, "Skybox View"),
                 .material = &matData,
-                .layer = i,
+                .pushConstantData = &pushConstants[i],
             });
         }
     }
@@ -57,9 +69,11 @@ public:
     Image* getImage() { return &image; }
 
     void Run() {
-        pushConstants.sunDirection = getSunDirection(true);
-        pushConstants.turbidity = turbidity;
-        pushConstants.exposure = exposure;
+        for (U32 i = 0; i < 6; i++) {
+            pushConstants[i].sunDirection = getSunDirection(true);
+            pushConstants[i].turbidity = turbidity;
+            pushConstants[i].exposure = exposure;
+        }
 
         ImGui::Begin("Sky Settings");
         ImGui::SliderFloat("Sun Elevation", &sunElevation, -10.0f, 90.0f);
@@ -67,11 +81,11 @@ public:
         ImGui::SliderFloat("Turbidity", &turbidity, 1.0f, 10.0f);
         ImGui::SliderFloat("Exposure", &exposure, 0.0f, 5.0f);
 
-    ImGui::Separator();
-    ImGui::Text("Sun Dir (toSun): (%.3f, %.3f, %.3f)",
-                pushConstants.sunDirection.x,
-                pushConstants.sunDirection.y,
-                pushConstants.sunDirection.z);
+        ImGui::Separator();
+        ImGui::Text("Sun Dir (toSun): (%.3f, %.3f, %.3f)",
+                pushConstants[0].sunDirection.x,
+                pushConstants[0].sunDirection.y,
+                pushConstants[0].sunDirection.z);
         ImGui::End();
     }
 
@@ -89,12 +103,12 @@ public:
     }
 
     void Draw(RenderEngine* graphics) {
-        graphics->renderTextureObjects(object);
+        graphics->renderTextureObjects(objects);
     }
 
     void Cleanup() {
         for (U32 i = 0; i < 6; i++) {
-            object[i].view.shutdown();
+            objects[i].view.shutdown();
         }
 
         image.shutdown();

@@ -110,15 +110,13 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
             }
 
             if (textureTarget->material->pipeline->pushConstants.enabled) {
-                *(((U32*)textureTarget->material->pushConstantData)) = textureTarget->layer;
-
                 vkCmdPushConstants(
                     recordInfo.commandBuffer,
                     textureTarget->material->pipeline->pipelineLayout,
                     textureTarget->material->pipeline->pushConstants.stages,
                     textureTarget->material->pipeline->pushConstants.offset,
                     textureTarget->material->pipeline->pushConstants.size,
-                    textureTarget->material->pushConstantData
+                    textureTarget->pushConstantData
                 );
             }
             vkCmdDraw(recordInfo.commandBuffer, 3, 1, 0, 0);
@@ -229,7 +227,7 @@ std::shared_ptr<RenderGraph> setupRenderGraph() {
                         material->pipeline->pushConstants.stages,
                         material->pipeline->pushConstants.offset,
                         material->pipeline->pushConstants.size,
-                        material->pushConstantData
+                        objects[i].pushConstantData
                     );
                 }
 

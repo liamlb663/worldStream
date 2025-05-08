@@ -5,20 +5,28 @@
 #include "AssetManagement/Meshes/Mesh.hpp"
 #include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "RenderEngine/RenderEngine.hpp"
+#include "RenderEngine/RenderObjects/RenderObject.hpp"
 #include "ResourceManagement/BufferRegistry.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
+#include "ResourceManagement/RenderResources/VertexAttribute.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "imgui.h"
-#include "spdlog/spdlog.h"
 
 class TerrainManager {
 public:
-
+    // Descriptors
     DescriptorPool pool;
-    assets::Mesh plane;
 
-    Buffer objectBuffer;
+    // Mesh Data
+    Buffer vertexBuffer;
+    Buffer indexBuffer;
+    ProvidedVertexLayout vertexLayout;
+    assets::Surface surface;
+
+    std::vector<MaterialData> materials;
+
+    Buffer materialBuffer;
 
     Image* heightmap;
     Sampler sampler;
@@ -32,12 +40,18 @@ public:
         pool = resources->createDescriptorPool(1, poolRatios).value();
 
         // Create Mesh
-        createPlane(resources, &plane, &pool, 256);
-        plane.materials.push_back(resources->getMaterialManager()->getData("terrain", &pool, &plane.vertexLayout));
-        plane.materials.push_back(resources->getMaterialManager()->getData("terrainWireframe", &pool, &plane.vertexLayout));
+        surface = {
+            .indexStart = 0,
+            .indexCount = 0,
+            .materialIndex = 0,
+        };
 
-        // Buffers
-        objectBuffer = resources->createUniformBuffer(800, "Plane Uniform Buffer").value();  // model + tint
+        createPlaneBuffers(resources, &vertexBuffer, &indexBuffer, &vertexLayout, &surface.indexCount, 256);
+        materials.push_back(resources->getMaterialManager()->getData("terrain", &pool, &vertexLayout));
+        materials.push_back(resources->getMaterialManager()->getData("terrainWireframe", &pool, &vertexLayout));
+
+        // Material Buffer
+        materialBuffer = resources->createUniformBuffer(64 * 2, "Terrain Material Buffer").value();
 
         // Textures
         LoadImageConfig imageConfig = {
@@ -51,50 +65,63 @@ public:
 
         // Bindings
         Buffer* globalBuffer = buffers->getBuffer("Global Buffer");
-        for (Size i = 0; i < plane.materials.size(); i++) {
+        for (Size i = 0; i < materials.size(); i++) {
             // Set 0: Global UBOs
-            plane.materials[i].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
-            plane.materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
-            plane.materials[i].descriptorSets[0].set.update();
+            materials[i].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
+            materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
+            materials[i].descriptorSets[0].set.update();
 
             // Set 1: Material Textures
-            plane.materials[i].descriptorSets[1].set.writeImageSampler(0, heightmap, sampler); // HeightMap
-            plane.materials[i].descriptorSets[1].set.update();
+            materials[i].descriptorSets[1].set.writeImageSampler(0, heightmap, sampler);    // HeightMap
+            materials[i].descriptorSets[1].set.update();
 
             // Set 2: Object Data
-            plane.materials[i].descriptorSets[2].set.writeUniformBuffer(0, &objectBuffer, 64, 0);
-            plane.materials[i].descriptorSets[2].set.update();
+            materials[i].descriptorSets[2].set.writeUniformBuffer(0, &materialBuffer, 64, 0);   // Model Matrix
+            materials[i].descriptorSets[2].set.update();
         }
     }
 
     void Run() {
         // Update Buffer
-        uint8_t* objectPtr = reinterpret_cast<uint8_t*>(objectBuffer.info.pMappedData);
+        uint8_t* objectPtr = reinterpret_cast<uint8_t*>(materialBuffer.info.pMappedData);
 
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(3.0f));
+        model = glm::scale(model, glm::vec3(128.0f));
         memcpy(objectPtr, &model, sizeof(glm::mat4));
 
         ImGui::Begin("Terrain");
 
         if (ImGui::Button("Switch Material")) {
-            plane.surfaces[0].materialIndex++;
-            plane.surfaces[0].materialIndex %= 2;
+            surface.materialIndex++;
+            surface.materialIndex %= 2;
         }
 
         ImGui::End();
     }
 
+    RenderObject getRenderObject() {
+        return {
+            .indexCount = surface.indexCount,
+            .startIndex = surface.indexStart,
+            .indexBuffer = &indexBuffer,
+            .vertexBuffer = &vertexBuffer,
+            .material = &materials[surface.materialIndex],
+            .pushConstantData = nullptr,
+        };
+    }
+
     void Draw(RenderEngine* graphics) {
-        graphics->renderObjects(0, plane.draw());
+        graphics->renderObjects(0, {getRenderObject()});
     }
 
     void Cleanup(ResourceManager* resources) {
+        materialBuffer.shutdown();
+        vertexBuffer.shutdown();
+        indexBuffer.shutdown();
+
         pool.destroyPools();
-        objectBuffer.shutdown();
         sampler.shutdown();
         resources->dropImage(heightmap);
-        plane.destroyMesh();
     }
 };
 

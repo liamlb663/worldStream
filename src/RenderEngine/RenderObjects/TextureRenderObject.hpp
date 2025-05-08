@@ -10,6 +10,6 @@ struct TextureRenderObject {
     Image* texture;
     ImageView view;
     MaterialData* material;
-    U32 layer;
+    void* pushConstantData;
 };
 

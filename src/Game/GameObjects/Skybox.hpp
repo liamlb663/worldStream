@@ -34,7 +34,7 @@ public:
         sampler = resources->getSamplerBuilder().build().value();
 
         // Camera Data
-        skybox.materials[0].pushConstantData = &pushData;
+        skybox.pushConstantData.push_back(&pushData);
     }
 
     void SetImage(Image* generatedCubemap) {

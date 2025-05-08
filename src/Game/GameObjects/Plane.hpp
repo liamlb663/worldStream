@@ -82,7 +82,7 @@ public:
             // Push Constants
             pushData.highlightColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.25f); // red tint, 25% blend
             pushData.outlineWidth = 0.01f;
-            plane.materials[i].pushConstantData = &pushData;
+            plane.pushConstantData.push_back(&pushData);
         }
 
         // Demo Plane Functions

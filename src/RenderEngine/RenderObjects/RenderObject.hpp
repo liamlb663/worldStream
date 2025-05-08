@@ -18,6 +18,7 @@ struct RenderObject {
     Buffer* vertexBuffer;
 
     MaterialData* material;
+    void* pushConstantData;
 };
 
 class IRenderable {

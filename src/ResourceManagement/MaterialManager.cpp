@@ -174,7 +174,6 @@ MaterialData MaterialManager::getData(
     MaterialData data = {
         .pipeline = materialInfo,
         .descriptorSets = descriptorSets,
-        .pushConstantData = nullptr,
     };
 
     return data;

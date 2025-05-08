@@ -61,6 +61,7 @@ void TestScene::Run(Input* input) {
     if (input->isPressed("MoveBackward"))   move.y--;
     if (input->isPressed("MoveForward"))    move.y++;
     if (input->isPressed("Sprint"))         move *= 2.0f;
+    move *= 5.0f;
 
     if (input->isCapturing()) {
         camera.move(move, input->deltaTime().asSeconds());
