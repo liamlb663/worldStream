@@ -2,16 +2,16 @@
 
 #include "PlaneGenerator.hpp"
 #include "AssetManagement/Meshes/Mesh.hpp"
+#include "ResourceManagement/RenderResources/VertexAttribute.hpp"
 
-void createPlane(
+void createPlaneBuffers(
     ResourceManager* resourceManager,
-    assets::Mesh* output,
-    DescriptorPool* pool,
+    Buffer* vertexBuffer,
+    Buffer* indexBuffer,
+    ProvidedVertexLayout* layout,
+    U32* numIndices,
     U32 resolution
 ) {
-    *output = {};
-    output->descriptor = pool;
-
     struct Vertex {
         glm::vec3 position;
         glm::vec3 normal;
@@ -85,7 +85,7 @@ void createPlane(
         v2.bitangent += bitangent;
     }
 
-    output->vertexLayout = {
+    *layout = {
         .semantics = {"POSITION", "NORMAL", "TEXCOORD", "TANGENT", "BITANGENT"},
         .formats = {
             {"POSITION", VK_FORMAT_R32G32B32_SFLOAT},
@@ -99,23 +99,48 @@ void createPlane(
     Size vertexSize = sizeof(Vertex) * vertices.size();
     Size indexSize  = sizeof(U32) * indices.size();
 
-    output->vertexBuffer = resourceManager->createVertexBuffer(vertexSize, "Plane Vertex Buffer").value();
-    output->indexBuffer  = resourceManager->createIndexBuffer(indexSize, "Plane Index Buffer").value();
+    *vertexBuffer = resourceManager->createVertexBuffer(vertexSize, "Plane Vertex Buffer").value();
+    *indexBuffer  = resourceManager->createIndexBuffer(indexSize, "Plane Index Buffer").value();
 
     Buffer vertexStaging = resourceManager->createStagingBuffer(vertexSize, "Plane Vertex Staging Buffer").value();
     Buffer indexStaging  = resourceManager->createStagingBuffer(indexSize, "Plane Index Staging Buffer").value();
 
     std::memcpy(vertexStaging.info.pMappedData, vertices.data(), vertexSize);
     std::memcpy(indexStaging.info.pMappedData, indices.data(), indexSize);
-    resourceManager->copyToBuffer(vertexStaging, output->vertexBuffer, vertexSize);
-    resourceManager->copyToBuffer(indexStaging, output->indexBuffer, indexSize);
+
+    resourceManager->copyToBuffer(vertexStaging, *vertexBuffer, vertexSize);
+    resourceManager->copyToBuffer(indexStaging, *indexBuffer, indexSize);
 
     vertexStaging.shutdown();
     indexStaging.shutdown();
 
+    *numIndices = indices.size();
+}
+
+void createPlane(
+    ResourceManager* resourceManager,
+    assets::Mesh* output,
+    DescriptorPool* pool,
+    U32 resolution
+) {
+    *output = {};
+    output->descriptor = pool;
+
+    (void)output->vertexLayout;
+
+    U32 numIndices = 0;
+    createPlaneBuffers(
+        resourceManager,
+        &output->vertexBuffer,
+        &output->indexBuffer,
+        &output->vertexLayout,
+        &numIndices,
+        resolution
+    );
+
     output->surfaces = {{
         .indexStart = 0,
-        .indexCount = static_cast<U32>(indices.size()),
+        .indexCount = numIndices,
         .materialIndex = 0,
     }};
 }
