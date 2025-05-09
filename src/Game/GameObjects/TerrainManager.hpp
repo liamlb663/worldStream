@@ -51,12 +51,12 @@ public:
         materials.push_back(resources->getMaterialManager()->getData("terrainWireframe", &pool, &vertexLayout));
 
         // Material Buffer
-        materialBuffer = resources->createUniformBuffer(64 * 2, "Terrain Material Buffer").value();
+        materialBuffer = resources->createUniformBuffer(64, "Terrain Material Buffer").value();
 
         // Textures
         LoadImageConfig imageConfig = {
             .type = ImageType::Texture2D,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .format = VK_FORMAT_R8_UNORM,
             .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
         };
 
