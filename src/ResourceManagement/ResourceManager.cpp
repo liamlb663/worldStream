@@ -105,7 +105,6 @@ Image* ResourceManager::loadImage(std::string path, const LoadImageConfig& confi
         spdlog::error("Failed to load image: {}", stbi_failure_reason());
         return nullptr;
     }
-    spdlog::info("Channels: {}", channels);
 
     auto result = createImage(
         {static_cast<U32>(width), static_cast<U32>(height)},
