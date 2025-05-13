@@ -40,7 +40,6 @@ public:
     void SetImage(Image* generatedCubemap) {
         cubemap = generatedCubemap;
         skybox.materials[0].descriptorSets[0].set.writeImageSampler(0, cubemap, sampler);
-        skybox.materials[0].descriptorSets[0].set.update();
     }
 
     void SetViewProj(glm::mat4 viewProj) {

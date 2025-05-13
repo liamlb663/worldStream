@@ -69,15 +69,12 @@ public:
             // Set 0: Global UBOs
             materials[i].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
             materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
-            materials[i].descriptorSets[0].set.update();
 
             // Set 1: Material Textures
             materials[i].descriptorSets[1].set.writeImageSampler(0, heightmap, sampler);    // HeightMap
-            materials[i].descriptorSets[1].set.update();
 
             // Set 2: Object Data
             materials[i].descriptorSets[2].set.writeUniformBuffer(0, &materialBuffer, 64, 0);   // Model Matrix
-            materials[i].descriptorSets[2].set.update();
         }
     }
 

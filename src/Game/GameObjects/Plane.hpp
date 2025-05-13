@@ -67,17 +67,14 @@ public:
         for (Size i = 0; i < 2; i++) {
             plane.materials[i].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
             plane.materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
-            plane.materials[i].descriptorSets[0].set.update();
 
             // Set 1: Material Textures
             plane.materials[i].descriptorSets[1].set.writeImageSampler(0, diffuse, sampler); // albedo
             plane.materials[i].descriptorSets[1].set.writeImageSampler(1, normal, sampler); // normal (placeholder)
             plane.materials[i].descriptorSets[1].set.writeImageSampler(2, rough, sampler); // roughness (placeholder)
-            plane.materials[i].descriptorSets[1].set.update();
 
             // Set 2: Object Data
             plane.materials[i].descriptorSets[2].set.writeUniformBuffer(0, &objectBuffer, 80, 0);
-            plane.materials[i].descriptorSets[2].set.update();
 
             // Push Constants
             pushData.highlightColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.25f); // red tint, 25% blend

@@ -10,7 +10,6 @@
 struct DescriptorSetInfo;
 
 #include <vulkan/vulkan.h>
-#include <vector>
 
 struct WriteEntry {
     VkWriteDescriptorSet write;
@@ -24,7 +23,6 @@ public:
 
     void writeUniformBuffer(U32 binding, Buffer* buffer, VkDeviceSize size, VkDeviceSize offset);
     void writeImageSampler(U32 binding, Image* image, Sampler sampler);
-    void update();
 
     VkDescriptorSet get() const { return m_descriptorSet; }
 
@@ -33,24 +31,10 @@ public:
         VkPipelineBindPoint pipelineBindPoint,
         VkPipelineLayout pipelineLayout,
         U32 setIndex
-    ) {
-        vkCmdBindDescriptorSets(
-            commandBuffer,
-            pipelineBindPoint,
-            pipelineLayout,
-            setIndex,
-            1,
-            &m_descriptorSet,
-            0,
-            nullptr
-        );
-    };
+    );
 
 private:
     VulkanInfo* m_vkInfo = nullptr;
     DescriptorPool* m_pool = nullptr;
     VkDescriptorSet m_descriptorSet = VK_NULL_HANDLE;
-
-    // Cached descriptor infos
-    std::vector<WriteEntry> m_writeEntries;
 };

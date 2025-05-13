@@ -34,7 +34,7 @@ const float uvOffset = 0.001;
 void main() {
     // Base height
     float baseHeight = texture(heightMap, inUV).r;
-    float offset = heightScale * baseHeight;
+    float offset = heightScale * (baseHeight - 0.5f);
 
     // Displace vertex position
     vec3 displacedPosition = inPosition + inNormal * offset;
