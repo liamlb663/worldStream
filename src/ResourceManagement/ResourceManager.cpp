@@ -74,10 +74,21 @@ std::expected<Image, std::string> ResourceManager::createImage(
 
 int getChannelsFromVkFormat(VkFormat format) {
     switch (format) {
-        case VK_FORMAT_R8_UNORM:        return 1;
-        case VK_FORMAT_R8G8_UNORM:      return 2;
-        case VK_FORMAT_R8G8B8_UNORM:    return 3;
-        case VK_FORMAT_R8G8B8A8_UNORM:  return 4;
+        case VK_FORMAT_R8_UNORM:            return 1;
+        case VK_FORMAT_R8G8_UNORM:          return 2;
+        case VK_FORMAT_R8G8B8_UNORM:        return 3;
+        case VK_FORMAT_R8G8B8A8_UNORM:      return 4;
+
+        case VK_FORMAT_R16_UNORM:           return 1;
+        case VK_FORMAT_R16G16_UNORM:        return 2;
+        case VK_FORMAT_R16G16B16_UNORM:     return 3;
+        case VK_FORMAT_R16G16B16A16_UNORM:  return 4;
+
+        case VK_FORMAT_R32_SFLOAT:          return 1;
+        case VK_FORMAT_R32G32_SFLOAT:       return 2;
+        case VK_FORMAT_R32G32B32_SFLOAT:    return 3;
+        case VK_FORMAT_R32G32B32A32_SFLOAT: return 4;
+
         default:
             spdlog::warn("Unsupported format for loading image: {}", static_cast<int>(format));
             return 4; // Default to 4 channels
