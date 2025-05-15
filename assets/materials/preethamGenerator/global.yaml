@@ -1,8 +1,0 @@
-descriptor_layout:
-  set: 0
-  bindings:
-    - binding: 0
-      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
-      stages: ["vertex", "fragment"]
-      size: 192      # view (64) + proj (64) + camPos (12) + padding/time (16)
-      offset: 0

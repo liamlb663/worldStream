@@ -169,20 +169,24 @@ ImageView Image::createLayerView(
         }
     };
 
-    VkImageView view;
-    VkResult result = vkCreateImageView(m_vkInfo->device, &viewInfo, nullptr, &view);
+    VkImageView newView;
+    VkResult result = vkCreateImageView(m_vkInfo->device, &viewInfo, nullptr, &newView);
     if (!VkUtils::checkVkResult(result,
             fmt::format("Failed to create layer view at layer {}", layerIndex))) {
         return {};
     }
 
-    ImageView output = ImageView::create(m_vkInfo, view);
+    ImageView output = ImageView::create(m_vkInfo, newView);
 
     if (!debugName.empty()) {
-        Debug::SetObjectName(m_vkInfo->device, (uint64_t)view, VK_OBJECT_TYPE_IMAGE_VIEW, debugName.c_str());
+        Debug::SetObjectName(m_vkInfo->device, (uint64_t)newView, VK_OBJECT_TYPE_IMAGE_VIEW, debugName.c_str());
     }
 
     return output;
+}
+
+ImageView Image::getImageView() const {
+    return ImageView::create(m_vkInfo, view);
 }
 
 void Image::shutdown() {

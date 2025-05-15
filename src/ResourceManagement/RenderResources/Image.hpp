@@ -36,6 +36,8 @@ public:
         const std::string& name
     ) const;
 
+    ImageView getImageView() const;
+
     void shutdown();
 
 private:

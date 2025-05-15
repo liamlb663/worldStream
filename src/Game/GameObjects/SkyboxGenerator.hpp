@@ -33,7 +33,7 @@ public:
 
     void Setup(ResourceManager* resources) {
         image = resources->createImage(
-            {1000, 1000},
+            {250, 250},
             Config::drawFormat,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
             VK_IMAGE_USAGE_SAMPLED_BIT |

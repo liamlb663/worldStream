@@ -91,7 +91,6 @@ public:
 
     void SetImage(Image* newAlbedo) {
         plane.materials[0].descriptorSets[1].set.writeImageSampler(0, newAlbedo, sampler);
-        plane.materials[0].descriptorSets[1].set.update();
     }
 
     void Run(Input* input) {

@@ -5,7 +5,9 @@
 #include "AssetManagement/Meshes/Mesh.hpp"
 #include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "RenderEngine/RenderEngine.hpp"
+#include "RenderEngine/RenderObjects/Materials.hpp"
 #include "RenderEngine/RenderObjects/RenderObject.hpp"
+#include "RenderEngine/RenderObjects/TextureRenderObject.hpp"
 #include "ResourceManagement/BufferRegistry.hpp"
 #include "ResourceManagement/RenderResources/Image.hpp"
 #include "ResourceManagement/RenderResources/VertexAttribute.hpp"
@@ -28,8 +30,17 @@ public:
 
     Buffer materialBuffer;
 
-    Image* heightmap;
+    Image heightmap;
     Sampler sampler;
+
+    MaterialData perlinGenerator;
+    TextureRenderObject textureTarget;
+
+    struct PerlinPushConstants {
+        float scale;
+        float seed;
+        glm::vec2 chunk;
+    } pushConstants;
 
     void Setup(ResourceManager* resources, BufferRegistry* buffers) {
         // Descriptor Pool
@@ -54,13 +65,29 @@ public:
         materialBuffer = resources->createUniformBuffer(64, "Terrain Material Buffer").value();
 
         // Textures
-        LoadImageConfig imageConfig = {
-            .type = ImageType::Texture2D,
-            .format = VK_FORMAT_R8_UNORM,
-            .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+        heightmap = resources->createImage(
+            {256},
+            VkFormat::VK_FORMAT_R32_SFLOAT,
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+            ImageType::Texture2D,
+            "Generated Heightmap"
+        ).value();
+
+        perlinGenerator = resources->getMaterialManager()->getData("perlinGenerator", &pool, nullptr);
+
+        pushConstants = {};
+        pushConstants.scale = 10;
+
+        textureTarget = {
+            .texture = &heightmap,
+            .view = heightmap.getImageView(),
+            .material = &perlinGenerator,
+            .pushConstantData = &pushConstants,
         };
 
-        heightmap = resources->loadImage("heightmap.png", imageConfig);
         sampler = resources->getSamplerBuilder().build().value();
 
         // Bindings
@@ -71,7 +98,7 @@ public:
             materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
 
             // Set 1: Material Textures
-            materials[i].descriptorSets[1].set.writeImageSampler(0, heightmap, sampler);    // HeightMap
+            materials[i].descriptorSets[1].set.writeImageSampler(0, &heightmap, sampler);        // HeightMap
 
             // Set 2: Object Data
             materials[i].descriptorSets[2].set.writeUniformBuffer(0, &materialBuffer, 64, 0);   // Model Matrix
@@ -83,6 +110,7 @@ public:
         uint8_t* objectPtr = reinterpret_cast<uint8_t*>(materialBuffer.info.pMappedData);
 
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
         model = glm::scale(model, glm::vec3(128.0f));
         memcpy(objectPtr, &model, sizeof(glm::mat4));
 
@@ -92,6 +120,12 @@ public:
             surface.materialIndex++;
             surface.materialIndex %= 2;
         }
+
+        ImGui::Separator();
+
+        ImGui::SliderFloat("Scale", &pushConstants.scale, 1.0f, 20.0f, "%.1f");
+        ImGui::SliderFloat("Seed", &pushConstants.seed, 0.0f, 1000.0f, "%.1f");
+        ImGui::DragFloat2("Chunk Offset", &pushConstants.chunk.x, 1.0f, -10000.0f, 10000.0f, "%.1f");
 
         ImGui::End();
     }
@@ -108,17 +142,21 @@ public:
     }
 
     void Draw(RenderEngine* graphics) {
+        graphics->renderTextureObjects({textureTarget});
+
         graphics->renderObjects(0, {getRenderObject()});
     }
 
     void Cleanup(ResourceManager* resources) {
+        (void)resources;
+
         materialBuffer.shutdown();
         vertexBuffer.shutdown();
         indexBuffer.shutdown();
 
         pool.destroyPools();
         sampler.shutdown();
-        resources->dropImage(heightmap);
+        heightmap.shutdown();
     }
 };
 

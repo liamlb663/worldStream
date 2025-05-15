@@ -1,0 +1,39 @@
+pipeline:
+  name: "Perlin Generator"
+
+  # Shaders
+  shaders:
+    - module: "shader.vert"
+      stage: "vertex"
+    - module: "shader.frag"
+      stage: "fragment"
+
+  # Blending Mode
+  blending: "None"
+
+  # Formats
+  color_format: "VK_FORMAT_R32_SFLOAT"
+
+  # Multi-sampling
+  multisampling: "VK_SAMPLE_COUNT_1_BIT"
+
+  # Rasterization and Culling
+  polygon_mode: "fill"
+  cull_mode: "none"
+  front_face: "counter-clockwise"
+
+  # Input Topology
+  topology: "triangle-list"
+
+  # Depth Information
+  depth_info:
+    depth_test: false
+    write_depth: false
+    compare_op: "VK_COMPARE_OP_LESS"
+
+  # Push Constants
+  push_constants:
+    - stages: ["fragment"]
+      size: 16
+      offset: 0
+
