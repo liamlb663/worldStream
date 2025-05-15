@@ -1,8 +1,0 @@
-descriptor_layout:
-  set: 2
-  bindings:
-    - binding: 0
-      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
-      stages: ["vertex", "fragment"]
-      size: 64      # model (64) + colorTint (16)
-      offset: 0

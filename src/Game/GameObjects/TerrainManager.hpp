@@ -67,7 +67,7 @@ public:
         // Textures
         heightmap = resources->createImage(
             {256},
-            VkFormat::VK_FORMAT_R32_SFLOAT,
+            VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
             VK_IMAGE_USAGE_SAMPLED_BIT |
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
@@ -99,9 +99,6 @@ public:
 
             // Set 1: Material Textures
             materials[i].descriptorSets[1].set.writeImageSampler(0, &heightmap, sampler);        // HeightMap
-
-            // Set 2: Object Data
-            materials[i].descriptorSets[2].set.writeUniformBuffer(0, &materialBuffer, 64, 0);   // Model Matrix
         }
     }
 
@@ -111,7 +108,7 @@ public:
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
-        model = glm::scale(model, glm::vec3(128.0f));
+        model = glm::scale(model, glm::vec3(128.0f/2.0f));
         memcpy(objectPtr, &model, sizeof(glm::mat4));
 
         ImGui::Begin("Terrain");

@@ -3,8 +3,6 @@
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNormal;
 layout(location = 2) in vec2 fragUV;
-layout(location = 3) in vec3 fragTangent;
-layout(location = 4) in vec3 fragBitangent;
 
 layout(location = 0) out vec4 outColor;
 
@@ -26,13 +24,8 @@ layout(set = 0, binding = 1) uniform LightUBO {
 // Textures
 layout(set = 1, binding = 0) uniform sampler2D heightMap;
 
-// Object
-layout(set = 2, binding = 0) uniform ObjectUBO {
-    mat4 model;
-};
-
 void main() {
-    const float stoneCoefficient = 0.95; // Lower = more stone
+    const float stoneCoefficient = 0.90; // Lower = more grass?
 
     vec3 normal = normalize(fragNormal);
     vec3 lightDir = normalize(-directionalLightDir); // light coming *toward* the surface

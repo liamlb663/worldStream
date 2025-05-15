@@ -3,8 +3,6 @@
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNormal;
 layout(location = 2) in vec2 fragUV;
-layout(location = 3) in vec3 fragTangent;
-layout(location = 4) in vec3 fragBitangent;
 
 layout(location = 0) out vec4 outColor;
 
@@ -26,52 +24,40 @@ layout(set = 0, binding = 1) uniform LightUBO {
 // Textures
 layout(set = 1, binding = 0) uniform sampler2D heightMap;
 
-// Object
-layout(set = 2, binding = 0) uniform ObjectUBO {
-    mat4 model;
-};
-
-// Converts normal from [0,1] → [-1,1]
-vec3 decodeNormal(vec3 n) {
-    return normalize(n * 2.0 - 1.0);
-}
-
 void main() {
-    // Constants
-    const vec3 baseAlbedo = vec3(1.0, 0.8, 0.6);
-    const float metallic = 0.0;
-    const float roughness = 0.5;
-    const float MIN_ROUGHNESS = 0.05;
-    const float MIN_SHININESS = 8.0;
-    const float MAX_SHININESS = 128.0;
-    const float MIN_SPECULAR = 0.04;
+    const float stoneCoefficient = 0.90; // Lower = more grass?
 
-    vec3 V = normalize(cameraPosition - fragPos);
+    vec3 normal = normalize(fragNormal);
+    vec3 lightDir = normalize(-directionalLightDir); // light coming *toward* the surface
+    vec3 viewDir = normalize(cameraPosition - fragPos);
 
-    float clampedRoughness = clamp(roughness, MIN_ROUGHNESS, 1.0);
-    float shininess = mix(MIN_SHININESS, MAX_SHININESS, 1.0 - clampedRoughness);
-    float specularStrength = mix(MIN_SPECULAR, 1.0, metallic);
+    // Lighting calculations
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * directionalLightColor;
 
-    // Build TBN matrix from inputs
-    vec3 T = normalize(fragTangent);
-    vec3 B = normalize(fragBitangent);
-    vec3 N = normalize(fragNormal);
-    mat3 TBN = mat3(T, B, N);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff * directionalLightColor;
 
-    float height = texture(heightMap, fragUV).r;
-    N = normalize(N + vec3(0.0, 0.0, height * 0.05));
+    float specularStrength = 0.5;
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    vec3 specular = specularStrength * spec * directionalLightColor;
 
-    // Lighting
-    vec3 Ld = normalize(-directionalLightDir);
-    vec3 H = normalize(V + Ld);
-    float diff = max(dot(N, Ld), 0.0);
-    float spec = pow(max(dot(N, H), 0.0), shininess);
+    // Combine lighting
+    vec3 lightColor = (ambient + diffuse + specular) * intensity;
 
-    vec3 lightColor = directionalLightColor * intensity;
-    vec3 color = lightColor * (diff + specularStrength * spec);
+    // Slope-based blending
+    float slope = dot(normal, vec3(0.0, 0.0, 1.0));
+    slope = clamp((slope - stoneCoefficient) / (1.0 - stoneCoefficient), 0.0, 1.0);
 
-    // Final color
-    color *= baseAlbedo;
-    outColor = vec4(color, 1.0);
+    // Define base colors
+    vec3 grassColor = vec3(0.2, 0.6, 0.2);
+    vec3 stoneColor = vec3(0.5, 0.5, 0.5);
+
+    // Blend based on slope (flat = grass, steep = stone)
+    vec3 surfaceColor = mix(stoneColor, grassColor, slope);
+    // Apply lighting
+    vec3 finalColor = surfaceColor * lightColor;
+
+    outColor = vec4(finalColor, 1.0);
 }
-

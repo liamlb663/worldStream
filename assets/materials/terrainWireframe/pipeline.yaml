@@ -51,14 +51,6 @@ pipeline:
         binding: 0
         semantic: "TEXCOORD"
         format: "VK_FORMAT_R32G32_SFLOAT"
-      - location: 3
-        binding: 0
-        semantic: "TANGENT"
-        format: "VK_FORMAT_R32G32B32_SFLOAT"
-      - location: 4
-        binding: 0
-        semantic: "BITANGENT"
-        format: "VK_FORMAT_R32G32B32_SFLOAT"
 
   # Descriptor Layouts
   descriptor_layouts:
@@ -66,6 +58,4 @@ pipeline:
       set: 0
     - layout: "textures.yaml"
       set: 1
-    - layout: "perObject.yaml"
-      set: 2
 

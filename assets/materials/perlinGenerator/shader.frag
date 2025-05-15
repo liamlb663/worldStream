@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec2 uv;
 
-layout(location = 0) out float outColor;
+layout(location = 0) out vec4 outColor;
 
 layout(push_constant) uniform PushConstants {
     float scale;
@@ -55,7 +55,25 @@ float perlin(vec2 p) {
     return 0.5 + 0.5 * mix(i1, i2, f.y);
 }
 
+vec3 computeNormal(vec2 p, float eps) {
+    float h = perlin(p);
+    float hx = perlin(p + vec2(eps, 0.0));
+    float hy = perlin(p + vec2(0.0, eps));
+
+    vec3 dx = vec3(eps, 0.0, hx - h);
+    vec3 dy = vec3(0.0, eps, hy - h);
+
+    return normalize(cross(dx, dy)); // Z is up
+}
+
 void main() {
-    vec2 newUv = uv * pc.scale;
-    outColor = perlin(newUv);
+    vec2 scaledUV = uv * pc.scale;
+    float height = perlin(scaledUV);
+    vec3 normal = computeNormal(scaledUV, 0.001);
+
+    // Pack normal [-1, 1] → [0, 1]
+    vec3 packedNormal = normal * 0.5 + 0.5;
+
+    // Output normals in RGB, height in A
+    outColor = vec4(packedNormal, height);
 }
