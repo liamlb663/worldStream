@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "AssetManagement/Meshes/Mesh.hpp"
 #include "AssetManagement/Meshes/PlaneGenerator.hpp"
 #include "RenderEngine/RenderEngine.hpp"
 #include "RenderEngine/RenderObjects/Materials.hpp"
@@ -12,60 +11,55 @@
 #include "ResourceManagement/RenderResources/Image.hpp"
 #include "ResourceManagement/RenderResources/VertexAttribute.hpp"
 #include "ResourceManagement/ResourceManager.hpp"
-#include "glm/ext/matrix_transform.hpp"
 #include "imgui.h"
 
-class TerrainManager {
+class TerrainChunk {
 public:
-    // Descriptors
-    DescriptorPool pool;
 
-    // Mesh Data
-    Buffer vertexBuffer;
-    Buffer indexBuffer;
-    ProvidedVertexLayout vertexLayout;
-    assets::Surface surface;
-
-    std::vector<MaterialData> materials;
-
-    Buffer materialBuffer;
-
-    Image heightmap;
-    Sampler sampler;
-
+    // Chunk Image
+    Image terrainInfo;
     MaterialData perlinGenerator;
-    TextureRenderObject textureTarget;
 
-    struct PerlinPushConstants {
+    struct PerlinGeneratorPushConstants {
         float scale;
         float seed;
-        glm::vec2 chunk;
-    } pushConstants;
+        glm::vec2 offset;
+    } perlinGeneratorPC;
 
-    void Setup(ResourceManager* resources, BufferRegistry* buffers) {
-        // Descriptor Pool
-        std::array<DescriptorPool::PoolSizeRatio, 2> poolRatios = {{
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3.0f},
-            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f}
-        }};
-        pool = resources->createDescriptorPool(1, poolRatios).value();
+    // Terrain Mesh
+    MaterialData terrainMaterial;
 
-        // Create Mesh
-        surface = {
-            .indexStart = 0,
-            .indexCount = 0,
-            .materialIndex = 0,
+    struct TerrainChunkPushConstants {
+        glm::vec2 offset;
+    } terrainChunkPC;
+
+    void setOffset(glm::vec2 offset) {
+        terrainChunkPC.offset = offset;
+        perlinGeneratorPC.offset = offset;
+    }
+
+    TextureRenderObject getTarget() {
+        return {
+            .texture = &terrainInfo,
+            .view = terrainInfo.getImageView(),
+            .material = &perlinGenerator,
+            .pushConstantData = &perlinGeneratorPC,
         };
+    };
 
-        createPlaneBuffers(resources, &vertexBuffer, &indexBuffer, &vertexLayout, &surface.indexCount, 256);
-        materials.push_back(resources->getMaterialManager()->getData("terrain", &pool, &vertexLayout));
-        materials.push_back(resources->getMaterialManager()->getData("terrainWireframe", &pool, &vertexLayout));
+    void Setup(
+        ResourceManager* resources,
+        DescriptorPool* pool,
+        ProvidedVertexLayout* vertexLayout,
+        Buffer* globalBuffer,
+        Buffer* terrainBuffer,
+        Sampler* sampler
+    ) {
+        // Set Generator Material
+        perlinGenerator = resources->getMaterialManager()->getData("perlinGenerator", pool, nullptr);
 
-        // Material Buffer
-        materialBuffer = resources->createUniformBuffer(64, "Terrain Material Buffer").value();
-
-        // Textures
-        heightmap = resources->createImage(
+        // Create Chunk Image
+        terrainInfo = resources->createImage(
             {256},
             VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
@@ -76,84 +70,147 @@ public:
             "Generated Heightmap"
         ).value();
 
-        perlinGenerator = resources->getMaterialManager()->getData("perlinGenerator", &pool, nullptr);
+        perlinGeneratorPC = {};
+        perlinGeneratorPC.scale = 10;
 
-        pushConstants = {};
-        pushConstants.scale = 10;
+        terrainChunkPC = {};
+        terrainChunkPC.offset = {0,0};
 
-        textureTarget = {
-            .texture = &heightmap,
-            .view = heightmap.getImageView(),
-            .material = &perlinGenerator,
-            .pushConstantData = &pushConstants,
-        };
 
-        sampler = resources->getSamplerBuilder().build().value();
+        // Get Terrain Material
+        terrainMaterial = resources->getMaterialManager()->getData("terrain", pool, vertexLayout);
 
-        // Bindings
-        Buffer* globalBuffer = buffers->getBuffer("Global Buffer");
-        for (Size i = 0; i < materials.size(); i++) {
-            // Set 0: Global UBOs
-            materials[i].descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
-            materials[i].descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
+        // Global Data
+        terrainMaterial.descriptorSets[0].set.writeUniformBuffer(0, globalBuffer, 192, 0);     // camera
+        terrainMaterial.descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
 
-            // Set 1: Material Textures
-            materials[i].descriptorSets[1].set.writeImageSampler(0, &heightmap, sampler);        // HeightMap
-        }
-    }
+        // Terrain Data
+        terrainMaterial.descriptorSets[1].set.writeUniformBuffer(0, terrainBuffer, 8, 0);   // lights
+
+        // Chunk Texture
+        terrainMaterial.descriptorSets[2].set.writeImageSampler(0, &terrainInfo, *sampler);
+    };
 
     void Run() {
-        // Update Buffer
-        uint8_t* objectPtr = reinterpret_cast<uint8_t*>(materialBuffer.info.pMappedData);
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
-        model = glm::scale(model, glm::vec3(128.0f/2.0f));
-        memcpy(objectPtr, &model, sizeof(glm::mat4));
-
         ImGui::Begin("Terrain");
 
-        if (ImGui::Button("Switch Material")) {
-            surface.materialIndex++;
-            surface.materialIndex %= 2;
-        }
+        ImGui::SliderFloat("Scale", &perlinGeneratorPC.scale, 1.0f, 20.0f, "%.1f");
+        ImGui::SliderFloat("Seed", &perlinGeneratorPC.seed, 0.0f, 1000.0f, "%.1f");
+        ImGui::DragFloat2("Perlin Offset", &perlinGeneratorPC.offset.x, 1.0f, -10000.0f, 10000.0f, "%.1f");
 
         ImGui::Separator();
 
-        ImGui::SliderFloat("Scale", &pushConstants.scale, 1.0f, 20.0f, "%.1f");
-        ImGui::SliderFloat("Seed", &pushConstants.seed, 0.0f, 1000.0f, "%.1f");
-        ImGui::DragFloat2("Chunk Offset", &pushConstants.chunk.x, 1.0f, -10000.0f, 10000.0f, "%.1f");
+        ImGui::DragFloat2("Terrain Offset", &terrainChunkPC.offset.x, 0.1f, -10000.0f, 10000.0f, "%.2f");
 
         ImGui::End();
     }
 
+    void Draw(RenderEngine* graphics, RenderObject obj) {
+        graphics->renderTextureObjects({getTarget()});
+
+        obj.material = &terrainMaterial;
+        obj.pushConstantData = &terrainChunkPC;
+
+        graphics->renderObjects(0, {obj});
+
+    }
+
+    void Cleanup() {
+        terrainInfo.shutdown();
+    }
+};
+
+class TerrainManager {
+public:
+    // Descriptors
+    DescriptorPool pool;
+    Sampler sampler;
+
+    // Mesh Data
+    Buffer vertexBuffer;
+    Buffer indexBuffer;
+    ProvidedVertexLayout vertexLayout;
+    U32 indexStart = 0;
+    U32 indexCount = 0;
+
+    // Terrain Data
+    Buffer terrainBuffer;
+
+    // Chunks
+    TerrainChunk chunk;
+
+    void Setup(ResourceManager* resources, BufferRegistry* buffers) {
+        // Descriptor Pool
+        std::array<DescriptorPool::PoolSizeRatio, 2> poolRatios = {{
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3.0f},
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1.0f}
+        }};
+        pool = resources->createDescriptorPool(1, poolRatios).value();
+
+        // Create Mesh
+        createPlaneBuffers(resources, &vertexBuffer, &indexBuffer, &vertexLayout, &indexCount, 256);
+
+        // Buffers
+        terrainBuffer = resources->createUniformBuffer(8, "Terrain Buffer").value();
+        Buffer* globalBuffer = buffers->getBuffer("Global Buffer");
+
+        sampler = resources->getSamplerBuilder().build().value();
+
+        chunk.Setup(resources, &pool, &vertexLayout, globalBuffer, &terrainBuffer, &sampler);
+    }
+
+    void Run() {
+        ImGui::Begin("Terrain Settings");
+
+        // Terrain scale & height scale controls
+        static float terrainScale = 128.0f;
+        static float heightScale = 0.25f;
+        if (ImGui::SliderFloat("Terrain Scale", &terrainScale, 1.0f, 128.0f)) {
+            // Update terrainScale in uniform buffer
+            float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
+            objectPtr[0] = terrainScale;
+        }
+        if (ImGui::SliderFloat("Height Scale", &heightScale, 0.001f, 2.0f)) {
+            float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
+            objectPtr[1] = heightScale;
+        }
+
+        ImGui::End();
+
+        // Update the terrain buffer manually (in case sliders didn't trigger)
+        float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
+        objectPtr[0] = terrainScale;
+        objectPtr[1] = heightScale;
+
+        // Run chunk ImGui controls
+        chunk.Run();
+    }
+
     RenderObject getRenderObject() {
         return {
-            .indexCount = surface.indexCount,
-            .startIndex = surface.indexStart,
+            .indexCount = indexCount,
+            .startIndex = indexStart,
             .indexBuffer = &indexBuffer,
             .vertexBuffer = &vertexBuffer,
-            .material = &materials[surface.materialIndex],
+            .material = nullptr,
             .pushConstantData = nullptr,
         };
     }
 
     void Draw(RenderEngine* graphics) {
-        graphics->renderTextureObjects({textureTarget});
-
-        graphics->renderObjects(0, {getRenderObject()});
+        chunk.Draw(graphics, getRenderObject());
     }
 
-    void Cleanup(ResourceManager* resources) {
-        (void)resources;
-
-        materialBuffer.shutdown();
+    void Cleanup() {
+        terrainBuffer.shutdown();
         vertexBuffer.shutdown();
         indexBuffer.shutdown();
 
         pool.destroyPools();
         sampler.shutdown();
-        heightmap.shutdown();
+
+        chunk.Cleanup();
+
     }
 };
 

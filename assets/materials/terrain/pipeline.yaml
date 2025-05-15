@@ -56,6 +56,14 @@ pipeline:
   descriptor_layouts:
     - layout: "global.yaml"
       set: 0
-    - layout: "textures.yaml"
+    - layout: "terrainData.yaml"
       set: 1
+    - layout: "textures.yaml"
+      set: 2
+
+  # Push Constants
+  push_constants:
+    - stages: ["vertex", "fragment"]
+      size: 32
+      offset: 0
 

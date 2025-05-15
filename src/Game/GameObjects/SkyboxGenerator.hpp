@@ -31,6 +31,8 @@ public:
     float turbidity = 6.5f;
     float exposure = 0.6f;
 
+    bool invalid = true;
+
     void Setup(ResourceManager* resources) {
         image = resources->createImage(
             {250, 250},
@@ -76,10 +78,10 @@ public:
         }
 
         ImGui::Begin("Sky Settings");
-        ImGui::SliderFloat("Sun Elevation", &sunElevation, -10.0f, 90.0f);
-        ImGui::SliderFloat("Sun Azimuth", &sunAzimuth, 0.0f, 360.0f);
-        ImGui::SliderFloat("Turbidity", &turbidity, 1.0f, 10.0f);
-        ImGui::SliderFloat("Exposure", &exposure, 0.0f, 5.0f);
+        invalid |= ImGui::SliderFloat("Sun Elevation", &sunElevation, -10.0f, 90.0f);
+        invalid |= ImGui::SliderFloat("Sun Azimuth", &sunAzimuth, 0.0f, 360.0f);
+        invalid |= ImGui::SliderFloat("Turbidity", &turbidity, 1.0f, 10.0f);
+        invalid |= ImGui::SliderFloat("Exposure", &exposure, 0.0f, 5.0f);
 
         ImGui::Separator();
         ImGui::Text("Sun Dir (toSun): (%.3f, %.3f, %.3f)",
@@ -103,7 +105,10 @@ public:
     }
 
     void Draw(RenderEngine* graphics) {
-        graphics->renderTextureObjects(objects);
+        if (invalid) {
+            graphics->renderTextureObjects(objects);
+            invalid = false;
+        }
     }
 
     void Cleanup() {

@@ -1,0 +1,8 @@
+descriptor_layout:
+  set: 1
+  bindings:
+    - binding: 0
+      descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
+      stages: ["vertex"]
+      size: 8
+      offset: 0

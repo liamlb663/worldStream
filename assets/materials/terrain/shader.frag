@@ -21,11 +21,8 @@ layout(set = 0, binding = 1) uniform LightUBO {
     float intensity;
 };
 
-// Textures
-layout(set = 1, binding = 0) uniform sampler2D heightMap;
-
 void main() {
-    const float stoneCoefficient = 0.90; // Lower = more grass?
+    const float stoneCoefficient = 0.99; // Lower = more grass?
 
     vec3 normal = normalize(fragNormal);
     vec3 lightDir = normalize(-directionalLightDir); // light coming *toward* the surface
@@ -60,4 +57,17 @@ void main() {
     vec3 finalColor = surfaceColor * lightColor;
 
     outColor = vec4(finalColor, 1.0);
+
+    // Visualize normals (in 0-1 range)
+    //outColor = vec4(normal * 0.5 + 0.5, 1.0);
+
+    // Visualize UV coordinates
+    //outColor = vec4(fragUV, 0.0, 1.0);
+
+    // Visualize slope value as grayscale
+    //outColor = vec4(vec3(slope), 1.0);
+
+    // Visualize height by mapping fragPos.z (if height matters)
+    //float heightNormalized = clamp((fragPos.z + 10.0) / 20.0, 0.0, 1.0);
+    //outColor = vec4(vec3(heightNormalized), 1.0);
 }

@@ -1,5 +1,5 @@
 descriptor_layout:
-  set: 1
+  set: 2
   bindings:
     - binding: 0  # Heightmap
       descriptor_type: "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER"

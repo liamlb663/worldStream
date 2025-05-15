@@ -16,11 +16,27 @@ layout(set = 0, binding = 0) uniform GlobalUBO {
     float time;
 };
 
-layout(set = 1, binding = 0) uniform sampler2D normalHeightMap;
+// Descriptor Set 1: Terrain Data
+layout(set = 1, binding = 0) uniform TerrainUBO {
+    float terrainScale;
+    float heightScale;
+};
 
-// Tweakable parameters
-const float heightScale = 0.25;
-const mat4 model = mat4(1.0f);
+// Descriptor Set 2 / Push Constants: Chunk Data
+layout(set = 2, binding = 0) uniform sampler2D normalHeightMap;
+layout(push_constant) uniform PushConstants {
+    vec2 chunkOffset;
+} pc;
+
+mat4 scale(mat4 m, vec3 s) {
+    mat4 scaleMatrix = mat4(
+        vec4(s.x, 0.0, 0.0, 0.0),
+        vec4(0.0, s.y, 0.0, 0.0),
+        vec4(0.0, 0.0, s.z, 0.0),
+        vec4(0.0, 0.0, 0.0, 1.0)
+    );
+    return m * scaleMatrix;
+}
 
 void main() {
     // Sample normal and height from texture
@@ -29,14 +45,25 @@ void main() {
     float height = packed.a;
 
     // Displace vertex position along input normal (or bakedNormal if preferred)
-    float offset = heightScale * (height - 0.5f);
-    vec3 displacedPosition = inPosition + inNormal * offset;
+    float verticalScale = heightScale * terrainScale;
+    float offset = verticalScale * (height - 0.5f);
+    vec3 displacedPosition = (inPosition + vec3(pc.chunkOffset, 0.0f)) + inNormal * offset;
+
+    mat4 model = scale(mat4(1.0), vec3(terrainScale, terrainScale, 1.0));
 
     // Output
     vec4 worldPos = model * vec4(displacedPosition, 1.0);
     fragPos = worldPos.xyz;
-    fragNormal = mat3(model) * bakedNormal;
     fragUV = inUV;
+
+    mat3 normalMatrix = mat3(
+        1.0 / terrainScale, 0.0, 0.0,
+        0.0, 1.0 / terrainScale, 0.0,
+        0.0, 0.0, 1.0 / verticalScale
+    );
+
+    // Transform baked normal by normalMatrix and normalize
+    fragNormal = normalize(normalMatrix * bakedNormal);
 
     gl_Position = proj * view * worldPos;
 }

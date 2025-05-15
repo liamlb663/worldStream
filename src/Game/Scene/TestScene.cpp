@@ -125,6 +125,6 @@ void TestScene::Cleanup() {
     skybox.Cleanup();
 
     globalBuffer.shutdown();
-    terrain.Cleanup(resources);
+    terrain.Cleanup();
 }
 
