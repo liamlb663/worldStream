@@ -34,7 +34,7 @@ vec2 fade(vec2 t) {
 }
 
 float perlin(vec2 p) {
-    vec2 worldP = p + pc.chunkOffset;
+    vec2 worldP = p + (pc.chunkOffset * pc.scale);
 
     vec2 Pi = floor(worldP);
     vec2 Pf = fract(worldP);

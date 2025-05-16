@@ -137,7 +137,9 @@ public:
     Buffer terrainBuffer;
 
     // Chunks
-    TerrainChunk chunk;
+    static constexpr I32 GRID_SIZE = 3;
+
+    std::array<std::array<TerrainChunk, GRID_SIZE>, GRID_SIZE> chunks;
 
     void Setup(ResourceManager* resources, BufferRegistry* buffers) {
         // Descriptor Pool
@@ -152,11 +154,27 @@ public:
 
         // Buffers
         terrainBuffer = resources->createUniformBuffer(8, "Terrain Buffer").value();
-        Buffer* globalBuffer = buffers->getBuffer("Global Buffer");
-
         sampler = resources->getSamplerBuilder().build().value();
 
-        chunk.Setup(resources, &pool, &vertexLayout, globalBuffer, &terrainBuffer, &sampler);
+        for (I32 y = 0; y < GRID_SIZE; y++) {
+            for (I32 x = 0; x < GRID_SIZE; x++) {
+                chunks[y][x].Setup(
+                    resources,
+                    &pool,
+                    &vertexLayout,
+                    buffers->getBuffer("Global Buffer"),
+                    &terrainBuffer,
+                    &sampler
+                );
+
+                I32 startOffset = GRID_SIZE / 2.0f;
+                glm::vec2 offset = glm::vec2(
+                    (x-startOffset),
+                    (y-startOffset)
+                );
+                chunks[y][x].setOffset(offset);
+            }
+        }
     }
 
     void Run() {
@@ -182,8 +200,13 @@ public:
         objectPtr[0] = terrainScale;
         objectPtr[1] = heightScale;
 
-        // Run chunk ImGui controls
-        chunk.Run();
+        for (int y = 0; y < GRID_SIZE; y++) {
+            for (int x = 0; x < GRID_SIZE; x++) {
+                ImGui::PushID(y * GRID_SIZE + x);
+                chunks[y][x].Run();
+                ImGui::PopID();
+            }
+        }
     }
 
     RenderObject getRenderObject() {
@@ -198,7 +221,12 @@ public:
     }
 
     void Draw(RenderEngine* graphics) {
-        chunk.Draw(graphics, getRenderObject());
+        for (int y = 0; y < GRID_SIZE; y++) {
+            for (int x = 0; x < GRID_SIZE; x++) {
+                RenderObject obj = getRenderObject();
+                chunks[y][x].Draw(graphics, obj);
+            }
+        }
     }
 
     void Cleanup() {
@@ -209,8 +237,11 @@ public:
         pool.destroyPools();
         sampler.shutdown();
 
-        chunk.Cleanup();
-
+        for (int y = 0; y < GRID_SIZE; y++) {
+            for (int x = 0; x < GRID_SIZE; x++) {
+                chunks[y][x].Cleanup();
+            }
+        }
     }
 };
 
