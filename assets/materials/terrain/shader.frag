@@ -22,7 +22,7 @@ layout(set = 0, binding = 1) uniform LightUBO {
 };
 
 void main() {
-    const float stoneCoefficient = 0.99; // Lower = more grass?
+    const float stoneCoefficient = 0.55; // Lower = more grass?
 
     vec3 normal = normalize(fragNormal);
     vec3 lightDir = normalize(-directionalLightDir); // light coming *toward* the surface

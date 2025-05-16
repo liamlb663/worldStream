@@ -1,7 +1,5 @@
 // noiseFunctions.glsl
 
-#pragma once
-
 // Gradient function
 float grad(int hash, vec2 p) {
     switch (hash & 3) {
@@ -50,17 +48,5 @@ float perlin(vec2 p, float scale, float seed, vec2 chunkOffset) {
     float i1 = mix(v00, v10, f.x);
     float i2 = mix(v01, v11, f.x);
     return 0.5 + 0.5 * mix(i1, i2, f.y);
-}
-
-// Compute normal from height map sampled by noise function
-vec3 computeNormal(vec2 p, float eps, float scale, float seed, vec2 chunkOffset) {
-    float h = perlin(p, scale, seed, chunkOffset);
-    float hx = perlin(p + vec2(eps, 0.0), scale, seed, chunkOffset);
-    float hy = perlin(p + vec2(0.0, eps), scale, seed, chunkOffset);
-
-    vec3 dx = vec3(eps, 0.0, hx - h);
-    vec3 dy = vec3(0.0, eps, hy - h);
-
-    return normalize(cross(dx, dy)); // Z up
 }
 

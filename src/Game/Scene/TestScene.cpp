@@ -15,7 +15,7 @@ void TestScene::Setup(ResourceManager* resources, Input* input, RenderEngine* gr
 
     // Camera Inputs
     camera = FreeCam(1080.0f / 720.0f, 90.0f, 0.1f, 1000.0f);
-    camera.setPosition(glm::vec3(0.0f, 1.0f, 1.0f));
+    camera.setPosition(glm::vec3(0.0f, 1.0f, 50.0f));
     camera.setRotation(glm::radians(glm::vec3(45.0f, 0.0f, 180.0f)));
 
     input->bindAction("MoveForward", GLFW_KEY_W);

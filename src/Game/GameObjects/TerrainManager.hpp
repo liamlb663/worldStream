@@ -16,7 +16,7 @@
 class TerrainChunk {
 public:
 
-    // Chunk Image
+    // Terrain Image
     Image terrainInfo;
     MaterialData perlinGenerator;
 
@@ -25,7 +25,10 @@ public:
         float seed;
         glm::vec2 offset;
         float texelSize;
+        U32 octaves;
     } perlinGeneratorPC;
+
+    bool imageInvalid = true;
 
     // Terrain Mesh
     MaterialData terrainMaterial;
@@ -72,8 +75,9 @@ public:
         ).value();
 
         perlinGeneratorPC = {};
-        perlinGeneratorPC.scale = 10;
+        perlinGeneratorPC.scale = 1;
         perlinGeneratorPC.texelSize = 1.0f/256.0f;
+        perlinGeneratorPC.octaves = 4;
 
         terrainChunkPC = {};
         terrainChunkPC.offset = {0,0};
@@ -93,22 +97,22 @@ public:
         terrainMaterial.descriptorSets[2].set.writeImageSampler(0, &terrainInfo, *sampler);
     };
 
+    void SetTerrainGenInfo(float scale, float seed, float octaves) {
+        perlinGeneratorPC.scale = scale;
+        perlinGeneratorPC.seed = seed;
+        perlinGeneratorPC.octaves = octaves;
+
+        imageInvalid = true;
+    }
+
     void Run() {
-        ImGui::Begin("Terrain");
-
-        ImGui::SliderFloat("Scale", &perlinGeneratorPC.scale, 1.0f, 20.0f, "%.1f");
-        ImGui::SliderFloat("Seed", &perlinGeneratorPC.seed, 0.0f, 1000.0f, "%.1f");
-        ImGui::DragFloat2("Perlin Offset", &perlinGeneratorPC.offset.x, 1.0f, -10000.0f, 10000.0f, "%.1f");
-
-        ImGui::Separator();
-
-        ImGui::DragFloat2("Terrain Offset", &terrainChunkPC.offset.x, 0.1f, -10000.0f, 10000.0f, "%.2f");
-
-        ImGui::End();
     }
 
     void Draw(RenderEngine* graphics, RenderObject obj) {
-        graphics->renderTextureObjects({getTarget()});
+        if (imageInvalid) {
+            graphics->renderTextureObjects({getTarget()});
+            imageInvalid = false;
+        }
 
         obj.material = &terrainMaterial;
         obj.pushConstantData = &terrainChunkPC;
@@ -160,7 +164,7 @@ public:
         // Set resolution in terrainBuffer
         float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
         objectPtr[0] = 128.0f;    // initial terrainScale
-        objectPtr[1] = 0.25f;     // initial heightScale
+        objectPtr[1] = 0.50f;     // initial heightScale
         objectPtr[2] = 256.0f;    // resolution
 
         sampler = resources->getSamplerBuilder()
@@ -198,7 +202,7 @@ public:
 
         // Terrain scale & height scale controls
         static float terrainScale = 128.0f;
-        static float heightScale = 0.25f;
+        static float heightScale = 0.50f;
         if (ImGui::SliderFloat("Terrain Scale", &terrainScale, 1.0f, 128.0f)) {
             // Update terrainScale in uniform buffer
             float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
@@ -207,6 +211,20 @@ public:
         if (ImGui::SliderFloat("Height Scale", &heightScale, 0.001f, 2.0f)) {
             float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
             objectPtr[1] = heightScale;
+        }
+
+        static float generationScale = 1.0f;
+        static float generationSeed = 0.0f;
+        static int generationOctaves = 4.0f;
+        if (ImGui::SliderFloat("Generation Scale", &generationScale, 1.0f, 20.0f, "%.1f") ||
+            ImGui::SliderFloat("Generation Seed", &generationSeed, 0.0f, 1000.0f, "%.1f") ||
+            ImGui::SliderInt("Generation Octaves", &generationOctaves, 0.0f, 10.0f)) {
+
+            for (int y = 0; y < GRID_SIZE; y++) {
+                for (int x = 0; x < GRID_SIZE; x++) {
+                    chunks[y][x].SetTerrainGenInfo(generationScale, generationSeed, generationOctaves);
+                }
+            }
         }
 
         ImGui::End();
