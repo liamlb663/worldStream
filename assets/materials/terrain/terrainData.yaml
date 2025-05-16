@@ -4,5 +4,5 @@ descriptor_layout:
     - binding: 0
       descriptor_type: "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER"
       stages: ["vertex"]
-      size: 8
+      size: 12
       offset: 0

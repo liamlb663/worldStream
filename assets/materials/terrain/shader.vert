@@ -20,6 +20,7 @@ layout(set = 0, binding = 0) uniform GlobalUBO {
 layout(set = 1, binding = 0) uniform TerrainUBO {
     float terrainScale;
     float heightScale;
+    float resolution;
 };
 
 // Descriptor Set 2 / Push Constants: Chunk Data
@@ -47,7 +48,10 @@ void main() {
     // Displace vertex position along input normal (or bakedNormal if preferred)
     float verticalScale = heightScale * terrainScale;
     float offset = verticalScale * (height - 0.5f);
-    vec3 displacedPosition = (inPosition + vec3(pc.chunkOffset, 0.0f)) + inNormal * offset;
+
+    float texelSize = 1.0 / resolution;
+    vec2 adjustedOffset = pc.chunkOffset * (1.0 - texelSize);
+    vec3 displacedPosition = (inPosition + vec3(adjustedOffset, 0.0f)) + inNormal * offset;
 
     mat4 model = scale(mat4(1.0), vec3(terrainScale, terrainScale, 1.0));
 

@@ -8,6 +8,7 @@ layout(push_constant) uniform PushConstants {
     float scale;
     float seed;
     vec2 chunkOffset;
+    float texelSize;
 } pc;
 
 float grad(int hash, vec2 p) {
@@ -67,7 +68,7 @@ vec3 computeNormal(vec2 p, float eps) {
 }
 
 void main() {
-    vec2 scaledUV = uv * pc.scale;
+    vec2 scaledUV = uv * pc.scale * (1.0f + pc.texelSize);
     float height = perlin(scaledUV);
     vec3 normal = computeNormal(scaledUV, 0.001);
 

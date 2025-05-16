@@ -23,7 +23,7 @@ void createPlaneBuffers(
     std::vector<Vertex> vertices;
     std::vector<U32> indices;
 
-    float step = 1.0f / (resolution - 1); // normalize to unit size (1.0)
+    float step = 1.0f / resolution; // normalize to unit size (1.0)
 
     for (U32 y = 0; y < resolution; ++y) {
         for (U32 x = 0; x < resolution; ++x) {

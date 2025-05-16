@@ -24,6 +24,7 @@ public:
         float scale;
         float seed;
         glm::vec2 offset;
+        float texelSize;
     } perlinGeneratorPC;
 
     // Terrain Mesh
@@ -72,6 +73,7 @@ public:
 
         perlinGeneratorPC = {};
         perlinGeneratorPC.scale = 10;
+        perlinGeneratorPC.texelSize = 1.0f/256.0f;
 
         terrainChunkPC = {};
         terrainChunkPC.offset = {0,0};
@@ -85,7 +87,7 @@ public:
         terrainMaterial.descriptorSets[0].set.writeUniformBuffer(1, globalBuffer, 320, 192);   // lights
 
         // Terrain Data
-        terrainMaterial.descriptorSets[1].set.writeUniformBuffer(0, terrainBuffer, 8, 0);   // lights
+        terrainMaterial.descriptorSets[1].set.writeUniformBuffer(0, terrainBuffer, 12, 0);   // lights
 
         // Chunk Texture
         terrainMaterial.descriptorSets[2].set.writeImageSampler(0, &terrainInfo, *sampler);
@@ -153,8 +155,22 @@ public:
         createPlaneBuffers(resources, &vertexBuffer, &indexBuffer, &vertexLayout, &indexCount, 256);
 
         // Buffers
-        terrainBuffer = resources->createUniformBuffer(8, "Terrain Buffer").value();
-        sampler = resources->getSamplerBuilder().build().value();
+        terrainBuffer = resources->createUniformBuffer(12, "Terrain Buffer").value();
+
+        // Set resolution in terrainBuffer
+        float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
+        objectPtr[0] = 128.0f;    // initial terrainScale
+        objectPtr[1] = 0.25f;     // initial heightScale
+        objectPtr[2] = 256.0f;    // resolution
+
+        sampler = resources->getSamplerBuilder()
+            .setFilter(VkFilter::VK_FILTER_NEAREST, VkFilter::VK_FILTER_NEAREST)
+            .setAddressMode(
+                VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+            )
+            .build().value();
 
         for (I32 y = 0; y < GRID_SIZE; y++) {
             for (I32 x = 0; x < GRID_SIZE; x++) {
