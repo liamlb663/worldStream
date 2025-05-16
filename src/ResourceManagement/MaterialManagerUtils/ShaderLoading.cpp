@@ -210,7 +210,7 @@ std::vector<U32> CompileShaderToSPIRV(const std::string& filename, VkShaderStage
     TBuiltInResource resources = InitResources();
 
     if (!shader.parse(&resources, 100, false, EShMsgDefault)) {
-        spdlog::error("GLSL Parsing Failed for ", filename);
+        spdlog::error("GLSL Parsing Failed for {}", filename);
         spdlog::error(shader.getInfoLog());
         return {};
     }
