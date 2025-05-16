@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <regex>
+#include <unordered_set>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -154,12 +156,47 @@ EShLanguage ShaderStageFromVulkan(VkShaderStageFlagBits stage) {
     return EShLangVertex;
 }
 
+std::string PreprocessIncludes(const std::filesystem::path& filePath, std::unordered_set<std::filesystem::path>& includedFiles) {
+    if (includedFiles.count(filePath)) {
+        // Prevent recursive includes
+        spdlog::warn("File {} already included, skipping to avoid recursion.", filePath.string());
+        return "";
+    }
+    includedFiles.insert(filePath);
+
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        spdlog::error("Failed to open shader file for include: {}", filePath.string());
+        return "";
+    }
+
+    std::string line;
+    std::string processedSource;
+    std::regex includeRegex(R"(#include\s+\"(.+?)\")");
+
+    while (std::getline(file, line)) {
+        std::smatch match;
+        if (std::regex_search(line, match, includeRegex)) {
+            auto includeFile = filePath.parent_path() / match[1].str();
+            processedSource += PreprocessIncludes(includeFile, includedFiles);
+        } else {
+            processedSource += line + "\n";
+        }
+    }
+
+    return processedSource;
+}
+
+std::string PreprocessIncludes(const std::filesystem::path& filePath) {
+    std::unordered_set<std::filesystem::path> includedFiles;
+    return PreprocessIncludes(filePath, includedFiles);
+}
+
 std::vector<U32> CompileShaderToSPIRV(const std::string& filename, VkShaderStageFlagBits vkStage) {
     glslang::InitializeProcess();
 
-    std::vector<U8> source = ReadFile(filename);
+    std::string shaderCode = PreprocessIncludes(filename);
 
-    std::string shaderCode(source.begin(), source.end());
     EShLanguage stage = ShaderStageFromVulkan(vkStage);
 
     glslang::TShader shader(stage);

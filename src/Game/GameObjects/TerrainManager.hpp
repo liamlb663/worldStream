@@ -57,7 +57,7 @@ public:
         Sampler* sampler
     ) {
         // Set Generator Material
-        perlinGenerator = resources->getMaterialManager()->getData("perlinGenerator", pool, nullptr);
+        perlinGenerator = resources->getMaterialManager()->getData("terrainGenerator", pool, nullptr);
 
         // Create Chunk Image
         terrainInfo = resources->createImage(
