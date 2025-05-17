@@ -13,6 +13,8 @@
 #include "ResourceManagement/ResourceManager.hpp"
 #include "imgui.h"
 
+static const U32 RESOLUTION = 128;
+
 class TerrainChunk {
 public:
 
@@ -64,7 +66,7 @@ public:
 
         // Create Chunk Image
         terrainInfo = resources->createImage(
-            {256},
+            {RESOLUTION, RESOLUTION},
             VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
             VK_IMAGE_USAGE_SAMPLED_BIT |
@@ -76,7 +78,7 @@ public:
 
         perlinGeneratorPC = {};
         perlinGeneratorPC.scale = 1;
-        perlinGeneratorPC.texelSize = 1.0f/256.0f;
+        perlinGeneratorPC.texelSize = 1.0f/RESOLUTION;
         perlinGeneratorPC.octaves = 4;
 
         terrainChunkPC = {};
@@ -156,7 +158,7 @@ public:
         pool = resources->createDescriptorPool(1, poolRatios).value();
 
         // Create Mesh
-        createPlaneBuffers(resources, &vertexBuffer, &indexBuffer, &vertexLayout, &indexCount, 256);
+        createPlaneBuffers(resources, &vertexBuffer, &indexBuffer, &vertexLayout, &indexCount, RESOLUTION);
 
         // Buffers
         terrainBuffer = resources->createUniformBuffer(12, "Terrain Buffer").value();
@@ -165,7 +167,7 @@ public:
         float* objectPtr = reinterpret_cast<float*>(terrainBuffer.info.pMappedData);
         objectPtr[0] = 128.0f;    // initial terrainScale
         objectPtr[1] = 0.50f;     // initial heightScale
-        objectPtr[2] = 256.0f;    // resolution
+        objectPtr[2] = 1.0f/RESOLUTION;    // resolution
 
         sampler = resources->getSamplerBuilder()
             .setFilter(VkFilter::VK_FILTER_NEAREST, VkFilter::VK_FILTER_NEAREST)
@@ -216,7 +218,7 @@ public:
         static float generationScale = 1.0f;
         static float generationSeed = 0.0f;
         static int generationOctaves = 4.0f;
-        if (ImGui::SliderFloat("Generation Scale", &generationScale, 1.0f, 20.0f, "%.1f") ||
+        if (ImGui::SliderFloat("Generation Scale", &generationScale, 0.0f, 20.0f, "%.1f") ||
             ImGui::SliderFloat("Generation Seed", &generationSeed, 0.0f, 1000.0f, "%.1f") ||
             ImGui::SliderInt("Generation Octaves", &generationOctaves, 0.0f, 10.0f)) {
 
