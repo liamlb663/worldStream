@@ -19,3 +19,18 @@ bool VkUtils::checkVkResult(VkResult result, std::string ErrorMessage) {
 
     return true;
 }
+
+U32 VkUtils::findMemoryType(VulkanInfo* vkInfo, U32 typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(vkInfo->physicalDevice, &memProperties);
+
+    for (U32 i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    spdlog::error("Failed to find suitable memory type!");
+    return -1;
+}
+
